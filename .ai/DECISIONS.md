@@ -1,4 +1,4 @@
-# Décisions d'architecture CargoLink
+# Décisions d'architecture Konzia
 
 Ne figurent ici que les décisions difficiles à défaire, surprenantes sans contexte, et résultant d'un vrai compromis.
 

@@ -1,4 +1,4 @@
-# 02 — Architecture technique CargoLink
+# 02 — Architecture technique Konzia
 
 Contexte : un développeur, un VPS Hostinger **KVM 2** (2 vCPU, 8 Go RAM, 100 Go NVMe), pilote de 2 commissionnaires à Lubumbashi. Principe directeur : **peu de pièces mobiles**, un seul dépôt, un seul langage (TypeScript).
 

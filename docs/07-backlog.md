@@ -1,6 +1,6 @@
-# 07 — Backlog MVP CargoLink
+# 07 — Backlog MVP Konzia
 
-Une tâche = une étape du [plan](../plans/pending/cargolink-mvp.md). Taille : XS < S < M (aucune tâche L ou plus). Chaque tâche est une tranche verticale (base → API → écran) sauf le socle.
+Une tâche = une étape du [plan](../plans/pending/konzia-mvp.md). Taille : XS < S < M (aucune tâche L ou plus). Chaque tâche est une tranche verticale (base → API → écran) sauf le socle.
 « Prête » = toutes ses tâches bloquantes sont terminées. Les tickets GitHub reprennent le même identifiant (`[1.2]`).
 
 ## Phase 1 — Socle et isolation

@@ -1,7 +1,7 @@
-# 06 — Maquettes CargoLink
+# 06 — Maquettes Konzia
 
 Maquettes cliquables (téléphone, thèmes clair et sombre) : **https://claude.ai/artifact/GkemHVvvzE4x9MRmmE7DkB**
-Source : [`maquettes/cargolink-maquettes.html`](maquettes/cargolink-maquettes.html). Le lien est privé : utilisez le menu « Partager » de la page pour la montrer aux commissionnaires pilotes.
+Source : [`maquettes/konzia-maquettes.html`](maquettes/konzia-maquettes.html). Le lien est privé : utilisez le menu « Partager » de la page pour la montrer aux commissionnaires pilotes.
 
 | # | Écran | Exigences illustrées |
 |---|---|---|
@@ -21,8 +21,10 @@ Source : [`maquettes/cargolink-maquettes.html`](maquettes/cargolink-maquettes.ht
 - Une action principale par écran, en cuivre (clin d'œil au Katanga), libellée par un verbe.
 - Nature du prix toujours écrite : « Prix indicatif », « Devis confirmé · v2 », « estimation ».
 - Statut de paiement et statut opérationnel = deux pastilles distinctes.
-- Numéros lisibles en police à chasse fixe : `CL-2026-000123` (commande), `CL-P-7KD3QX` (colis).
+- Numéros lisibles en police à chasse fixe : `KZ-2026-000123` (commande), `KZ-P-7KD3QX` (colis).
 - Cibles tactiles ≥ 44 px ; libellés visibles sur chaque champ.
+
+Questionnaire pour les commissionnaires (réponses copiées vers WhatsApp) : **https://claude.ai/artifact/NSbKLimsZaz4M2X9U2JrPi**, source [`questionnaire/konzia-questionnaire.html`](questionnaire/konzia-questionnaire.html).
 
 ## À valider avec les 2 commissionnaires pilotes
 

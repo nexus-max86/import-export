@@ -1,0 +1,176 @@
+<title>Questionnaire Konzia</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout : une colonne étroite lisible sur téléphone ; chaque question est une carte avec de grandes réponses à toucher ; barre de progression collante en haut. */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --line:#d9e0e4; --fg:#16212b; --muted:#5b6b78;
+  --copper:#b05a2a; --copper-ink:#ffffff; --copper-soft:#f6e7dd; --ok:#1f7a4d; --ok-soft:#e0f1e8;
+  --f-display:"Archivo",system-ui,sans-serif; --f-body:"Inter",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1519;--surface:#172027;--line:#2a3741;--fg:#e7edf1;--muted:#9aabb8;--copper:#de8a57;--copper-ink:#1a0f08;--copper-soft:#3a271c;--ok:#5ec48f;--ok-soft:#173326;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1519;--surface:#172027;--line:#2a3741;--fg:#e7edf1;--muted:#9aabb8;--copper:#de8a57;--copper-ink:#1a0f08;--copper-soft:#3a271c;--ok:#5ec48f;--ok-soft:#173326;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:17px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar-in{max-width:560px;margin:0 auto;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:12px}
+.brand{font-family:var(--f-display);font-weight:800;font-size:18px}
+.brand b{color:var(--copper)}
+.prog{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--copper);transition:width .2s}
+.count{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
+main{max-width:560px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--f-display);font-size:26px;line-height:1.2;margin:0;text-wrap:balance}
+.intro{display:flex;flex-direction:column;gap:10px}
+.intro p{margin:0;color:var(--muted)}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.q.done{border-color:var(--ok)}
+.q h2{font-family:var(--f-body);font-size:17px;font-weight:600;margin:0;display:flex;gap:10px;text-wrap:balance}
+.q h2 span{color:var(--copper);font-family:var(--f-display);min-width:24px}
+.hint{font-size:14px;color:var(--muted);margin:-6px 0 0 34px}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{font:500 16px var(--f-body);min-height:48px;padding:10px 16px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;text-align:left}
+.opt[aria-pressed="true"]{border-color:var(--copper);background:var(--copper-soft);font-weight:600}
+.opt:focus-visible,input:focus-visible,textarea:focus-visible,.btn:focus-visible{outline:3px solid var(--copper);outline-offset:2px}
+input,textarea{width:100%;font:inherit;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:var(--fg);min-height:48px}
+textarea{min-height:96px;resize:vertical}
+.other{display:none}
+.other.show{display:block}
+.btn{display:flex;justify-content:center;align-items:center;width:100%;min-height:56px;border-radius:14px;border:0;background:var(--copper);color:var(--copper-ink);font:600 18px var(--f-body);cursor:pointer}
+.btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--fg);min-height:48px;font-size:16px}
+.final{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.final h2{font-family:var(--f-display);font-size:20px;margin:0}
+.final p{margin:0;color:var(--muted);font-size:15px}
+#out{font-family:ui-monospace,monospace;font-size:13.5px;min-height:200px;white-space:pre-wrap}
+.msg{background:var(--ok-soft);color:var(--ok);border-radius:10px;padding:10px 12px;font-weight:600;font-size:15px}
+.num{font-weight:600;user-select:all}
+@media (prefers-reduced-motion:reduce){.prog i{transition:none}}
+</style>
+
+<div class="bar"><div class="bar-in"><div class="brand">Kon<b>zia</b></div><div class="prog" aria-hidden="true"><i id="progFill"></i></div><div class="count" id="count">0/14</div></div></div>
+
+<main>
+  <section class="intro">
+    <h1>Comment travaillez-vous aujourd'hui ?</h1>
+    <p>Nous préparons Konzia, un outil pour aider les commissionnaires à gérer leurs clients, devis, paiements et colis, sans tout faire sur Excel et WhatsApp.</p>
+    <p>14 questions, environ 5 minutes. Touchez vos réponses. À la fin, un bouton copie tout pour l'envoyer sur WhatsApp. Il n'y a pas de bonne ou de mauvaise réponse.</p>
+  </section>
+
+  <div id="questions"></div>
+
+  <section class="final">
+    <h2>Envoyer vos réponses</h2>
+    <p>Touchez « Copier mes réponses », puis collez-les dans la conversation WhatsApp avec l'équipe Konzia.</p>
+    <button class="btn" id="copy" type="button">Copier mes réponses</button>
+    <div class="msg" id="copied" hidden>Copié. Collez maintenant dans WhatsApp.</div>
+    <label for="out" style="font-size:14px;color:var(--muted)">Si la copie ne marche pas : appuyez longuement dans le cadre, « Tout sélectionner », puis « Copier ».</label>
+    <textarea id="out" readonly></textarea>
+    <button class="btn ghost" id="reset" type="button">Effacer et recommencer</button>
+    <p>Merci beaucoup pour votre temps.</p>
+  </section>
+</main>
+
+<script>
+const Q=[
+ {id:"nom",t:"Votre nom et le nom de votre activité",type:"text",ph:"Ex. : Jean K., Kaseba Import"},
+ {id:"volume",t:"Combien de commandes de clients traitez-vous par mois ?",opts:["Moins de 10","10 à 30","30 à 100","Plus de 100"]},
+ {id:"sites",t:"Sur quels sites achetez-vous ?",multi:true,opts:["SHEIN","Alibaba","1688","AliExpress","Temu","Taobao","Pinduoduo","Amazon","Autre"]},
+ {id:"prix",t:"Quand vous donnez un prix au client, qu'est-ce que vous comptez dedans ?",multi:true,opts:["Prix de l'article","Livraison du vendeur jusqu'à l'entrepôt","Ma commission","Transport jusqu'en RDC","Douane","Livraison à Lubumbashi","Frais Mobile Money","Autre"]},
+ {id:"commission",t:"Votre commission, c'est plutôt…",opts:["Un pourcentage du prix","Un montant fixe par commande","Un montant par article","Ça dépend du client","Autre"]},
+ {id:"transport",t:"Le transport, vous le faites payer comment ?",opts:["Au kilo","Au volume (taille du colis)","Le plus élevé des deux","Un prix fixe par colis","Autre"]},
+ {id:"route",t:"Par où passent les colis, le plus souvent ?",hint:"Plusieurs réponses possibles.",multi:true,opts:["Avion jusqu'à Lubumbashi","Avion puis route par la Zambie (Kasumbalesa)","Bateau puis route (Dar es Salaam ou autre port)","Un transitaire s'occupe de tout, je ne sais pas le détail","Autre"]},
+ {id:"delai",t:"Combien de temps entre la commande et la remise au client ?",opts:["Moins de 2 semaines","2 à 4 semaines","1 à 2 mois","Plus de 2 mois","Ça varie beaucoup"]},
+ {id:"paiement",t:"Comment vos clients vous paient-ils ?",multi:true,opts:["M-Pesa","Orange Money","Airtel Money","Espèces","Banque","Autre"]},
+ {id:"quand",t:"Quand le client paie-t-il ?",opts:["Tout avant que j'achète","Une avance, puis le reste à l'arrivée","Tout à l'arrivée","Ça dépend du client"]},
+ {id:"problemes",t:"Qu'est-ce qui vous fait perdre le plus de temps ou d'argent ?",hint:"Choisissez jusqu'à 3 réponses.",multi:true,max:3,opts:["Clients qui ne paient pas ou paient en retard","Colis ou articles mélangés entre clients","Colis perdus ou abîmés","Calculer les prix","Répondre aux mêmes questions sur WhatsApp","Dire au client où est son colis","Prix qui changent sur le site","Retrouver qui a payé quoi","Autre"]},
+ {id:"documents",t:"Quels documents pourriez-vous montrer pour prouver que vous êtes un vrai professionnel ?",multi:true,opts:["Carte d'électeur ou passeport","RCCM","Identification nationale","Numéro d'impôt","Adresse de ma boutique ou de mon dépôt","Aucun pour l'instant"]},
+ {id:"clients_app",t:"Vos clients utiliseraient-ils une application pour suivre leurs commandes ?",opts:["Oui, la plupart","Seulement quelques-uns","Non, ils préfèrent WhatsApp","Je ne sais pas"]},
+ {id:"abonnement",t:"Si l'outil vous fait gagner du temps, combien seriez-vous prêt à payer par mois ?",opts:["Rien, seulement si c'est gratuit","Jusqu'à 10 $","10 à 25 $","25 à 50 $","Plus de 50 $"]},
+ {id:"libre",t:"Autre chose à nous dire ?",type:"textarea",ph:"Une idée, une inquiétude, une façon de faire que nous devons connaître…",optional:true}
+];
+const KEY="konzia-questionnaire-v1";
+let A={};
+try{A=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){A={}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(A))}catch(e){}}
+const box=document.getElementById("questions");
+const counted=Q.filter(q=>!q.optional);
+document.getElementById("count").textContent="0/"+counted.length;
+
+Q.forEach((q,i)=>{
+  const s=document.createElement("section");s.className="q";s.id="q-"+q.id;
+  const h=document.createElement("h2");
+  const n=document.createElement("span");n.textContent=String(i+1);
+  const tt=document.createElement("div");tt.textContent=q.t;
+  h.append(n,tt);s.append(h);
+  if(q.hint||q.multi){const p=document.createElement("p");p.className="hint";p.textContent=q.hint||"Plusieurs réponses possibles.";s.append(p)}
+  if(q.type){
+    const el=document.createElement(q.type==="textarea"?"textarea":"input");
+    el.id="f-"+q.id;el.placeholder=q.ph||"";el.value=A[q.id]||"";
+    el.setAttribute("aria-label",q.t);
+    el.addEventListener("input",()=>{A[q.id]=el.value;save();update()});
+    s.append(el);
+  }else{
+    const o=document.createElement("div");o.className="opts";o.setAttribute("role","group");o.setAttribute("aria-label",q.t);
+    const other=document.createElement("input");other.className="other";other.id="f-"+q.id+"-autre";other.placeholder="Précisez…";other.setAttribute("aria-label","Précisez votre réponse");
+    other.value=A[q.id+"_autre"]||"";
+    other.addEventListener("input",()=>{A[q.id+"_autre"]=other.value;save();update()});
+    q.opts.forEach(label=>{
+      const b=document.createElement("button");b.type="button";b.className="opt";b.textContent=label;
+      const sel=()=>q.multi?(A[q.id]||[]).includes(label):A[q.id]===label;
+      b.setAttribute("aria-pressed",sel());
+      b.addEventListener("click",()=>{
+        if(q.multi){
+          let arr=A[q.id]||[];
+          if(arr.includes(label))arr=arr.filter(x=>x!==label);
+          else{ if(q.max&&arr.length>=q.max) arr=arr.slice(1); arr=[...arr,label]; }
+          A[q.id]=arr;
+        }else{A[q.id]=A[q.id]===label?undefined:label}
+        o.querySelectorAll(".opt").forEach(x=>x.setAttribute("aria-pressed",q.multi?(A[q.id]||[]).includes(x.textContent):A[q.id]===x.textContent));
+        save();update();
+      });
+      o.append(b);
+    });
+    s.append(o,other);
+  }
+  box.append(s);
+});
+
+function answered(q){const v=A[q.id];return Array.isArray(v)?v.length>0:!!(v&&String(v).trim())}
+function fmt(q){
+  let v=A[q.id];
+  if(Array.isArray(v))v=v.join(", ");
+  if(!v||!String(v).trim())return "—";
+  const hasOther=Array.isArray(A[q.id])?A[q.id].includes("Autre"):A[q.id]==="Autre";
+  if(hasOther&&A[q.id+"_autre"])v+=" ("+A[q.id+"_autre"].trim()+")";
+  return v;
+}
+function update(){
+  let done=0;
+  Q.forEach(q=>{
+    const ok=answered(q);if(ok&&!q.optional)done++;
+    document.getElementById("q-"+q.id).classList.toggle("done",ok);
+    if(!q.type){
+      const hasOther=Array.isArray(A[q.id])?A[q.id].includes("Autre"):A[q.id]==="Autre";
+      document.getElementById("f-"+q.id+"-autre").classList.toggle("show",hasOther);
+    }
+  });
+  document.getElementById("count").textContent=done+"/"+counted.length;
+  document.getElementById("progFill").style.width=(done/counted.length*100)+"%";
+  document.getElementById("out").value="*Questionnaire Konzia*\n\n"+Q.map((q,i)=>(i+1)+". "+q.t+"\n→ "+fmt(q)).join("\n\n");
+}
+update();
+
+document.getElementById("copy").addEventListener("click",()=>{
+  const out=document.getElementById("out");const ok=document.getElementById("copied");
+  const fallback=()=>{out.focus();out.select();ok.hidden=true};
+  try{
+    navigator.clipboard.writeText(out.value).then(()=>{ok.hidden=false},fallback);
+  }catch(e){fallback()}
+});
+let armed=false;
+document.getElementById("reset").addEventListener("click",e=>{
+  if(!armed){armed=true;e.target.textContent="Toucher encore pour tout effacer";setTimeout(()=>{armed=false;e.target.textContent="Effacer et recommencer"},4000);return}
+  A={};save();location.reload();
+});
+</script>

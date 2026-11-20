@@ -1,4 +1,4 @@
-# Plan — CargoLink MVP (conception puis développement)
+# Plan — Konzia MVP (conception puis développement)
 
 Référence : [`docs/cahier-des-charges.md`](../../docs/cahier-des-charges.md) · Glossaire : [`docs/glossaire.md`](../../docs/glossaire.md)
 Statut : **APPROUVÉ le 20/11/2026** (G1 : VPS KVM 2 ; G2–G9 : recommandations acceptées ; e-mail via Brevo). Phase 0 livrée, en relecture.
@@ -12,7 +12,7 @@ Statut : **APPROUVÉ le 20/11/2026** (G1 : VPS KVM 2 ; G2–G9 : recommandations
 | Authentification / messages | E-mail + WhatsApp, pas de SMS |
 | Pilote | 2 commissionnaires, qui travaillent aujourd'hui sur Excel + WhatsApp |
 | Langue | Français uniquement au lancement (architecture prête pour l'i18n) |
-| Nom | CargoLink |
+| Nom | Konzia |
 
 Conséquence du « développeur unique » : on optimise pour **peu de pièces mobiles** et un code facile à reprendre. Tout ce qui n'est pas indispensable au pilote reste hors périmètre.
 
@@ -148,7 +148,7 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 - Phase 4 : conditions d'annulation et de remboursement affichées dans les devis (§18.5) — texte à fournir par le propriétaire avant la phase 4.
 - Phase 6 : étapes logistiques réellement utilisées par les 2 pilotes (itinéraire Chine → Lubumbashi ? via Kasumbalesa ?) — à recueillir pendant la phase 0.
 - Phase 8 : délais de litige — à fixer avant la phase 8.
-- Phase 9 : nom de domaine. Vérifié le 20/11/2026 : `cargolink.com`, `.app`, `.co`, `.net`, `.store`, `getcargolink.com`, `mycargolink.com` pris ; `cargolinkrdc.com`, `cargolink-rdc.com`, `cargolinkcongo.com` libres ; `.cd` et `.africa` non vérifiables par l'outil. « CargoLink » est aussi le nom d'un annuaire IATA et de plusieurs transitaires : risque de confusion de marque à évaluer.
+- Phase 9 : nom de domaine. Nom retenu le 20/11/2026 : **Konzia** (remplace CargoLink, trop proche d'un annuaire IATA et de transitaires existants). Vérifié le 20/11/2026 : `konzia.com` pris ; `konzia.app`, `konzia.co`, `konzia.net`, `konzia.io`, `konziardc.com`, `getkonzia.com` libres ; `.cd` non vérifiable par l'outil. Achat à faire par le propriétaire.
 - Recherche multi-marketplaces, connecteurs API, paiements intégrés, abonnements : brouillard, étudiés après le pilote.
 
 ## Toujours / Jamais

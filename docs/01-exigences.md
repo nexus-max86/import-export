@@ -1,12 +1,12 @@
-# 01 — Exigences CargoLink
+# 01 — Exigences Konzia
 
 Source : [`cahier-des-charges.md`](cahier-des-charges.md). Termes : [`glossaire.md`](glossaire.md).
-Colonne **Phase** : `MVP` (pilote), `V1`, `Plus tard`. Colonne **Étape** : étape du plan [`plans/pending/cargolink-mvp.md`](../plans/pending/cargolink-mvp.md).
+Colonne **Phase** : `MVP` (pilote), `V1`, `Plus tard`. Colonne **Étape** : étape du plan [`plans/pending/konzia-mvp.md`](../plans/pending/konzia-mvp.md).
 
 Décisions prises le 20/11/2026 qui modifient le cahier :
 - Application client = **web installable (PWA)** au MVP ; application native reportée.
 - Connexion **e-mail + mot de passe** (pas de SMS). WhatsApp pour les notifications, après validation Meta.
-- **Client géré** : un commissionnaire peut gérer des clients sans compte CargoLink.
+- **Client géré** : un commissionnaire peut gérer des clients sans compte Konzia.
 - Import des **clients** depuis Excel/CSV pour les commissionnaires pilotes.
 - **USD** devise de référence ; **CDF** affiché via taux admin ; **CNY** pour les coûts d'achat.
 
@@ -77,7 +77,7 @@ Décisions prises le 20/11/2026 qui modifient le cahier :
 ### Commandes et achats (§6.7, §6.8)
 | ID | Exigence | Phase | Étape | Critère |
 |---|---|---|---|---|
-| EF-60 | Acceptation → commande avec numéro lisible (`CL-2026-000123`), liée à la version exacte du devis | MVP | 4.3 | — |
+| EF-60 | Acceptation → commande avec numéro lisible (`KZ-2026-000123`), liée à la version exacte du devis | MVP | 4.3 | — |
 | EF-61 | Statuts opérationnels séparés du statut de paiement | MVP | 4.3 | — |
 | EF-62 | Ajustement de prix après acceptation = demande soumise au client, acceptée ou refusée | MVP | 4.3 | Le montant ne change pas sans accord |
 | EF-63 | Achats fournisseurs : boutique, plateforme, référence, date, montant réel, devise, taux, preuve, numéro de suivi vendeur, articles et quantités | MVP | 6.1 | Coût réel et prix facturé stockés séparément |

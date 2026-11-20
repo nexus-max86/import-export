@@ -1,4 +1,4 @@
-# 03 — Modèle de données CargoLink (MVP)
+# 03 — Modèle de données Konzia (MVP)
 
 Conventions :
 - Clés primaires `id uuid` (v7, triables par date). Toutes les tables ont `created_at`, `updated_at`.
@@ -101,7 +101,7 @@ erDiagram
 
 | Table | Colonnes clés |
 |---|---|
-| `orders` | `number` (`CL-2026-000123`, séquence), `organization_id`, `org_customer_id`, `customer_user_id`, `quote_version_id` (unique), `currency`, `agreed_total_amount`, `final_amount`, `status` (opérationnel), `payment_status` (`unpaid`/`partially_paid`/`paid`/`refunded`/`partially_refunded`), `cancelled_reason` |
+| `orders` | `number` (`KZ-2026-000123`, séquence), `organization_id`, `org_customer_id`, `customer_user_id`, `quote_version_id` (unique), `currency`, `agreed_total_amount`, `final_amount`, `status` (opérationnel), `payment_status` (`unpaid`/`partially_paid`/`paid`/`refunded`/`partially_refunded`), `cancelled_reason` |
 | `order_items` | `order_id`, `organization_id`, `customer_user_id`, `quote_line_id`, `description`, `variant`, `qty_ordered`, `qty_purchased`, `qty_received`, `unit_price_amount` |
 | `order_adjustments` | `order_id`, `organization_id`, `amount_delta`, `reason`, `status` (`proposed`/`accepted`/`rejected`), `proposed_by`, `decided_by`, `decided_at` |
 | `order_events` | `order_id`, `organization_id`, `type`, `from_status`, `to_status`, `actor_user_id`, `note`, `at` (insertion seule) |
@@ -135,7 +135,7 @@ erDiagram
 
 | Table | Colonnes clés |
 |---|---|
-| `parcels` | `organization_id`, `code` (`CL-P-7KD3QX`, unique), `location_label`, `weight_g`, `length_mm`, `width_mm`, `height_mm`, `volumetric_divisor` (ex. 5000/6000), `volumetric_weight_g` (calculé), `condition` (`ok`/`damaged`/`opened`), `current_step_code`, `route_template_id`, `status` (`open`/`closed`/`delivered`/`lost`/`cancelled`) |
+| `parcels` | `organization_id`, `code` (`KZ-P-7KD3QX`, unique), `location_label`, `weight_g`, `length_mm`, `width_mm`, `height_mm`, `volumetric_divisor` (ex. 5000/6000), `volumetric_weight_g` (calculé), `condition` (`ok`/`damaged`/`opened`), `current_step_code`, `route_template_id`, `status` (`open`/`closed`/`delivered`/`lost`/`cancelled`) |
 | `parcel_items` | `parcel_id`, `order_item_id`, `organization_id`, `customer_user_id`, `org_customer_id`, `quantity`, `added_at`, `added_by`, `removed_at`, `removed_by`, `removed_reason` (retrait = marquage, jamais suppression) |
 | `parcel_events` | `parcel_id`, `organization_id`, `step_code`, `occurred_at`, `location`, `note`, `photo_file_ids uuid[]`, `recorded_by` (insertion seule) |
 | `shipments` | `organization_id`, `mode` (`air`/`sea`/`road`/`other`), `origin`, `destination`, `carrier`, `reference`, `tracking_number`, `departure_est`, `departure_at`, `arrival_est`, `arrival_at`, `cost_amount`, `currency`, `status` |

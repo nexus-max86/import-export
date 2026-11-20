@@ -1,14 +1,14 @@
-# Glossaire CargoLink
+# Glossaire Konzia
 
 Termes métier utilisés dans le code, les écrans et la documentation. Un terme = un sens.
 
 | Terme (FR) | Nom dans le code | Définition |
 |---|---|---|
-| Client | `customer` | Personne qui achète via un commissionnaire. Peut avoir un compte CargoLink ou être un « client géré ». |
-| Client géré | `managed_customer` | Client enregistré par un commissionnaire, sans compte CargoLink (ex. client WhatsApp). Peut réclamer son compte plus tard via un lien d'invitation. *(sous réserve de validation, question G6)* |
+| Client | `customer` | Personne qui achète via un commissionnaire. Peut avoir un compte Konzia ou être un « client géré ». |
+| Client géré | `managed_customer` | Client enregistré par un commissionnaire, sans compte Konzia (ex. client WhatsApp). Peut réclamer son compte plus tard via un lien d'invitation. |
 | Commissionnaire | `organization` (type `independent` ou `company`) | Professionnel qui achète à l'étranger pour ses clients. Chaque commissionnaire est un tenant isolé. |
 | Membre | `organization_member` | Utilisateur rattaché à un commissionnaire, avec un rôle (administrateur, commercial, acheteur, logistique, comptable, livreur). |
-| Service CargoLink | `organization` avec `is_platform_operated = true` | Le service d'importation propre à la plateforme ; un commissionnaire comme les autres, sans accès privilégié. |
+| Service Konzia | `organization` avec `is_platform_operated = true` | Le service d'importation propre à la plateforme ; un commissionnaire comme les autres, sans accès privilégié. |
 | Demande de devis | `quote_request` | Liste d'articles qu'un client souhaite acheter, envoyée à un ou plusieurs commissionnaires. |
 | Article demandé | `quote_request_item` | Un produit (lien ou saisie manuelle) avec variante, quantité, instructions. |
 | Devis | `quote` / `quote_version` | Proposition chiffrée d'UN commissionnaire. Chaque modification crée une nouvelle version ; l'ancienne reste consultable. |

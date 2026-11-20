@@ -1,4 +1,4 @@
-# 05 — États et parcours CargoLink
+# 05 — États et parcours Konzia
 
 Chaque transition est faite par une **fonction de service unique** (`quotes.send()`, `payments.confirm()`…) qui vérifie l'état de départ, écrit l'événement et l'audit dans la même transaction. Aucune route ne modifie un statut directement.
 
@@ -7,7 +7,7 @@ Chaque transition est faite par une **fonction de service unique** (`quotes.send
 ```mermaid
 sequenceDiagram
   actor Cl as Client
-  participant App as CargoLink
+  participant App as Konzia
   actor A as Commissionnaire A
   actor B as Commissionnaire B
   Cl->>App: Colle un lien (ou saisie manuelle)
@@ -20,7 +20,7 @@ sequenceDiagram
   B->>App: Envoie devis v1
   App-->>Cl: 2 devis à comparer
   Cl->>App: Accepte le devis de A
-  App-->>A: Commande CL-2026-000123 créée
+  App-->>A: Commande KZ-2026-000123 créée
   App-->>B: Demande attribuée à un autre commissionnaire
   Cl->>App: Paie A (Mobile Money) et joint la preuve
   A->>App: Confirme le paiement

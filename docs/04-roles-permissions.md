@@ -1,4 +1,4 @@
-# 04 — Rôles et permissions CargoLink
+# 04 — Rôles et permissions Konzia
 
 Deux niveaux de contrôle :
 1. **Entre organisations et entre clients** : Row-Level Security PostgreSQL (voir [03](03-modele-donnees.md) §8). Infranchissable par l'application.
@@ -86,7 +86,7 @@ Les permissions sont des chaînes `domaine.action`. Au MVP, les rôles sont **pr
 | Villes, zones, marketplaces, modèles d'étapes, taux de change | — | ✅ |
 | Journal d'audit | — | 👁 |
 
-Le **service d'importation propre** de CargoLink est une organisation ordinaire (`is_platform_operated = true`). Ses membres n'ont **aucune** permission plateforme du fait de cette appartenance ; un même humain qui serait admin et membre du service agit avec un seul contexte à la fois (choix explicite de l'espace), et toute lecture admin est journalisée.
+Le **service d'importation propre** de Konzia est une organisation ordinaire (`is_platform_operated = true`). Ses membres n'ont **aucune** permission plateforme du fait de cette appartenance ; un même humain qui serait admin et membre du service agit avec un seul contexte à la fois (choix explicite de l'espace), et toute lecture admin est journalisée.
 
 ## 5. Règles transverses
 
