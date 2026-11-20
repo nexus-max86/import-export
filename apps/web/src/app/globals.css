@@ -1,0 +1,32 @@
+@import 'tailwindcss';
+
+/* Jetons Konzia (repris des maquettes). */
+@theme {
+  --color-copper: #b05a2a;
+  --color-copper-soft: #f6e7dd;
+  --color-ink: #16212b;
+  --color-muted: #5b6b78;
+  --color-line: #dbe1e5;
+  --color-surface: #ffffff;
+  --color-canvas: #eef1f3;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Archivo', system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-copper: #de8a57;
+    --color-copper-soft: #3a271c;
+    --color-ink: #e7edf1;
+    --color-muted: #9aabb8;
+    --color-line: #2a3741;
+    --color-surface: #172027;
+    --color-canvas: #0f1519;
+    color-scheme: dark;
+  }
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}

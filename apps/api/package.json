@@ -1,0 +1,40 @@
+{
+  "name": "@konzia/api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start": "node dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@konzia/db": "workspace:*",
+    "@konzia/shared": "workspace:*",
+    "@nestjs/common": "11.1.9",
+    "@nestjs/core": "11.1.9",
+    "@nestjs/platform-express": "11.1.9",
+    "helmet": "8.1.0",
+    "ioredis": "5.8.2",
+    "nestjs-pino": "4.4.1",
+    "pino": "10.1.0",
+    "pino-http": "11.0.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "zod": "4.1.12"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "11.0.10",
+    "@nestjs/testing": "11.1.9",
+    "@swc/core": "1.15.2",
+    "@types/express": "5.0.5",
+    "@types/node": "22.19.1",
+    "@types/supertest": "6.0.3",
+    "pino-pretty": "13.1.2",
+    "supertest": "7.1.4",
+    "typescript": "5.9.3",
+    "unplugin-swc": "1.5.9",
+    "vitest": "3.2.4"
+  }
+}
