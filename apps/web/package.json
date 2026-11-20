@@ -7,15 +7,19 @@
     "build": "next build",
     "start": "next start --port 3000",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "e2e": "playwright test --trace off"
   },
   "dependencies": {
+    "@fontsource-variable/inter": "5.2.8",
+    "@fontsource/archivo": "5.2.8",
     "@konzia/shared": "workspace:*",
     "next": "15.5.29",
     "react": "19.2.0",
     "react-dom": "19.2.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "4.1.17",
     "@types/node": "22.19.1",
     "@types/react": "19.2.2",

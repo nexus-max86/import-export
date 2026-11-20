@@ -21,6 +21,12 @@ pnpm db:migrate               # applique les migrations sur konzia_dev
 pnpm dev                      # web : http://localhost:3000 · API : http://localhost:3001/api/health
 ```
 
+En développement, les e-mails ne partent pas : leurs liens (confirmation, mot de passe) s'affichent dans les logs de l'API.
+
+```
+
+```
+
 ## Commandes
 
 | Commande          | Rôle                                                           |

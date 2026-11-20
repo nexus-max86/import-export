@@ -1,7 +1,11 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { LoggerModule } from 'nestjs-pino';
+import { AuthModule } from './auth/auth.module';
+import { CsrfMiddleware } from './common/csrf.middleware';
 import { ConfigModule } from './config/config.module';
 import { loadEnv } from './config/env';
+import { DevModule } from './dev/dev.module';
+import { EmailModule } from './email/email.module';
 import { HealthController } from './health/health.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
@@ -27,7 +31,14 @@ const env = loadEnv();
     }),
     PrismaModule,
     RedisModule,
+    EmailModule,
+    AuthModule,
+    ...(env.NODE_ENV !== 'production' && env.EMAIL_TRANSPORT === 'fake' ? [DevModule] : []),
   ],
   controllers: [HealthController],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(CsrfMiddleware).forRoutes('*path');
+  }
+}

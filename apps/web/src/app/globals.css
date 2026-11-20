@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* Jetons Konzia (repris des maquettes). */
+/* Jetons Konzia (repris des maquettes). Le mode sombre redéfinit les mêmes jetons. */
 @theme {
   --color-copper: #b05a2a;
   --color-copper-soft: #f6e7dd;
@@ -9,7 +9,11 @@
   --color-line: #dbe1e5;
   --color-surface: #ffffff;
   --color-canvas: #eef1f3;
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-ok: #1f7a4d;
+  --color-ok-soft: #e0f1e8;
+  --color-danger: #b3261e;
+  --color-danger-soft: #f9e0de;
+  --font-sans: 'Inter Variable', system-ui, sans-serif;
   --font-display: 'Archivo', system-ui, sans-serif;
 }
 
@@ -22,6 +26,10 @@
     --color-line: #2a3741;
     --color-surface: #172027;
     --color-canvas: #0f1519;
+    --color-ok: #5ec48f;
+    --color-ok-soft: #173326;
+    --color-danger: #f08a82;
+    --color-danger-soft: #3d1c1a;
     color-scheme: dark;
   }
 }

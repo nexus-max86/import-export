@@ -8,6 +8,7 @@ export default defineConfig({
     globals: true,
     include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
     setupFiles: ['./test/setup.ts'],
+    globalSetup: ['./test/global-setup.ts'],
     // Les tests d'intégration partagent une base : pas de parallélisme entre fichiers.
     fileParallelism: false,
     testTimeout: 20000,

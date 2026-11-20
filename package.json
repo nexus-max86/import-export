@@ -15,7 +15,8 @@
     "db:generate": "pnpm --filter @konzia/db generate",
     "db:migrate": "pnpm --filter @konzia/db migrate:dev",
     "db:deploy": "pnpm --filter @konzia/db migrate:deploy",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "e2e": "pnpm --filter @konzia/web e2e"
   },
   "devDependencies": {
     "@eslint/js": "9.39.1",

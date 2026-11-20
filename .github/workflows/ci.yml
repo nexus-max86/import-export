@@ -29,6 +29,7 @@ jobs:
       DATABASE_URL: postgresql://konzia:konzia@localhost:5432/konzia_test
       REDIS_URL: redis://localhost:6379
       APP_URL: http://localhost:3000
+      HASH_SALT: ci-salt-ci-salt-ci-salt-ci-salt-ci
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -44,3 +45,5 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      - run: pnpm --filter @konzia/web exec playwright install --with-deps chromium
+      - run: pnpm e2e

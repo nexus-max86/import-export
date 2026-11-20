@@ -1,5 +1,6 @@
 import { Controller, Get, HttpCode, Inject, ServiceUnavailableException } from '@nestjs/common';
 import type Redis from 'ioredis';
+import { Public } from '../auth/decorators';
 import { PrismaService } from '../prisma/prisma.service';
 import { REDIS } from '../redis/redis.module';
 
@@ -13,6 +14,7 @@ export class HealthController {
   ) {}
 
   /** Sonde de disponibilité : 200 si la base et Redis répondent, 503 sinon. */
+  @Public()
   @Get()
   @HttpCode(200)
   async check(): Promise<{ status: 'ok'; db: Check; redis: Check }> {

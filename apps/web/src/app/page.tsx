@@ -1,16 +1,31 @@
+import Link from 'next/link';
+import { Logo } from '@/components/ui';
+
 export default function HomePage() {
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-4 px-4 py-12">
-      <h1 className="font-display text-3xl font-extrabold">
-        Kon<span className="text-copper">zia</span>
+    <main className="mx-auto flex max-w-md flex-col gap-5 px-4 py-12">
+      <Logo />
+      <h1 className="font-display text-3xl font-bold text-balance">
+        Achetez à l’international, sans mauvaise surprise.
       </h1>
       <p className="text-muted">
         Collez le lien d’un article vu sur SHEIN, Alibaba ou Temu. Des commissionnaires vérifiés de
-        Lubumbashi vous envoient leur prix.
+        Lubumbashi vous envoient leur prix détaillé.
       </p>
-      <p className="rounded-lg border border-line bg-surface p-4 text-sm">
-        Konzia est en construction. Ouverture du pilote à Lubumbashi.
-      </p>
+      <div className="flex flex-col gap-2">
+        <Link
+          href="/inscription"
+          className="flex min-h-11 items-center justify-center rounded-lg bg-copper px-4 font-semibold text-white"
+        >
+          Créer un compte
+        </Link>
+        <Link
+          href="/connexion"
+          className="flex min-h-11 items-center justify-center rounded-lg border border-line px-4 font-semibold"
+        >
+          Se connecter
+        </Link>
+      </div>
     </main>
   );
 }

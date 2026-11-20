@@ -1,3 +1,6 @@
+import '@fontsource-variable/inter';
+import '@fontsource/archivo/700.css';
+import '@fontsource/archivo/800.css';
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
