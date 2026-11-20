@@ -15,7 +15,7 @@ const NETWORK_MESSAGE = 'Connexion impossible. Vérifiez votre réseau et réess
 /** Appel à l'API Konzia (même origine). Ajoute l'en-tête CSRF sur les écritures. */
 export async function api<T = void>(
   path: string,
-  options: { method?: 'GET' | 'POST' | 'DELETE'; body?: unknown } = {},
+  options: { method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; body?: unknown } = {},
 ): Promise<T> {
   const method = options.method ?? (options.body === undefined ? 'GET' : 'POST');
   let res: Response;

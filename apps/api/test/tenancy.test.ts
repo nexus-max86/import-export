@@ -38,7 +38,14 @@ describe('Isolation entre commissionnaires', () => {
     b = await actor(t, 'Mwamba');
     orgA = await createOrg(a, 'Kaseba Import');
     orgB = await createOrg(b, 'Mwamba Express');
-    // Données chez A dans chaque table : une invitation en attente.
+    // Données chez A dans chaque table : une invitation en attente, une zone desservie.
+    const zone = await t.prisma.serviceZone.findFirstOrThrow({ where: { name: 'Kampemba' } });
+    await a.agent
+      .put('/api/org/service-zones', {
+        zones: [{ serviceZoneId: zone.id, handoverModes: ['pickup'], localFee: null }],
+      })
+      .set(...asOrg(orgA))
+      .expect(200);
     await a.agent
       .post('/api/org/invitations', { email: 'agent@example.test', role: 'sales' })
       .set(...asOrg(orgA))

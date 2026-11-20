@@ -10,6 +10,9 @@ import { FakeEmailSender } from '../src/email/fake-email-sender';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { REDIS } from '../src/redis/redis.module';
 
+const SEED_CITIES = "'Lubumbashi', 'Likasi', 'Kasumbalesa', 'Kipushi'";
+const SEED_ZONES = "'Lubumbashi', 'Kamalondo', 'Kenya', 'Katuba', 'Kampemba', 'Annexe', 'Rwashi'";
+
 export interface TestContext {
   app: INestApplication;
   prisma: PrismaService;
@@ -27,6 +30,7 @@ function makeAgent(app: INestApplication) {
     get: (url: string) => a.get(url),
     post: (url: string, body?: object) =>
       a.post(url).set(CSRF_HEADER, CSRF_HEADER_VALUE).send(body),
+    put: (url: string, body?: object) => a.put(url).set(CSRF_HEADER, CSRF_HEADER_VALUE).send(body),
     patch: (url: string, body?: object) =>
       a.patch(url).set(CSRF_HEADER, CSRF_HEADER_VALUE).send(body),
     delete: (url: string) => a.delete(url).set(CSRF_HEADER, CSRF_HEADER_VALUE),
@@ -48,6 +52,14 @@ export async function createTestApp(): Promise<TestContext> {
     agent: () => makeAgent(app),
     async reset() {
       await prisma.$executeRawUnsafe('TRUNCATE users, organizations, audit_logs CASCADE');
+      // Référentiel : on ne garde que les données de la migration (villes du pilote, communes de Lubumbashi).
+      await prisma.$executeRawUnsafe(
+        `DELETE FROM service_zones WHERE city_id IN (SELECT id FROM cities WHERE name NOT IN (${SEED_CITIES}))
+           OR (city_id = (SELECT id FROM cities WHERE name = 'Lubumbashi') AND name NOT IN (${SEED_ZONES}))`,
+      );
+      await prisma.$executeRawUnsafe(`DELETE FROM cities WHERE name NOT IN (${SEED_CITIES})`);
+      await prisma.$executeRawUnsafe(`UPDATE cities SET is_active = (name = 'Lubumbashi')`);
+      await prisma.$executeRawUnsafe(`UPDATE service_zones SET is_active = true`);
       if (redis.status === 'wait') await redis.connect();
       await redis.flushdb();
       outbox.outbox.length = 0;

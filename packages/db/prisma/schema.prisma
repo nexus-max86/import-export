@@ -150,8 +150,9 @@ model Organization {
   createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  members     OrganizationMember[]
-  invitations Invitation[]
+  members      OrganizationMember[]
+  invitations  Invitation[]
+  serviceZones OrganizationServiceZone[]
 
   @@map("organizations")
 }
@@ -214,4 +215,63 @@ model AuditLog {
   @@index([organizationId, createdAt])
   @@index([entityType, entityId])
   @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Villes et zones (ticket #5) — référentiel global, géré par l'administrateur
+// ---------------------------------------------------------------------------
+
+enum HandoverMode {
+  pickup
+  delivery
+  partner_point
+}
+
+model City {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  name      String   @unique
+  country   String   @default("CD")
+  isActive  Boolean  @default(false) @map("is_active")
+  timezone  String   @default("Africa/Lubumbashi")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  zones ServiceZone[]
+
+  @@map("cities")
+}
+
+model ServiceZone {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  cityId    String   @map("city_id") @db.Uuid
+  /// Commune ou quartier.
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  city          City                      @relation(fields: [cityId], references: [id])
+  organizations OrganizationServiceZone[]
+
+  @@unique([cityId, name])
+  @@map("service_zones")
+}
+
+/// Zones desservies par un commissionnaire, avec modes de remise et frais locaux.
+model OrganizationServiceZone {
+  id               String         @id @default(uuid(7)) @db.Uuid
+  organizationId   String         @map("organization_id") @db.Uuid
+  serviceZoneId    String         @map("service_zone_id") @db.Uuid
+  handoverModes    HandoverMode[] @map("handover_modes")
+  /// Frais de livraison locale en unité mineure ; nul = sur devis.
+  localFeeAmount   BigInt?        @map("local_fee_amount")
+  localFeeCurrency String?        @map("local_fee_currency") @db.Char(3)
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  serviceZone  ServiceZone  @relation(fields: [serviceZoneId], references: [id])
+
+  @@unique([organizationId, serviceZoneId])
+  @@map("organization_service_zones")
 }

@@ -43,3 +43,9 @@ export async function addMember(
 ) {
   return t.prisma.organizationMember.create({ data: { organizationId: orgId, userId, role } });
 }
+
+/** Promeut un compte en administrateur de la plateforme. */
+export async function makeAdmin(t: TestContext, who: Actor): Promise<Actor> {
+  await t.prisma.user.update({ where: { id: who.userId }, data: { platformRole: 'admin' } });
+  return who;
+}

@@ -7,6 +7,7 @@ export const TENANT_TABLES: { table: string; orgColumn: string }[] = [
   { table: 'organization_members', orgColumn: 'organization_id' },
   { table: 'invitations', orgColumn: 'organization_id' },
   { table: 'audit_logs', orgColumn: 'organization_id' },
+  { table: 'organization_service_zones', orgColumn: 'organization_id' },
 ];
 
 /** Tables jamais accessibles au rôle applicatif (chemins système uniquement). */

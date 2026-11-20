@@ -7,6 +7,7 @@ import { ConfigModule } from './config/config.module';
 import { loadEnv } from './config/env';
 import { DevModule } from './dev/dev.module';
 import { EmailModule } from './email/email.module';
+import { GeoModule } from './geo/geo.module';
 import { HealthController } from './health/health.controller';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -39,6 +40,7 @@ const env = loadEnv();
     AuditModule,
     AuthModule,
     OrganizationsModule,
+    GeoModule,
     ...(env.NODE_ENV !== 'production' && env.EMAIL_TRANSPORT === 'fake' ? [DevModule] : []),
   ],
   controllers: [HealthController],
