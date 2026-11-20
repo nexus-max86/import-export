@@ -27,6 +27,8 @@ function makeAgent(app: INestApplication) {
     get: (url: string) => a.get(url),
     post: (url: string, body?: object) =>
       a.post(url).set(CSRF_HEADER, CSRF_HEADER_VALUE).send(body),
+    patch: (url: string, body?: object) =>
+      a.patch(url).set(CSRF_HEADER, CSRF_HEADER_VALUE).send(body),
     delete: (url: string) => a.delete(url).set(CSRF_HEADER, CSRF_HEADER_VALUE),
   };
 }
@@ -45,7 +47,7 @@ export async function createTestApp(): Promise<TestContext> {
     outbox,
     agent: () => makeAgent(app),
     async reset() {
-      await prisma.$executeRawUnsafe('TRUNCATE users CASCADE');
+      await prisma.$executeRawUnsafe('TRUNCATE users, organizations CASCADE');
       if (redis.status === 'wait') await redis.connect();
       await redis.flushdb();
       outbox.outbox.length = 0;

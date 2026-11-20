@@ -5,7 +5,10 @@ const EnvSchema = z
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     API_PORT: z.coerce.number().int().positive().default(3001),
     APP_URL: z.url(),
+    /** Rôle propriétaire : authentification et opérations système auditées. */
     DATABASE_URL: z.string().startsWith('postgresql://'),
+    /** Rôle konzia_app, soumis à la Row-Level Security : toutes les données métier. */
+    APP_DATABASE_URL: z.string().startsWith('postgresql://'),
     REDIS_URL: z.string().startsWith('redis://'),
     LOG_LEVEL: z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])

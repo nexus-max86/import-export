@@ -30,3 +30,24 @@ export function resetPasswordMessage(to: string, name: string, link: string): Ou
     ].join('\n'),
   };
 }
+
+export function invitationMessage(
+  to: string,
+  orgName: string,
+  roleLabel: string,
+  link: string,
+): OutgoingEmail {
+  return {
+    to,
+    subject: `Invitation à rejoindre ${orgName} sur Konzia`,
+    text: [
+      'Bonjour,',
+      '',
+      `${orgName} vous invite à rejoindre son équipe sur Konzia, avec le rôle « ${roleLabel} ».`,
+      'Pour accepter, connectez-vous (ou créez un compte avec cette adresse e-mail) puis ouvrez ce lien :',
+      link,
+      '',
+      'Cette invitation est valable 7 jours.',
+    ].join('\n'),
+  };
+}

@@ -13,7 +13,7 @@
     "test": "pnpm -r --workspace-concurrency=1 test",
     "format": "prettier --write .",
     "db:generate": "pnpm --filter @konzia/db generate",
-    "db:migrate": "pnpm --filter @konzia/db migrate:dev",
+    "db:migrate": "pnpm --filter @konzia/db migrate:dev && pnpm --filter @konzia/db app-login:dev",
     "db:deploy": "pnpm --filter @konzia/db migrate:deploy",
     "format:check": "prettier --check .",
     "e2e": "pnpm --filter @konzia/web e2e"

@@ -1,0 +1,12 @@
+/**
+ * Toutes les tables métier soumises à la RLS, avec la colonne qui les rattache à une organisation.
+ * RÈGLE : chaque nouvelle table métier est ajoutée ici ; le test inter-tenant la couvre alors.
+ */
+export const TENANT_TABLES: { table: string; orgColumn: string }[] = [
+  { table: 'organizations', orgColumn: 'id' },
+  { table: 'organization_members', orgColumn: 'organization_id' },
+  { table: 'invitations', orgColumn: 'organization_id' },
+];
+
+/** Tables jamais accessibles au rôle applicatif (chemins système uniquement). */
+export const SYSTEM_ONLY_TABLES = ['sessions', 'email_tokens', 'consents', '_prisma_migrations'];

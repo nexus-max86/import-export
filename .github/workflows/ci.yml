@@ -27,6 +27,7 @@ jobs:
         ports: ['6379:6379']
     env:
       DATABASE_URL: postgresql://konzia:konzia@localhost:5432/konzia_test
+      APP_DATABASE_URL: postgresql://konzia_app:konzia_app@localhost:5432/konzia_test
       REDIS_URL: redis://localhost:6379
       APP_URL: http://localhost:3000
       HASH_SALT: ci-salt-ci-salt-ci-salt-ci-salt-ci
@@ -40,6 +41,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @konzia/shared --filter @konzia/db build
       - run: pnpm db:deploy
+      - run: pnpm --filter @konzia/db app-login
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck

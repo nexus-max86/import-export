@@ -7,8 +7,10 @@ import { loadEnv } from './config/env';
 import { DevModule } from './dev/dev.module';
 import { EmailModule } from './email/email.module';
 import { HealthController } from './health/health.controller';
+import { OrganizationsModule } from './organizations/organizations.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
+import { TenancyModule } from './tenancy/tenancy.module';
 
 const env = loadEnv();
 
@@ -32,7 +34,9 @@ const env = loadEnv();
     PrismaModule,
     RedisModule,
     EmailModule,
+    TenancyModule,
     AuthModule,
+    OrganizationsModule,
     ...(env.NODE_ENV !== 'production' && env.EMAIL_TRANSPORT === 'fake' ? [DevModule] : []),
   ],
   controllers: [HealthController],

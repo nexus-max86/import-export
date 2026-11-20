@@ -10,7 +10,9 @@
     "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
     "migrate:dev": "dotenv -e ../../.env -- prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
-    "test": "echo \"(pas de test propre au paquet db : couvert par les tests de l'API)\""
+    "test": "echo \"(pas de test propre au paquet db : couvert par les tests de l'API)\"",
+    "app-login": "node scripts/enable-app-login.cjs",
+    "app-login:dev": "dotenv -e ../../.env -- node scripts/enable-app-login.cjs"
   },
   "dependencies": {
     "@prisma/client": "6.19.3"

@@ -53,6 +53,7 @@ model User {
   sessions    Session[]
   emailTokens EmailToken[]
   consents    Consent[]
+  memberships OrganizationMember[]
 
   @@map("users")
 }
@@ -104,4 +105,88 @@ model Consent {
 
   @@index([userId, kind])
   @@map("consents")
+}
+
+// ---------------------------------------------------------------------------
+// Organisations et membres (ticket #3) — tables soumises à la RLS
+// ---------------------------------------------------------------------------
+
+enum OrganizationType {
+  independent
+  company
+}
+
+enum OrganizationStatus {
+  pending
+  approved
+  rejected
+  suspended
+}
+
+enum OrgRole {
+  owner
+  sales
+  buyer
+  logistics
+  accountant
+  courier
+}
+
+enum MemberStatus {
+  active
+  removed
+}
+
+model Organization {
+  id                 String             @id @default(uuid(7)) @db.Uuid
+  type               OrganizationType
+  name               String
+  slug               String             @unique
+  description        String?
+  phoneWhatsapp      String?            @map("phone_whatsapp")
+  /// Service d'importation opéré par Konzia : aucun privilège lié à ce drapeau.
+  isPlatformOperated Boolean            @default(false) @map("is_platform_operated")
+  status             OrganizationStatus @default(pending)
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  members     OrganizationMember[]
+  invitations Invitation[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String       @id @default(uuid(7)) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  userId         String       @map("user_id") @db.Uuid
+  role           OrgRole
+  status         MemberStatus @default(active)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("organization_members")
+}
+
+model Invitation {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  email          String
+  role           OrgRole
+  tokenHash      String    @unique @map("token_hash")
+  invitedBy      String    @map("invited_by") @db.Uuid
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz(3)
+  acceptedAt     DateTime? @map("accepted_at") @db.Timestamptz(3)
+  revokedAt      DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@map("invitations")
 }

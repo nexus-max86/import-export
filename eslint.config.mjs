@@ -25,7 +25,12 @@ export default tseslint.config(
     },
   },
   {
+    // Scripts Node en CommonJS (outillage, hors application).
     files: ['**/*.cjs', '**/*.config.{js,mjs}'],
-    languageOptions: { globals: { process: 'readonly', module: 'writable', require: 'readonly' } },
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: { process: 'readonly', module: 'writable', require: 'readonly', console: 'readonly' },
+    },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
 );

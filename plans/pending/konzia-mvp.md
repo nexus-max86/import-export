@@ -161,7 +161,7 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 | Phase | Statut |
 |---|---|
 | 0 — Conception | Livrée (docs 01–07, maquettes, tickets #1–#31) — relecture du propriétaire |
-| 1 — Socle et isolation | En cours : #1 et #2 faits |
+| 1 — Socle et isolation | En cours : #1, #2, #3 faits |
 | 2 — Profils et vérification | À faire |
 | 3 — Import et demande | À faire |
 | 4 — Devis et commande | À faire |

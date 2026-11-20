@@ -3,6 +3,7 @@ import { loadEnv } from './env';
 const valid = {
   APP_URL: 'http://localhost:3000',
   DATABASE_URL: 'postgresql://u:p@localhost:5432/db',
+  APP_DATABASE_URL: 'postgresql://a:p@localhost:5432/db',
   REDIS_URL: 'redis://localhost:6379',
   HASH_SALT: 'x'.repeat(32),
 };

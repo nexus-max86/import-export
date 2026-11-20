@@ -22,6 +22,9 @@ export default defineConfig({
         API_PORT: '3101',
         APP_URL: 'http://localhost:3100',
         DATABASE_URL: db,
+        APP_DATABASE_URL:
+          process.env.E2E_APP_DATABASE_URL ??
+          'postgresql://konzia_app:konzia_app@localhost:5432/konzia_test',
         REDIS_URL: process.env.E2E_REDIS_URL ?? 'redis://localhost:6379/2',
         HASH_SALT: 'e2e-salt-e2e-salt-e2e-salt-e2e-salt',
         EMAIL_TRANSPORT: 'fake',
