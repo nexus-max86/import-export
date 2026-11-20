@@ -24,7 +24,7 @@ test('un commissionnaire ajoute un client géré, qui réclame ensuite sa fiche'
   await pro.getByRole('button', { name: 'Enregistrer le client' }).click();
   await expect(pro.getByText('Patrick Mbuyi ajouté.')).toBeVisible();
   await expect(pro.getByText('Client géré')).toBeVisible();
-  await expect(pro.getByText('+243812345678')).toBeVisible();
+  await expect(pro.getByText('+243 81 234 5678')).toBeVisible();
 
   await pro.getByRole('button', { name: 'Inviter Patrick Mbuyi à suivre ses commandes' }).click();
   await expect(pro.getByRole('link', { name: 'Envoyer sur WhatsApp' })).toHaveAttribute(

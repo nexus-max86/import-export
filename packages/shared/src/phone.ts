@@ -23,3 +23,9 @@ export function whatsappLink(phone: string, message?: string): string {
   const digits = phone.replace(/\D/g, '');
   return `https://wa.me/${digits}${message ? `?text=${encodeURIComponent(message)}` : ''}`;
 }
+
+/** Affichage lisible : +243810000000 → « +243 81 000 0000 ». */
+export function formatPhone(phone: string): string {
+  const m = phone.match(/^\+243(\d{2})(\d{3})(\d{4})$/);
+  return m ? `+243 ${m[1]} ${m[2]} ${m[3]}` : phone;
+}

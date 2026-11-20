@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizePhone, whatsappLink } from './phone';
+import { formatPhone, normalizePhone, whatsappLink } from './phone';
 
 describe('normalizePhone', () => {
   it.each([
@@ -26,5 +26,14 @@ describe('whatsappLink', () => {
     expect(whatsappLink('+243810000000', 'Commande KZ-2026-000123')).toBe(
       'https://wa.me/243810000000?text=Commande%20KZ-2026-000123',
     );
+  });
+});
+
+describe('formatPhone', () => {
+  it('espace un numéro congolais', () => {
+    expect(formatPhone('+243810000000')).toBe('+243 81 000 0000');
+  });
+  it('laisse un numéro étranger tel quel', () => {
+    expect(formatPhone('+260971234567')).toBe('+260971234567');
   });
 });

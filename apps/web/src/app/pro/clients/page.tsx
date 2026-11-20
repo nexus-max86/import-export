@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  formatPhone,
   OrgCustomerSchema,
   type CityInfo,
   type ClaimLink,
@@ -87,7 +88,7 @@ export default function CustomersPage() {
         }}
         className="flex items-end gap-2"
       >
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <Field
             id="q"
             label="Rechercher"
@@ -150,7 +151,11 @@ function CustomerRow({ org, customer }: { org: string; customer: OrgCustomerInfo
         </span>
       </div>
       <p className="text-sm text-muted">
-        {[customer.phoneWhatsapp, customer.email, customer.zoneName ?? customer.cityName]
+        {[
+          customer.phoneWhatsapp && formatPhone(customer.phoneWhatsapp),
+          customer.email,
+          customer.zoneName ?? customer.cityName,
+        ]
           .filter(Boolean)
           .join(' · ')}
       </p>

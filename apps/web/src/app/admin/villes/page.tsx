@@ -133,7 +133,7 @@ export default function AdminCitiesPage() {
             )}
           </ul>
           <form onSubmit={(e) => addZone(e, city)} className="flex items-end gap-2">
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <Field id={`zone-${city.id}`} label="Ajouter une commune ou un quartier" />
             </div>
             <Button type="submit" variant="ghost" busy={busy === `zone-${city.id}`}>
@@ -144,7 +144,7 @@ export default function AdminCitiesPage() {
       ))}
       <Card>
         <form onSubmit={addCity} className="flex items-end gap-2">
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <Field id="cityName" label="Nouvelle ville" />
           </div>
           <Button type="submit" busy={busy === 'city'}>
