@@ -6,3 +6,4 @@ export * from './organizations';
 export * from './geo';
 export * from './phone';
 export * from './profile';
+export * from './customers';

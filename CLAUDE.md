@@ -16,6 +16,7 @@
 - Toute table métier : `organization_id`, `ENABLE ROW LEVEL SECURITY`, politiques et GRANT explicites pour `konzia_app` dans la migration, ajout à `apps/api/test/tenancy-tables.ts`.
 - Données métier : toujours via `TenantDb.run(userId, tx => …)` (rôle `konzia_app`). `PrismaService` (rôle propriétaire) seulement pour l'authentification et les opérations système audités.
 - Prisma avec le rôle applicatif : toujours un `select` explicite (droits par colonne, ex. `users`).
+- Toute nouvelle table avec `org_customer_id` : l'ajouter à `ORG_CUSTOMER_REFERENCES` (`apps/api/src/customers/customers.service.ts`) pour la fusion lors d'une réclamation de compte.
 - Pas de suppression physique des devis, commandes, paiements, mouvements de colis.
 - Adaptateurs factices nommés `Fake…`, refusés en production.
 - Versions : Next 15.5, NestJS 11, Prisma 6, TypeScript 5.9, Zod 4, Vitest 3 (voir D6).

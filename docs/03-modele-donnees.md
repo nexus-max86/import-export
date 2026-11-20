@@ -49,8 +49,8 @@ erDiagram
 | `invitations` | `organization_id`, `email`, `role`, `token_hash`, `expires_at`, `accepted_at` |
 | `organization_verifications` | `organization_id`, `status`, `submitted_at`, `decided_by`, `decided_at`, `reason` |
 | `documents` | `organization_id`, `verification_id`, `kind`, `file_id`, chiffré (clé applicative) |
-| `org_customers` | `organization_id`, `user_id` (nullable), `full_name`, `phone_whatsapp`, `email`, `city_id`, `notes_private`, `claim_token_hash`, `claimed_at`, `source` (`signup`/`manual`/`import`) — unique (`organization_id`, `user_id`) quand `user_id` non nul |
-| `addresses` | `user_id` **ou** `org_customer_id` (contrainte : exactement un), `label`, `city_id`, `service_zone_id`, `line`, `landmark`, `is_default` |
+| `org_customers` | `organization_id`, `user_id` (nullable), `full_name`, `phone_whatsapp`, `email`, `city_id`, `service_zone_id`, `address_line`, `landmark`, `notes_private`, `claim_token_hash`, `claim_token_expires_at`, `claimed_at`, `source` (`signup`/`manual`/`import`), `status` (`active`/`merged`/`archived`), `merged_into_id` — unique (`organization_id`, `user_id`) parmi les fiches actives |
+| `addresses` | `user_id` (adresses personnelles, RLS par utilisateur), `label`, `city_id`, `service_zone_id`, `line`, `landmark`, `is_default`. L'adresse d'un client géré est portée par sa fiche `org_customers` (D7). |
 | `cities` | `name`, `country` (`CD`), `is_active`, `timezone` |
 | `service_zones` | `city_id`, `name` (commune/quartier) |
 | `organization_service_zones` | `organization_id`, `service_zone_id`, `handover_modes text[]` (`pickup`/`delivery`/`partner_point`), `local_fee_amount`, `currency` |

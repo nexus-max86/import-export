@@ -47,6 +47,10 @@ describe('Isolation entre commissionnaires', () => {
       .set(...asOrg(orgA))
       .expect(200);
     await a.agent
+      .post('/api/org/customers', { fullName: 'Client de A', phoneWhatsapp: '0810000001' })
+      .set(...asOrg(orgA))
+      .expect(201);
+    await a.agent
       .post('/api/org/invitations', { email: 'agent@example.test', role: 'sales' })
       .set(...asOrg(orgA))
       .expect(204);

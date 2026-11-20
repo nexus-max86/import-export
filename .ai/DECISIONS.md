@@ -34,3 +34,9 @@ Ne figurent ici que les décisions difficiles à défaire, surprenantes sans con
 - **Décision** : Next.js 15.5, NestJS 11, Prisma 6.19, TypeScript 5.9, Zod 4, Vitest 3, ESLint 9, versions exactes épinglées.
 - **Pourquoi** : des versions majeures plus récentes existent (Next 16, NestJS 12, Prisma 7, TypeScript 7), mais ces lignes sont stables, encore maintenues et bien connues ; un développeur seul gagne à limiter les surprises pendant le MVP.
 - **Revoir** : après le pilote, monter une dépendance majeure à la fois, CI verte à chaque étape.
+
+## D7 — Adresse d'un client géré portée par sa fiche ; fusion à la réclamation (20/11/2026)
+
+- **Décision** : un client géré a son adresse directement sur `org_customers` (ville, commune, adresse, repère). La table `addresses` reste strictement personnelle (RLS par utilisateur). Quand un client réclame sa fiche alors qu'il en avait déjà une chez ce commissionnaire (créée à l'inscription), la fiche d'inscription est marquée `merged` et ses références sont réaffectées à la fiche réclamée, qui porte l'historique.
+- **Pourquoi** : éviter qu'un commissionnaire puisse lire ou modifier le carnet d'adresses personnel d'un client ; garder un seul dossier client par commissionnaire.
+- **Coût** : chaque table qui référence `org_customer_id` doit être déclarée dans `ORG_CUSTOMER_REFERENCES`.

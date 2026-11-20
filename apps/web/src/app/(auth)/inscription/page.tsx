@@ -2,11 +2,13 @@
 
 import { RegisterSchema } from '@konzia/shared';
 import Link from 'next/link';
-import { useState, type FormEvent } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useState, type FormEvent } from 'react';
 import { Button, Card, Field, Notice } from '@/components/ui';
-import { api, ApiError, fieldErrors } from '@/lib/api';
+import { api, ApiError, fieldErrors, safeNext } from '@/lib/api';
 
-export default function RegisterPage() {
+function Register() {
+  const next = safeNext(useSearchParams().get('suite'));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -51,7 +53,10 @@ export default function RegisterPage() {
           activer votre compte.
         </p>
         <p className="text-sm text-muted">Rien reçu ? Regardez dans les courriers indésirables.</p>
-        <Link href="/connexion" className="font-semibold text-copper underline">
+        <Link
+          href={next ? `/connexion?suite=${encodeURIComponent(next)}` : '/connexion'}
+          className="font-semibold text-copper underline"
+        >
           Aller à la connexion
         </Link>
       </Card>
@@ -103,5 +108,13 @@ export default function RegisterPage() {
         </Link>
       </p>
     </Card>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <Register />
+    </Suspense>
   );
 }

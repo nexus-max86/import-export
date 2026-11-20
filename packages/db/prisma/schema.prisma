@@ -56,6 +56,7 @@ model User {
   memberships OrganizationMember[]
   profile     CustomerProfile?
   addresses   Address[]
+  customerOf  OrgCustomer[]
 
   @@map("users")
 }
@@ -155,6 +156,7 @@ model Organization {
   members      OrganizationMember[]
   invitations  Invitation[]
   serviceZones OrganizationServiceZone[]
+  customers    OrgCustomer[]
 
   @@map("organizations")
 }
@@ -241,6 +243,7 @@ model City {
   zones     ServiceZone[]
   profiles  CustomerProfile[]
   addresses Address[]
+  customers OrgCustomer[]
 
   @@map("cities")
 }
@@ -258,6 +261,7 @@ model ServiceZone {
   organizations OrganizationServiceZone[]
   profiles      CustomerProfile[]
   addresses     Address[]
+  customers     OrgCustomer[]
 
   @@unique([cityId, name])
   @@map("service_zones")
@@ -320,4 +324,56 @@ model Address {
 
   @@index([userId])
   @@map("addresses")
+}
+
+// ---------------------------------------------------------------------------
+// Clients d'un commissionnaire (ticket #7) — décision D4
+// ---------------------------------------------------------------------------
+
+enum OrgCustomerSource {
+  signup
+  manual
+  import
+}
+
+enum OrgCustomerStatus {
+  active
+  /// Fiche fusionnée dans une autre lors d'une réclamation de compte.
+  merged
+  archived
+}
+
+/// La fiche d'un client chez UN commissionnaire. Jamais partagée entre organisations.
+model OrgCustomer {
+  id                  String            @id @default(uuid(7)) @db.Uuid
+  organizationId      String            @map("organization_id") @db.Uuid
+  /// Renseigné si le client a un compte Konzia (inscription ou réclamation).
+  userId              String?           @map("user_id") @db.Uuid
+  fullName            String            @map("full_name")
+  phoneWhatsapp       String?           @map("phone_whatsapp")
+  email               String?
+  cityId              String?           @map("city_id") @db.Uuid
+  serviceZoneId       String?           @map("service_zone_id") @db.Uuid
+  addressLine         String?           @map("address_line")
+  landmark            String?
+  /// Notes internes du commissionnaire : jamais visibles du client.
+  notesPrivate        String?           @map("notes_private")
+  source              OrgCustomerSource
+  status              OrgCustomerStatus @default(active)
+  mergedIntoId        String?           @map("merged_into_id") @db.Uuid
+  claimTokenHash      String?           @unique @map("claim_token_hash")
+  claimTokenExpiresAt DateTime?         @map("claim_token_expires_at") @db.Timestamptz(3)
+  claimedAt           DateTime?         @map("claimed_at") @db.Timestamptz(3)
+  createdBy           String?           @map("created_by") @db.Uuid
+  createdAt           DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User?        @relation(fields: [userId], references: [id])
+  city         City?        @relation(fields: [cityId], references: [id])
+  serviceZone  ServiceZone? @relation(fields: [serviceZoneId], references: [id])
+
+  @@index([organizationId, status])
+  @@index([userId])
+  @@map("org_customers")
 }

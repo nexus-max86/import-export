@@ -2,13 +2,14 @@
 
 import { LoginSchema } from '@konzia/shared';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState, type FormEvent } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState, type FormEvent } from 'react';
 import { Button, Card, Field, Notice } from '@/components/ui';
-import { api, ApiError, fieldErrors } from '@/lib/api';
+import { api, ApiError, fieldErrors, safeNext } from '@/lib/api';
 
-export default function LoginPage() {
+function Login() {
   const router = useRouter();
+  const next = safeNext(useSearchParams().get('suite'));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -29,7 +30,7 @@ export default function LoginPage() {
     setBusy(true);
     try {
       await api('/auth/login', { body: parsed.data });
-      router.push('/compte');
+      router.push(next ?? '/compte');
     } catch (err) {
       if (err instanceof ApiError) setFormError(err.message);
       setBusy(false);
@@ -65,11 +66,22 @@ export default function LoginPage() {
         </Link>
         <p>
           Pas encore de compte ?{' '}
-          <Link href="/inscription" className="font-semibold text-copper underline">
+          <Link
+            href={next ? `/inscription?suite=${encodeURIComponent(next)}` : '/inscription'}
+            className="font-semibold text-copper underline"
+          >
             Créer un compte
           </Link>
         </p>
       </div>
     </Card>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <Login />
+    </Suspense>
   );
 }

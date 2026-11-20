@@ -167,7 +167,7 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 |---|---|
 | 0 — Conception | Livrée (docs 01–07, maquettes, tickets #1–#31) — relecture du propriétaire |
 | 1 — Socle et isolation | **Terminée** (#1–#4) le 20/11/2026 — 58 tests API, 7 tests partagés, 2 parcours Playwright |
-| 2 — Profils et vérification | À faire |
+| 2 — Profils et vérification | En cours : #5, #6, #7 faits ; #10, #11, #12 à faire |
 | 3 — Import et demande | À faire |
 | 4 — Devis et commande | À faire |
 | 5 — Paiements directs | À faire |
