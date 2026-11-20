@@ -1,0 +1,392 @@
+<title>Maquettes CargoLink</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout : rail de navigation des écrans à gauche (bureau), écran de téléphone au centre ; sur mobile, le téléphone occupe la largeur et la navigation passe en haut. */
+:root{
+  --bg:#eef1f3; --surface:#ffffff; --sunken:#f5f7f8; --line:#dbe1e5;
+  --fg:#16212b; --muted:#5b6b78;
+  --copper:#b05a2a; --copper-ink:#ffffff; --copper-soft:#f6e7dd;
+  --ok:#1f7a4d; --ok-soft:#e0f1e8; --warn:#9a6400; --warn-soft:#fbefd6; --bad:#b3261e; --bad-soft:#f9e0de; --info:#25628f; --info-soft:#e1edf6;
+  --f-display:"Archivo",system-ui,sans-serif; --f-body:"Inter",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1519; --surface:#172027; --sunken:#121a20; --line:#2a3741;
+  --fg:#e7edf1; --muted:#9aabb8; --copper:#de8a57; --copper-ink:#1a0f08; --copper-soft:#3a271c;
+  --ok:#5ec48f; --ok-soft:#173326; --warn:#e7b04f; --warn-soft:#3a2d12; --bad:#f08a82; --bad-soft:#3d1c1a; --info:#7db6e0; --info-soft:#16293a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1519; --surface:#172027; --sunken:#121a20; --line:#2a3741;
+  --fg:#e7edf1; --muted:#9aabb8; --copper:#de8a57; --copper-ink:#1a0f08; --copper-soft:#3a271c;
+  --ok:#5ec48f; --ok-soft:#173326; --warn:#e7b04f; --warn-soft:#3a2d12; --bad:#f08a82; --bad-soft:#3d1c1a; --info:#7db6e0; --info-soft:#16293a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{display:grid;grid-template-columns:260px minmax(0,420px) minmax(0,1fr);gap:32px;max-width:1180px;margin:0 auto;padding-block:28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0}
+.rail h1{font-size:22px;font-weight:800;letter-spacing:-.01em}
+.rail .sub{color:var(--muted);font-size:13px;margin:4px 0 20px}
+.rail h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:18px 0 6px;font-family:var(--f-body);font-weight:600}
+.rail a{display:flex;gap:10px;align-items:baseline;padding:7px 10px;border-radius:8px;color:var(--fg);text-decoration:none;font-size:14px}
+.rail a span{font-family:var(--f-mono);font-size:11px;color:var(--muted);min-width:18px}
+.rail a:hover{background:var(--surface)}
+.rail a[aria-current="page"]{background:var(--copper-soft);color:var(--fg);font-weight:600}
+.rail a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,label.pick:focus-within{outline:2px solid var(--copper);outline-offset:2px}
+.phone{background:var(--surface);border:1px solid var(--line);border-radius:28px;overflow:hidden;min-height:760px;display:flex;flex-direction:column;box-shadow:0 1px 2px rgb(0 0 0/.04),0 12px 32px rgb(0 0 0/.06)}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--f-display);font-weight:800;font-size:17px;letter-spacing:-.01em}
+.brand b{color:var(--copper)}
+.who{font-size:12px;color:var(--muted)}
+.screen{padding:18px;display:flex;flex-direction:column;gap:14px;flex:1}
+.screen h3{font-size:20px;font-weight:700}
+.lead{color:var(--muted);font-size:14px;margin:-6px 0 0}
+.tabs{display:flex;border-top:1px solid var(--line);background:var(--surface)}
+.tabs a{flex:1;text-align:center;font-size:11px;padding:10px 4px;color:var(--muted);text-decoration:none}
+.tabs a.on{color:var(--copper);font-weight:600}
+.card{border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
+.sunk{background:var(--sunken);border-radius:var(--r);padding:12px}
+.row{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.row>*{min-width:0}
+.mono{font-family:var(--f-mono);font-size:12.5px}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+label{font-size:13px;font-weight:600;display:block;margin-bottom:4px}
+input,select,textarea{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);min-height:44px}
+.btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:8px;border:1px solid transparent;font:600 15px var(--f-body);cursor:pointer;text-decoration:none}
+.btn.primary{background:var(--copper);color:var(--copper-ink)}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--fg)}
+.btn.block{width:100%}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btns .btn{flex:1}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.info{background:var(--info-soft);color:var(--info)} .pill.cu{background:var(--copper-soft);color:var(--copper)}
+.prod{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:start}
+.thumb{width:64px;height:64px;border-radius:8px;background:var(--sunken);border:1px solid var(--line);display:grid;place-items:center;color:var(--muted);font-size:10px;text-align:center}
+.price-kind{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.big{font-family:var(--f-display);font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.compare .card{padding:12px;gap:6px}
+.compare .line{display:flex;justify-content:space-between;font-size:12.5px;gap:6px}
+.compare .line span:last-child{font-variant-numeric:tabular-nums}
+.compare .card.best{border-color:var(--copper)}
+hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.steps li{display:grid;grid-template-columns:20px minmax(0,1fr);gap:10px;padding-bottom:14px;position:relative}
+.steps li::before{content:"";width:12px;height:12px;border-radius:50%;margin-top:5px;background:var(--line);border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line)}
+.steps li.done::before{background:var(--ok);box-shadow:0 0 0 1px var(--ok)}
+.steps li.now::before{background:var(--copper);box-shadow:0 0 0 3px var(--copper-soft)}
+.steps li:not(:last-child)::after{content:"";position:absolute;left:5px;top:20px;bottom:0;width:2px;background:var(--line)}
+.steps li.done:not(:last-child)::after{background:var(--ok)}
+.steps .t{font-size:14px;font-weight:600}
+.steps .d{font-size:12px;color:var(--muted)}
+.list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.list>div{padding:12px 14px;display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line)}
+.list>div:first-child{border-top:0}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kpis .sunk{display:flex;flex-direction:column;gap:2px}
+.kpis b{font-family:var(--f-display);font-size:22px;font-variant-numeric:tabular-nums}
+.kpis span{font-size:11.5px;color:var(--muted)}
+.qtable{width:100%;border-collapse:collapse;font-size:13px}
+.qtable td{padding:7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.qtable td:last-child{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:8px}
+.qtable tr.total td{font-weight:700;border-bottom:0;font-size:14px}
+.est{font-size:10.5px;color:var(--warn);font-weight:600;margin-left:4px}
+.pick{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:var(--r);padding:12px;cursor:pointer}
+.pick input{width:20px;min-height:20px;height:20px;margin-top:2px;accent-color:var(--copper);flex:none}
+.pick:has(input:checked){border-color:var(--copper);background:var(--copper-soft)}
+.notes{display:flex;flex-direction:column;gap:14px;font-size:14px;color:var(--fg)}
+.notes h2{font-size:15px;font-weight:700}
+.notes p,.notes ul{margin:0;color:var(--muted)}
+.notes ul{padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.example{font-size:11px;color:var(--muted);text-align:center;padding:6px;border-top:1px dashed var(--line)}
+.toast{background:var(--ok-soft);color:var(--ok);border-radius:8px;padding:10px 12px;font-size:13px;font-weight:600}
+@media (max-width:1000px){
+  .wrap{grid-template-columns:minmax(0,1fr);max-width:480px;gap:16px}
+  .rail nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+  .rail h2{display:none}
+  .rail a{white-space:nowrap;border:1px solid var(--line);flex:none}
+  .rail .sub{margin-bottom:12px}
+  .phone{border-radius:18px;min-height:0}
+}
+@media (prefers-reduced-motion:no-preference){.screen{animation:in .18s ease-out}@keyframes in{from{opacity:.4}to{opacity:1}}}
+</style>
+
+<div class="wrap">
+  <aside class="rail">
+    <h1>CargoLink</h1>
+    <p class="sub">Maquettes du MVP · données d'exemple</p>
+    <nav id="nav" aria-label="Écrans">
+      <h2>Client</h2>
+      <a href="#c-accueil"><span>01</span>Accueil</a>
+      <a href="#c-import"><span>02</span>Importer un lien</a>
+      <a href="#c-demande"><span>03</span>Choisir les commissionnaires</a>
+      <a href="#c-devis"><span>04</span>Comparer les devis</a>
+      <a href="#c-commande"><span>05</span>Commande et paiement</a>
+      <a href="#c-suivi"><span>06</span>Suivre mon colis</a>
+      <h2>Commissionnaire</h2>
+      <a href="#p-tableau"><span>07</span>Tableau de bord</a>
+      <a href="#p-devis"><span>08</span>Rédiger un devis</a>
+      <a href="#p-colis"><span>09</span>Préparer un colis</a>
+      <h2>Administration</h2>
+      <a href="#a-verif"><span>10</span>Vérifier un commissionnaire</a>
+    </nav>
+  </aside>
+
+  <main class="phone" aria-live="polite">
+    <!-- 01 -->
+    <section data-view="c-accueil" hidden>
+      <div class="topbar"><div class="brand">Cargo<b>Link</b></div><div class="who">Lubumbashi</div></div>
+      <div class="screen">
+        <h3>Bonjour Ruth</h3>
+        <p class="lead">Collez le lien d'un article vu sur SHEIN, Alibaba, Temu ou ailleurs. Des commissionnaires vous envoient leur prix.</p>
+        <a class="btn primary block" href="#c-import">Importer un lien</a>
+        <div class="card">
+          <div class="row"><b>Demande du 18 nov.</b><span class="pill info">2 devis reçus</span></div>
+          <span class="small muted">3 articles · envoyée à Kaseba Import et Mwamba Express</span>
+          <a class="btn ghost" href="#c-devis">Comparer les devis</a>
+        </div>
+        <div class="card">
+          <div class="row"><b class="mono">CL-2026-000087</b><span class="pill cu">En transit</span></div>
+          <span class="small muted">Kaseba Import · 2 colis · arrivée estimée 2–6 déc.</span>
+          <a class="btn ghost" href="#c-suivi">Suivre</a>
+        </div>
+      </div>
+      <nav class="tabs"><a class="on" href="#c-accueil">Accueil</a><a href="#c-import">Importer</a><a href="#c-devis">Demandes</a><a href="#c-commande">Commandes</a><a href="#c-suivi">Colis</a></nav>
+    </section>
+
+    <!-- 02 -->
+    <section data-view="c-import" hidden>
+      <div class="topbar"><div class="brand">Importer un lien</div><a class="who" href="#c-accueil">Fermer</a></div>
+      <div class="screen">
+        <div><label for="url">Lien du produit</label><input id="url" value="https://www.shein.com/Robe-Midi-Plissee-p-2814455.html"></div>
+        <button class="btn primary block" id="go">Lire le lien</button>
+        <div id="importResult" class="card">
+          <div class="row"><span class="pill ok">SHEIN reconnu</span><span class="small muted">lu le 20/11/2026 à 10:42</span></div>
+          <div class="prod"><div class="thumb">image<br>produit</div>
+            <div><b>Robe midi plissée à col montant</b>
+              <div class="price-kind">Prix indicatif affiché sur SHEIN</div>
+              <div class="num">14,99 USD</div></div></div>
+          <p class="small muted" style="margin:0">Ce prix peut changer. Le commissionnaire le vérifie avant de vous envoyer un devis.</p>
+        </div>
+        <div class="compare">
+          <div><label for="taille">Taille</label><select id="taille"><option>M</option><option>S</option><option>L</option></select></div>
+          <div><label for="qte">Quantité</label><input id="qte" type="number" value="2" min="1"></div>
+        </div>
+        <div><label for="couleur">Couleur ou variante</label><input id="couleur" value="Vert sauge"></div>
+        <div><label for="note">Note pour le commissionnaire</label><input id="note" value="Si la taille M manque, prendre L."></div>
+        <a class="btn primary block" href="#c-demande">Ajouter à ma demande</a>
+        <p class="small muted" style="margin:0;text-align:center">Lien non reconnu ? <a href="#c-import">Saisir l'article à la main</a> ou joindre une capture d'écran.</p>
+      </div>
+    </section>
+
+    <!-- 03 -->
+    <section data-view="c-demande" hidden>
+      <div class="topbar"><div class="brand">Ma demande</div><span class="who">Brouillon enregistré</span></div>
+      <div class="screen">
+        <div class="list">
+          <div><div class="row"><b>Robe midi plissée</b><span class="num">× 2</span></div><span class="small muted">SHEIN · M · vert sauge</span></div>
+          <div><div class="row"><b>Écouteurs sans fil TWS</b><span class="num">× 5</span></div><span class="small muted">Alibaba · noir</span></div>
+          <div><div class="row"><b>Organiseur de cuisine</b><span class="num">× 1</span></div><span class="small muted">Saisie manuelle · capture jointe</span></div>
+        </div>
+        <h3 style="font-size:16px">À qui envoyer la demande ?</h3>
+        <label class="pick"><input type="checkbox" checked><span><b>Kaseba Import</b> <span class="pill ok">Vérifié</span><br><span class="small muted">Lubumbashi · aérien et routier · répond en ~4 h · 38 commandes terminées</span></span></label>
+        <label class="pick"><input type="checkbox" checked><span><b>Mwamba Express</b> <span class="pill ok">Vérifié</span><br><span class="small muted">Lubumbashi, Likasi · aérien · répond en ~1 j · 12 commandes terminées</span></span></label>
+        <label class="pick"><input type="checkbox"><span><b>Service CargoLink</b> <span class="pill info">Opéré par la plateforme</span><br><span class="small muted">Lubumbashi · aérien · nouveau</span></span></label>
+        <a class="btn primary block" href="#c-devis">Envoyer à 2 commissionnaires</a>
+        <p class="small muted" style="margin:0">Chaque commissionnaire vous répond séparément. Vous ne payez rien à cette étape.</p>
+      </div>
+    </section>
+
+    <!-- 04 -->
+    <section data-view="c-devis" hidden>
+      <div class="topbar"><div class="brand">Comparer les devis</div><span class="who">Demande du 18 nov.</span></div>
+      <div class="screen">
+        <p class="lead">Les montants viennent de deux commissionnaires différents. Chaque devis accepté devient une commande séparée.</p>
+        <div class="compare">
+          <div class="card best">
+            <b>Kaseba Import</b><span class="pill cu">Devis confirmé · v2</span>
+            <div class="line"><span>Articles</span><span>97,40</span></div>
+            <div class="line"><span>Service</span><span>12,00</span></div>
+            <div class="line"><span>Transport aérien<span class="est">est.</span></span><span>28,50</span></div>
+            <div class="line"><span>Douane<span class="est">est.</span></span><span>9,00</span></div>
+            <div class="line"><span>Livraison locale</span><span>3,00</span></div>
+            <hr><div class="line"><b>Total USD</b><b>149,90</b></div>
+            <span class="small muted num">≈ 427 215 CDF</span>
+            <span class="small muted">Délai : 14 à 21 jours · valable jusqu'au 23/11</span>
+          </div>
+          <div class="card">
+            <b>Mwamba Express</b><span class="pill cu">Devis confirmé · v1</span>
+            <div class="line"><span>Articles</span><span>99,10</span></div>
+            <div class="line"><span>Service</span><span>8,00</span></div>
+            <div class="line"><span>Transport aérien<span class="est">est.</span></span><span>34,00</span></div>
+            <div class="line"><span>Douane<span class="est">est.</span></span><span>10,00</span></div>
+            <div class="line"><span>Livraison locale</span><span>0,00</span></div>
+            <hr><div class="line"><b>Total USD</b><b>151,10</b></div>
+            <span class="small muted num">≈ 430 635 CDF</span>
+            <span class="small muted">Délai : 10 à 18 jours · valable jusqu'au 22/11</span>
+          </div>
+        </div>
+        <p class="small muted" style="margin:0"><b>est.</b> = estimation : le montant final peut varier. Toute hausse vous sera soumise pour accord. Taux d'exemple : 1 USD = 2 850 CDF (saisi le 20/11).</p>
+        <div class="btns"><a class="btn primary" href="#c-commande">Accepter Kaseba</a><a class="btn ghost" href="#c-devis">Demander une correction</a></div>
+      </div>
+    </section>
+
+    <!-- 05 -->
+    <section data-view="c-commande" hidden>
+      <div class="topbar"><div class="brand mono">CL-2026-000123</div><span class="who">Kaseba Import</span></div>
+      <div class="screen">
+        <div class="toast">Devis accepté. Votre commande est créée.</div>
+        <div class="row"><span class="pill warn">Paiement à vérifier</span><span class="pill info">En attente de paiement</span></div>
+        <div class="sunk"><div class="price-kind">Total convenu (devis v2)</div><div class="big">149,90 USD</div></div>
+        <div class="card">
+          <b>Comment payer Kaseba Import</b>
+          <span class="small">M-Pesa : <span class="mono">+243 81 000 0000</span> (Kaseba Mukendi)<br>Espèces : avenue Lumumba, Lubumbashi, 9h–17h</span>
+          <span class="small muted">Vous payez directement le commissionnaire. CargoLink ne détient pas votre argent.</span>
+        </div>
+        <div><label for="ref">Référence de la transaction</label><input id="ref" value="MP241120.1042.K93811"></div>
+        <div><label for="preuve">Preuve de paiement</label><input id="preuve" type="file" accept="image/*,application/pdf"></div>
+        <button class="btn primary block" type="button">Envoyer la preuve</button>
+        <p class="small muted" style="margin:0">La commande passe à « Payée » seulement quand Kaseba Import confirme la réception.</p>
+        <span class="small">Une question ? Écrivez sur WhatsApp : <span class="mono">+243 81 000 0000</span> en citant CL-2026-000123.</span>
+      </div>
+    </section>
+
+    <!-- 06 -->
+    <section data-view="c-suivi" hidden>
+      <div class="topbar"><div class="brand mono">CL-2026-000087</div><span class="who">2 colis</span></div>
+      <div class="screen">
+        <div class="row"><b>Colis <span class="mono">CL-P-7KD3QX</span></b><span class="pill cu">En transit</span></div>
+        <span class="small muted">Vos articles dans ce colis : robe midi × 2, organiseur × 1. Les autres articles du colis ne vous sont pas montrés.</span>
+        <ol class="steps">
+          <li class="done"><span><span class="t">Reçu à l'entrepôt de Guangzhou</span><br><span class="d">12 nov. · photo disponible</span></span></li>
+          <li class="done"><span><span class="t">Pesé et mesuré</span><br><span class="d">13 nov. · 2,4 kg</span></span></li>
+          <li class="done"><span><span class="t">Expédié vers la RDC (aérien)</span><br><span class="d">15 nov.</span></span></li>
+          <li class="now"><span><span class="t">En transit</span><br><span class="d">Arrivée estimée entre le 2 et le 6 déc. · estimation, non garantie</span></span></li>
+          <li><span><span class="t">Formalités douanières</span></span></li>
+          <li><span><span class="t">Arrivé au point de distribution</span></span></li>
+          <li><span><span class="t">Prêt pour retrait</span></span></li>
+        </ol>
+        <div class="card"><div class="row"><b>Colis <span class="mono">CL-P-Q82MNA</span></b><span class="pill info">Acheté</span></div><span class="small muted">Écouteurs × 5 · en attente d'expédition par le vendeur</span></div>
+        <a class="btn ghost block" href="#c-suivi">Signaler un problème</a>
+      </div>
+      <nav class="tabs"><a href="#c-accueil">Accueil</a><a href="#c-import">Importer</a><a href="#c-devis">Demandes</a><a href="#c-commande">Commandes</a><a class="on" href="#c-suivi">Colis</a></nav>
+    </section>
+
+    <!-- 07 -->
+    <section data-view="p-tableau" hidden>
+      <div class="topbar"><div class="brand">Cargo<b>Link</b> Pro</div><div class="who">Kaseba Import · propriétaire</div></div>
+      <div class="screen">
+        <div class="kpis">
+          <div class="sunk"><b>4</b><span>demandes à chiffrer</span></div>
+          <div class="sunk"><b>3</b><span>paiements à vérifier</span></div>
+          <div class="sunk"><b>11</b><span>commandes en cours</span></div>
+        </div>
+        <h3 style="font-size:16px">À traiter</h3>
+        <div class="list">
+          <div><div class="row"><b>Ruth K.</b><span class="pill warn">Devis attendu</span></div><span class="small muted">3 articles · SHEIN, Alibaba · reçue il y a 2 h</span><a class="small" href="#p-devis">Rédiger le devis</a></div>
+          <div><div class="row"><b>Patrick M.</b> <span class="pill info">Client géré</span></div><span class="small muted">Paiement M-Pesa déclaré · 86,00 USD · CL-2026-000119</span><span class="small"><a href="#p-tableau">Confirmer</a> · <a href="#p-tableau">Refuser</a></span></div>
+          <div><div class="row"><b>Grace N.</b><span class="pill bad">Anomalie colis</span></div><span class="small muted">CL-P-H4T2LW · emballage endommagé à la réception</span></div>
+        </div>
+        <div class="btns"><a class="btn ghost" href="#p-colis">Colis</a><a class="btn ghost" href="#p-tableau">Importer mes clients (Excel)</a></div>
+      </div>
+      <nav class="tabs"><a class="on" href="#p-tableau">Accueil</a><a href="#p-devis">Demandes</a><a href="#p-tableau">Commandes</a><a href="#p-colis">Colis</a><a href="#p-tableau">Clients</a></nav>
+    </section>
+
+    <!-- 08 -->
+    <section data-view="p-devis" hidden>
+      <div class="topbar"><div class="brand">Devis pour Ruth K.</div><span class="who">Version 1 · brouillon</span></div>
+      <div class="screen">
+        <div class="card">
+          <div class="row"><b>Robe midi plissée × 2</b><a class="small" href="#p-devis">Ouvrir le lien</a></div>
+          <span class="small muted">Indicatif lu le 20/11 : 14,99 USD. Vérifiez le prix et la taille M.</span>
+          <div class="compare"><div><label for="pv">Prix vérifié (USD)</label><input id="pv" value="15,49"></div><div><label for="dispo">Disponibilité</label><select id="dispo"><option>Vérifiée</option><option>Taille M épuisée</option></select></div></div>
+        </div>
+        <table class="qtable" aria-label="Lignes du devis">
+          <tr><td>Articles (3 lignes)</td><td>97,40</td></tr>
+          <tr><td>Frais de service</td><td>12,00</td></tr>
+          <tr><td>Transport aérien · 2,4 kg × 11,90 <span class="est">estimation</span></td><td>28,50</td></tr>
+          <tr><td>Douane <span class="est">estimation</span></td><td>9,00</td></tr>
+          <tr><td>Livraison locale · Kampemba</td><td>3,00</td></tr>
+          <tr class="total"><td>Total USD</td><td>149,90</td></tr>
+        </table>
+        <div class="compare"><div><label for="val">Valable jusqu'au</label><input id="val" value="23/11/2026"></div><div><label for="delai">Délai (jours)</label><input id="delai" value="14 à 21"></div></div>
+        <div><label for="hyp">Hypothèses et conditions</label><input id="hyp" value="Douane estimée sur la base de 2,4 kg ; montant final selon facture du transitaire."></div>
+        <a class="btn primary block" href="#c-devis">Envoyer le devis</a>
+        <p class="small muted" style="margin:0">Une fois envoyée, cette version ne peut plus être modifiée. Toute correction crée une version 2.</p>
+      </div>
+    </section>
+
+    <!-- 09 -->
+    <section data-view="p-colis" hidden>
+      <div class="topbar"><div class="brand">Colis <span class="mono">CL-P-7KD3QX</span></div><span class="pill info">Ouvert</span></div>
+      <div class="screen">
+        <div class="compare">
+          <div><label for="poids">Poids (kg)</label><input id="poids" value="2,4"></div>
+          <div><label for="dim">Dimensions (cm)</label><input id="dim" value="40 × 30 × 15"></div>
+        </div>
+        <span class="small muted">Poids volumétrique (÷ 6 000) : 3,0 kg · le plus élevé est facturé</span>
+        <h3 style="font-size:16px">Articles dans ce colis</h3>
+        <div class="list">
+          <div><div class="row"><b>Robe midi plissée × 2</b><span class="mono">CL-2026-000087</span></div><span class="small muted">Ruth K.</span></div>
+          <div><div class="row"><b>Organiseur de cuisine × 1</b><span class="mono">CL-2026-000087</span></div><span class="small muted">Ruth K.</span></div>
+          <div><div class="row"><b>Chaussures de sécurité × 3</b><span class="mono">CL-2026-000091</span></div><span class="small muted">Patrick M. · client géré</span></div>
+        </div>
+        <a class="btn ghost block" href="#p-colis">Ajouter des articles reçus</a>
+        <div><label for="etape">Enregistrer une étape</label><select id="etape"><option>Expédié vers la RDC</option><option>En transit</option><option>Arrivé en RDC</option><option>Anomalie (bloqué, perdu, endommagé)</option></select></div>
+        <button class="btn primary block" type="button">Enregistrer et notifier 2 clients</button>
+        <p class="small muted" style="margin:0">Chaque étape est horodatée et ne peut pas être effacée. Une erreur se corrige par une nouvelle étape.</p>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section data-view="a-verif" hidden>
+      <div class="topbar"><div class="brand">Console admin</div><span class="who">MFA active</span></div>
+      <div class="screen">
+        <div class="row"><h3>Mwamba Express</h3><span class="pill warn">En attente</span></div>
+        <span class="small muted">Indépendant · Lubumbashi, Likasi · inscrit le 14/11/2026</span>
+        <div class="list">
+          <div><div class="row"><b>Pièce d'identité</b><span class="pill ok">Reçue</span></div><span class="small muted">Ouverture journalisée dans l'audit</span></div>
+          <div><div class="row"><b>Registre de commerce (RCCM)</b><span class="pill ok">Reçu</span></div></div>
+          <div><div class="row"><b>Justificatif d'adresse</b><span class="pill bad">Manquant</span></div></div>
+        </div>
+        <div><label for="motif">Motif de la décision (obligatoire)</label><input id="motif" value="Justificatif d'adresse à fournir avant approbation."></div>
+        <div class="btns"><button class="btn primary" type="button">Approuver</button><button class="btn ghost" type="button">Demander un document</button></div>
+        <button class="btn ghost block" type="button" style="color:var(--bad)">Refuser Mwamba Express</button>
+        <p class="small muted" style="margin:0">Chaque décision est enregistrée avec votre nom, la date et le motif.</p>
+      </div>
+    </section>
+    <div class="example">Noms, numéros et montants fictifs, pour illustration.</div>
+  </main>
+
+  <aside class="notes" id="notes"></aside>
+</div>
+
+<script>
+const NOTES={
+ "c-accueil":["Accueil client","La page d'accueil pousse une seule action : importer un lien. Les demandes et commandes en cours suivent, avec leur statut visible d'un coup d'œil.",["Cible : téléphone Android d'entrée de gamme, réseau 3G.","Les commandes de commissionnaires différents restent séparées."]],
+ "c-import":["Importer un lien","Le lien est reconnu par liste blanche de domaines. Seules les informations publiques sont lues. Le prix est toujours marqué « indicatif » et daté.",["Lien inconnu ou lecture impossible : saisie manuelle + capture, sans message d'échec culpabilisant.","URL locales et adresses privées bloquées côté serveur (SSRF)."]],
+ "c-demande":["Choisir les commissionnaires","Le client choisit à qui envoyer. Seuls les commissionnaires approuvés apparaissent. Le service CargoLink est présenté comme les autres, avec une mention claire.",["Le brouillon est enregistré automatiquement.","Aucun paiement à cette étape."]],
+ "c-devis":["Comparer les devis","Côte à côte, avec les mêmes lignes. Les estimations sont marquées. Le taux USD/CDF et sa date sont affichés.",["Accepter crée une commande liée à la version exacte (v2 ici).","Les montants des deux commissionnaires ne sont jamais additionnés."]],
+ "c-commande":["Commande et paiement direct","Le client paie le commissionnaire directement, puis envoie une référence et une preuve.",["Statut « à vérifier » tant que le commissionnaire n'a pas confirmé.","Statut de paiement et statut opérationnel affichés séparément.","WhatsApp : numéro affiché en texte, avec le n° de commande."]],
+ "c-suivi":["Suivre mon colis","Le client ne voit que ses propres articles dans un colis partagé.",["Délais présentés comme estimations.","Étapes configurables par itinéraire ; seules les étapes « visibles client » apparaissent."]],
+ "p-tableau":["Tableau de bord commissionnaire","Ce qui demande une action d'abord : devis à rédiger, paiements à vérifier, anomalies.",["Clients gérés (sans compte) marqués comme tels.","Import Excel des clients existants pour le démarrage du pilote."]],
+ "p-devis":["Rédiger un devis","Le commissionnaire vérifie le prix et la disponibilité, puis détaille chaque frais.",["Total recalculé côté serveur.","Version figée à l'envoi ; correction = nouvelle version."]],
+ "p-colis":["Préparer un colis","Un colis peut mélanger des articles de plusieurs commandes et clients.",["Poids volumétrique calculé avec le diviseur du transporteur.","Chaque étape notifie uniquement les clients concernés."]],
+ "a-verif":["Vérifier un commissionnaire","Décision avec motif obligatoire, journalisée.",["Consultation des documents journalisée.","MFA obligatoire pour la console."]]
+};
+const views=[...document.querySelectorAll("[data-view]")];
+const links=[...document.querySelectorAll("#nav a")];
+const notes=document.getElementById("notes");
+function show(){
+  const id=(location.hash||"#c-accueil").slice(1);
+  const v=views.find(s=>s.dataset.view===id)||views[0];
+  views.forEach(s=>s.hidden=s!==v);
+  links.forEach(a=>a.toggleAttribute("aria-current",a.getAttribute("href")==="#"+v.dataset.view));
+  links.forEach(a=>{if(a.hasAttribute("aria-current"))a.setAttribute("aria-current","page")});
+  const n=NOTES[v.dataset.view];
+  notes.innerHTML=`<h2>${n[0]}</h2><p>${n[1]}</p><ul>${n[2].map(x=>`<li>${x}</li>`).join("")}</ul>`;
+}
+addEventListener("hashchange",show);show();
+document.getElementById("go").addEventListener("click",()=>{const r=document.getElementById("importResult");r.hidden=false;});
+</script>

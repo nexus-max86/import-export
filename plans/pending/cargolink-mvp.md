@@ -1,14 +1,14 @@
 # Plan — CargoLink MVP (conception puis développement)
 
 Référence : [`docs/cahier-des-charges.md`](../../docs/cahier-des-charges.md) · Glossaire : [`docs/glossaire.md`](../../docs/glossaire.md)
-Statut : **PROPOSITION — en attente des réponses aux questions G1–G9 et de l'approbation**
+Statut : **APPROUVÉ le 20/11/2026** (G1 : VPS KVM 2 ; G2–G9 : recommandations acceptées ; e-mail via Brevo). Phase 0 livrée, en relecture.
 
 ## Contexte validé
 
 | Sujet | Réponse |
 |---|---|
 | Développement | Une seule personne (le propriétaire), avec Claude |
-| Hébergement | Hostinger (offre exacte : question G1) |
+| Hébergement | Hostinger VPS KVM 2 (Docker) |
 | Authentification / messages | E-mail + WhatsApp, pas de SMS |
 | Pilote | 2 commissionnaires, qui travaillent aujourd'hui sur Excel + WhatsApp |
 | Langue | Français uniquement au lancement (architecture prête pour l'i18n) |
@@ -148,7 +148,7 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 - Phase 4 : conditions d'annulation et de remboursement affichées dans les devis (§18.5) — texte à fournir par le propriétaire avant la phase 4.
 - Phase 6 : étapes logistiques réellement utilisées par les 2 pilotes (itinéraire Chine → Lubumbashi ? via Kasumbalesa ?) — à recueillir pendant la phase 0.
 - Phase 8 : délais de litige — à fixer avant la phase 8.
-- Phase 9 : nom de domaine (`cargolink…`) — disponibilité à vérifier par le propriétaire.
+- Phase 9 : nom de domaine. Vérifié le 20/11/2026 : `cargolink.com`, `.app`, `.co`, `.net`, `.store`, `getcargolink.com`, `mycargolink.com` pris ; `cargolinkrdc.com`, `cargolink-rdc.com`, `cargolinkcongo.com` libres ; `.cd` et `.africa` non vérifiables par l'outil. « CargoLink » est aussi le nom d'un annuaire IATA et de plusieurs transitaires : risque de confusion de marque à évaluer.
 - Recherche multi-marketplaces, connecteurs API, paiements intégrés, abonnements : brouillard, étudiés après le pilote.
 
 ## Toujours / Jamais
@@ -160,7 +160,7 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 
 | Phase | Statut |
 |---|---|
-| 0 — Conception | En attente d'approbation |
+| 0 — Conception | Livrée (docs 01–07, maquettes, tickets #1–#31) — relecture du propriétaire |
 | 1 — Socle et isolation | À faire |
 | 2 — Profils et vérification | À faire |
 | 3 — Import et demande | À faire |
