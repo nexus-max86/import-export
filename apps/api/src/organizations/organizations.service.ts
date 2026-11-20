@@ -16,6 +16,7 @@ import {
   type UpdateOrganizationInput,
 } from '@konzia/shared';
 import { randomBytes } from 'node:crypto';
+import { AuditService } from '../audit/audit.service';
 import { ENV } from '../config/config.module';
 import type { Env } from '../config/env';
 import { randomToken, sha256 } from '../common/crypto';
@@ -46,19 +47,35 @@ export class OrganizationsService {
     private readonly db: TenantDb,
     @Inject(EMAIL_SENDER) private readonly email: EmailSender,
     @Inject(ENV) private readonly env: Env,
+    private readonly audit: AuditService,
   ) {}
 
   /** Création = amorçage : l'organisation et son propriétaire sont créés ensemble par le rôle système. */
   async create(userId: string, input: CreateOrganizationInput): Promise<MembershipSummary> {
-    const org = await this.system.organization.create({
-      data: {
-        name: input.name,
-        type: input.type,
-        description: input.description ?? null,
-        phoneWhatsapp: input.phoneWhatsapp ?? null,
-        slug: slugify(input.name),
-        members: { create: { userId, role: 'owner' } },
-      },
+    const org = await this.system.$transaction(async (tx) => {
+      const created = await tx.organization.create({
+        data: {
+          name: input.name,
+          type: input.type,
+          description: input.description ?? null,
+          phoneWhatsapp: input.phoneWhatsapp ?? null,
+          slug: slugify(input.name),
+          members: { create: { userId, role: 'owner' } },
+        },
+      });
+      await this.audit.recordSystem(
+        {
+          actorUserId: userId,
+          actorRole: 'self',
+          organizationId: created.id,
+          action: 'org.created',
+          entityType: 'organization',
+          entityId: created.id,
+          after: { name: created.name, type: created.type, status: created.status },
+        },
+        tx,
+      );
+      return created;
     });
     return { organizationId: org.id, name: org.name, status: org.status, role: 'owner' };
   }
@@ -98,13 +115,28 @@ export class OrganizationsService {
   }
 
   async update(userId: string, org: OrgContext, input: UpdateOrganizationInput): Promise<void> {
-    await this.db.run(userId, (tx) =>
-      tx.organization.update({
+    await this.db.run(userId, async (tx) => {
+      const fields = { name: true, description: true, phoneWhatsapp: true } as const;
+      const before = await tx.organization.findUniqueOrThrow({
+        where: { id: org.organizationId },
+        select: fields,
+      });
+      const after = await tx.organization.update({
         where: { id: org.organizationId },
         data: input,
-        select: { id: true },
-      }),
-    );
+        select: fields,
+      });
+      await this.audit.record(tx, {
+        actorUserId: userId,
+        actorRole: org.role,
+        organizationId: org.organizationId,
+        action: 'org.updated',
+        entityType: 'organization',
+        entityId: org.organizationId,
+        before,
+        after,
+      });
+    });
   }
 
   members(userId: string, org: OrgContext): Promise<MemberInfo[]> {
@@ -149,7 +181,7 @@ export class OrganizationsService {
         },
         data: { revokedAt: new Date() },
       });
-      await tx.invitation.create({
+      const invitation = await tx.invitation.create({
         data: {
           organizationId: org.organizationId,
           email: input.email,
@@ -159,6 +191,15 @@ export class OrganizationsService {
           expiresAt: new Date(Date.now() + INVITATION_TTL_MS),
         },
         select: { id: true },
+      });
+      await this.audit.record(tx, {
+        actorUserId: userId,
+        actorRole: org.role,
+        organizationId: org.organizationId,
+        action: 'org.member.invited',
+        entityType: 'invitation',
+        entityId: invitation.id,
+        after: { email: input.email, role: input.role },
       });
       const o = await tx.organization.findUniqueOrThrow({
         where: { id: org.organizationId },
@@ -208,6 +249,18 @@ export class OrganizationsService {
         where: { id: invitation.id },
         data: { acceptedAt: new Date() },
       });
+      await this.audit.recordSystem(
+        {
+          actorUserId: userId,
+          actorRole: 'self',
+          organizationId: invitation.organizationId,
+          action: 'org.member.joined',
+          entityType: 'invitation',
+          entityId: invitation.id,
+          after: { role: invitation.role },
+        },
+        tx,
+      );
       return {
         organizationId: invitation.organizationId,
         name: invitation.organization.name,
@@ -231,6 +284,16 @@ export class OrganizationsService {
         data: { role },
         select: { id: true },
       });
+      await this.audit.record(tx, {
+        actorUserId: userId,
+        actorRole: org.role,
+        organizationId: org.organizationId,
+        action: 'org.member.role_changed',
+        entityType: 'organization_member',
+        entityId: member.id,
+        before: { role: member.role },
+        after: { role },
+      });
     });
   }
 
@@ -242,6 +305,16 @@ export class OrganizationsService {
         where: { id: member.id },
         data: { status: 'removed' },
         select: { id: true },
+      });
+      await this.audit.record(tx, {
+        actorUserId: userId,
+        actorRole: org.role,
+        organizationId: org.organizationId,
+        action: 'org.member.removed',
+        entityType: 'organization_member',
+        entityId: member.id,
+        before: { role: member.role, status: 'active' },
+        after: { status: 'removed' },
       });
     });
   }

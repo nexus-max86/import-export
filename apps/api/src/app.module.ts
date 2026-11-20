@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { LoggerModule } from 'nestjs-pino';
+import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
 import { CsrfMiddleware } from './common/csrf.middleware';
 import { ConfigModule } from './config/config.module';
@@ -35,6 +36,7 @@ const env = loadEnv();
     RedisModule,
     EmailModule,
     TenancyModule,
+    AuditModule,
     AuthModule,
     OrganizationsModule,
     ...(env.NODE_ENV !== 'production' && env.EMAIL_TRANSPORT === 'fake' ? [DevModule] : []),

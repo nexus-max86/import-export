@@ -190,3 +190,28 @@ model Invitation {
   @@index([organizationId])
   @@map("invitations")
 }
+
+// ---------------------------------------------------------------------------
+// Journal d'audit (ticket #4) — insertion seule, immuable
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  /// Nul pour une action du système (tâche planifiée, migration de données).
+  actorUserId    String?  @map("actor_user_id") @db.Uuid
+  /// Rôle sous lequel l'acteur agissait (owner, sales…, platform_admin, system).
+  actorRole      String   @map("actor_role")
+  organizationId String?  @map("organization_id") @db.Uuid
+  /// Verbe stable, ex. « org.member.role_changed ».
+  action         String
+  entityType     String   @map("entity_type")
+  entityId       String?  @map("entity_id")
+  before         Json?
+  after          Json?
+  reason         String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}

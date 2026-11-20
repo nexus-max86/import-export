@@ -141,6 +141,11 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 | Import URL | Métadonnées publiques seulement ; saisie manuelle = parcours normal | Les marketplaces bloquent l'extraction ; interdiction de contourner |
 | Authentification | E-mail + mot de passe + vérification d'e-mail ; WhatsApp pour les notifications | Pas de SMS ; la connexion par WhatsApp exige une validation Meta |
 | Taux de change | Saisis par l'admin, figés dans chaque devis | Simple, traçable |
+| Nom du produit | **Konzia** (remplace CargoLink) | Décision du propriétaire, 20/11 ; CargoLink trop proche de marques existantes |
+| E-mail transactionnel | Brevo via SMTP | Offre gratuite suffisante pour le pilote, SMTP standard donc remplaçable |
+| Versions des dépendances | Next 15.5, NestJS 11, Prisma 6, TS 5.9 (D6) | Lignes stables maîtrisées ; montée de version après le pilote |
+| Deux connexions PostgreSQL | Propriétaire (auth, amorçage, admin audité) + `konzia_app` sous RLS (tout le métier) | Les opérations sans utilisateur (session par jeton, invitation) ne peuvent pas passer par la RLS |
+| Audit | Appels explicites dans la transaction du changement (pas d'intercepteur) | Avant/après précis et atomicité garantie ; journal immuable par déclencheur |
 
 ## Non encore spécifié
 
@@ -161,7 +166,7 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 | Phase | Statut |
 |---|---|
 | 0 — Conception | Livrée (docs 01–07, maquettes, tickets #1–#31) — relecture du propriétaire |
-| 1 — Socle et isolation | En cours : #1, #2, #3 faits |
+| 1 — Socle et isolation | **Terminée** (#1–#4) le 20/11/2026 — 58 tests API, 7 tests partagés, 2 parcours Playwright |
 | 2 — Profils et vérification | À faire |
 | 3 — Import et demande | À faire |
 | 4 — Devis et commande | À faire |

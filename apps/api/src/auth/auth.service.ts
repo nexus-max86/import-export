@@ -12,6 +12,7 @@ import {
   type RegisterInput,
 } from '@konzia/shared';
 import type { EmailTokenPurpose } from '@konzia/db';
+import { AuditService } from '../audit/audit.service';
 import { ENV } from '../config/config.module';
 import type { Env } from '../config/env';
 import { randomToken, sha256 } from '../common/crypto';
@@ -35,6 +36,7 @@ export class AuthService {
     private readonly sessions: SessionService,
     @Inject(EMAIL_SENDER) private readonly email: EmailSender,
     @Inject(ENV) private readonly env: Env,
+    private readonly audit: AuditService,
   ) {}
 
   async register(input: RegisterInput): Promise<void> {
@@ -113,6 +115,13 @@ export class AuthService {
       },
     });
     await this.sessions.revokeAll(record.userId);
+    await this.audit.recordSystem({
+      actorUserId: record.userId,
+      actorRole: 'self',
+      action: 'auth.password_reset',
+      entityType: 'user',
+      entityId: record.userId,
+    });
   }
 
   async me(userId: string): Promise<MeResponse> {

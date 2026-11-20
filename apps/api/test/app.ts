@@ -47,7 +47,7 @@ export async function createTestApp(): Promise<TestContext> {
     outbox,
     agent: () => makeAgent(app),
     async reset() {
-      await prisma.$executeRawUnsafe('TRUNCATE users, organizations CASCADE');
+      await prisma.$executeRawUnsafe('TRUNCATE users, organizations, audit_logs CASCADE');
       if (redis.status === 'wait') await redis.connect();
       await redis.flushdb();
       outbox.outbox.length = 0;
