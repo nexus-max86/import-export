@@ -10,5 +10,11 @@ export const TENANT_TABLES: { table: string; orgColumn: string }[] = [
   { table: 'organization_service_zones', orgColumn: 'organization_id' },
 ];
 
+/** Données personnelles d'un utilisateur : seul leur propriétaire y accède. */
+export const USER_TABLES: { table: string; userColumn: string }[] = [
+  { table: 'customer_profiles', userColumn: 'user_id' },
+  { table: 'addresses', userColumn: 'user_id' },
+];
+
 /** Tables jamais accessibles au rôle applicatif (chemins système uniquement). */
 export const SYSTEM_ONLY_TABLES = ['sessions', 'email_tokens', 'consents', '_prisma_migrations'];

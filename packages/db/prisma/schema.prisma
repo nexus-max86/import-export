@@ -54,6 +54,8 @@ model User {
   emailTokens EmailToken[]
   consents    Consent[]
   memberships OrganizationMember[]
+  profile     CustomerProfile?
+  addresses   Address[]
 
   @@map("users")
 }
@@ -236,7 +238,9 @@ model City {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  zones ServiceZone[]
+  zones     ServiceZone[]
+  profiles  CustomerProfile[]
+  addresses Address[]
 
   @@map("cities")
 }
@@ -252,6 +256,8 @@ model ServiceZone {
 
   city          City                      @relation(fields: [cityId], references: [id])
   organizations OrganizationServiceZone[]
+  profiles      CustomerProfile[]
+  addresses     Address[]
 
   @@unique([cityId, name])
   @@map("service_zones")
@@ -274,4 +280,44 @@ model OrganizationServiceZone {
 
   @@unique([organizationId, serviceZoneId])
   @@map("organization_service_zones")
+}
+
+// ---------------------------------------------------------------------------
+// Profil client et adresses (ticket #6) — données personnelles, RLS par utilisateur
+// ---------------------------------------------------------------------------
+
+model CustomerProfile {
+  userId               String   @id @map("user_id") @db.Uuid
+  cityId               String?  @map("city_id") @db.Uuid
+  serviceZoneId        String?  @map("service_zone_id") @db.Uuid
+  deliveryInstructions String?  @map("delivery_instructions")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city        City?        @relation(fields: [cityId], references: [id])
+  serviceZone ServiceZone? @relation(fields: [serviceZoneId], references: [id])
+
+  @@map("customer_profiles")
+}
+
+model Address {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  label         String
+  cityId        String   @map("city_id") @db.Uuid
+  serviceZoneId String?  @map("service_zone_id") @db.Uuid
+  line          String
+  /// Point de repère (très utilisé à Lubumbashi : « en face de l'église… »).
+  landmark      String?
+  isDefault     Boolean  @default(false) @map("is_default")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city        City         @relation(fields: [cityId], references: [id])
+  serviceZone ServiceZone? @relation(fields: [serviceZoneId], references: [id])
+
+  @@index([userId])
+  @@map("addresses")
 }

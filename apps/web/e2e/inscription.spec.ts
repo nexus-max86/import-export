@@ -34,6 +34,24 @@ test('un client s’inscrit, confirme son e-mail et gère ses appareils', async 
   await expect(page.getByText('cet appareil')).toBeVisible();
   await expect(page.getByText(/Confirmez votre adresse/)).toHaveCount(0);
 
+  // Profil : numéro WhatsApp normalisé et première adresse de livraison.
+  await page.getByRole('link', { name: /Profil et adresses/ }).click();
+  await page.getByLabel('Numéro WhatsApp').fill('081 000 0000');
+  await page.locator('#profile-city').selectOption({ label: 'Lubumbashi' });
+  await page.locator('#profile-zone').selectOption({ label: 'Kampemba' });
+  await page.getByRole('button', { name: 'Enregistrer le profil' }).click();
+  await expect(page.getByText('Profil enregistré.')).toBeVisible();
+  await expect(page.getByLabel('Numéro WhatsApp')).toHaveValue('+243810000000');
+
+  await page.getByLabel('Nom de l’adresse').fill('Maison');
+  await page.locator('#addr-new-zone').selectOption({ label: 'Kampemba' });
+  await page.getByLabel('Avenue et numéro').fill('Av. Lumumba 12');
+  await page.getByLabel('Point de repère (facultatif)').fill('En face de la paroisse');
+  await page.getByRole('button', { name: 'Ajouter l’adresse' }).click();
+  await expect(page.getByText('Adresse ajoutée.')).toBeVisible();
+  await expect(page.getByText('Par défaut', { exact: true })).toBeVisible();
+
+  await page.getByRole('link', { name: '← Mon compte' }).click();
   await page.getByRole('button', { name: 'Se déconnecter' }).click();
   await expect(page).toHaveURL(/\/connexion$/);
 });

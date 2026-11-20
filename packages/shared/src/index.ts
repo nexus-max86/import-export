@@ -4,3 +4,5 @@ export * from './auth';
 export * from './permissions';
 export * from './organizations';
 export * from './geo';
+export * from './phone';
+export * from './profile';

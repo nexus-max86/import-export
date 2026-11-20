@@ -1,6 +1,7 @@
 'use client';
 
 import type { MeResponse, SessionInfo } from '@konzia/shared';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { Button, Card, Logo, Notice } from '@/components/ui';
@@ -94,6 +95,12 @@ export default function AccountPage() {
           </Button>
         </Card>
       )}
+      <Link
+        href="/compte/profil"
+        className="flex min-h-11 items-center justify-between rounded-2xl border border-line bg-surface px-5 py-4 font-semibold"
+      >
+        Profil et adresses de livraison <span aria-hidden="true">→</span>
+      </Link>
       <Card>
         <h2 className="font-display text-lg font-bold">Appareils connectés</h2>
         <ul className="flex flex-col divide-y divide-line">

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { normalizePhone } from './phone';
 import { ORG_ROLES, type OrgRole } from './roles';
 
 /** En-tête indiquant l'organisation au nom de laquelle agit l'utilisateur. */
@@ -11,7 +12,17 @@ export const CreateOrganizationSchema = z.object({
   phoneWhatsapp: z
     .string()
     .trim()
-    .regex(/^\+?[0-9 ]{8,20}$/, 'Numéro WhatsApp invalide.')
+    .transform((v, ctx) => {
+      const phone = normalizePhone(v);
+      if (!phone) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Numéro WhatsApp invalide. Exemple : 081 000 0000.',
+        });
+        return z.NEVER;
+      }
+      return phone;
+    })
     .optional(),
 });
 export type CreateOrganizationInput = z.infer<typeof CreateOrganizationSchema>;
