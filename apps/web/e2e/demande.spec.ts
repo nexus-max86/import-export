@@ -185,4 +185,31 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await client.reload();
   await expect(client.getByText('Achetée').first()).toBeVisible();
   await expect(client.getByText('118,40', { exact: false })).toHaveCount(0);
+
+  // --- Colis partagé par deux clients (écran 09) ---
+  await pro.getByRole('link', { name: 'Colis', exact: true }).click();
+  await pro.getByLabel('Diviseur volumétrique du transporteur').selectOption('6000');
+  await pro.getByRole('button', { name: 'Créer le colis' }).click();
+  await expect(pro.getByRole('heading', { name: /^KZ-P-[0-9A-Z]{6}$/ })).toBeVisible();
+  await pro.getByRole('checkbox', { name: /Mettre en colis Robe/ }).check();
+  await pro.getByRole('checkbox', { name: /Mettre en colis Organiseur/ }).check();
+  await pro.getByRole('checkbox', { name: /Mettre en colis Chaussures/ }).check();
+  await pro.getByRole('button', { name: 'Ajouter au colis' }).click();
+  await expect(pro.getByText('Articles ajoutés au colis.')).toBeVisible();
+  await expect(pro.getByRole('heading', { name: 'Articles dans ce colis (3)' })).toBeVisible();
+  await expect(pro.getByText('Patrick Mbuyi · client géré')).toBeVisible();
+  await pro.getByLabel('Poids (kg)').fill('2,5');
+  await pro.getByLabel('Longueur (cm)').fill('30');
+  await pro.getByLabel('Largeur (cm)').fill('20');
+  await pro.getByLabel('Hauteur (cm)').fill('30');
+  await expect(
+    pro.getByText('Poids volumétrique (÷ 6 000) : 3,0 kg', { exact: false }),
+  ).toBeVisible();
+  await pro.getByRole('button', { name: 'Enregistrer les mesures' }).click();
+  await expect(pro.getByText('Mesures enregistrées.')).toBeVisible();
+  await pro.getByRole('button', { name: 'Fermer le colis' }).click();
+  await expect(pro.getByText('Colis fermé.')).toBeVisible();
+
+  await client.reload();
+  await expect(client.getByText('En préparation logistique').first()).toBeVisible();
 });

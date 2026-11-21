@@ -31,17 +31,23 @@ export class FilesService {
     tx: TenantTx,
     userId: string,
     organizationId: string | null,
-    purpose: 'verification_document' | 'product_screenshot' | 'payment_proof' | 'purchase_proof',
+    purpose:
+      | 'verification_document'
+      | 'product_screenshot'
+      | 'payment_proof'
+      | 'purchase_proof'
+      | 'parcel_photo',
     upload: UploadedBlob,
   ) {
     if (upload.size > MAX_UPLOAD_BYTES)
       throw new PayloadTooLargeException('Fichier trop lourd (5 Mo maximum).');
     const mime = sniffMime(upload.buffer);
-    const allowed = purpose === 'product_screenshot' ? mime && mime !== 'application/pdf' : mime;
+    const imageOnly = purpose === 'product_screenshot' || purpose === 'parcel_photo';
+    const allowed = imageOnly ? mime && mime !== 'application/pdf' : mime;
     if (!mime || !allowed) {
       throw new BadRequestException(
-        purpose === 'product_screenshot'
-          ? 'Envoyez une capture d’écran (JPEG, PNG ou WebP).'
+        imageOnly
+          ? 'Envoyez une image (JPEG, PNG ou WebP).'
           : 'Format non accepté. Envoyez un PDF ou une photo (JPEG, PNG, WebP).',
       );
     }
@@ -50,6 +56,7 @@ export class FilesService {
       verification_document: 'verification',
       payment_proof: 'payments',
       purchase_proof: 'purchases',
+      parcel_photo: 'parcels',
     }[purpose];
     const storageKey = `${folder}/${organizationId ?? userId}/${randomUUID()}`;
     // Le contenu est écrit avant la ligne en base : un échec SQL laisse au pire un fichier orphelin chiffré.

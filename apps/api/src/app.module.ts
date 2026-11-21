@@ -18,6 +18,7 @@ import { OrdersModule } from './orders/orders.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { PaymentsModule } from './payments/payments.module';
 import { SupplierOrdersModule } from './supplier-orders/supplier-orders.module';
+import { ParcelsModule } from './parcels/parcels.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProfileModule } from './profile/profile.module';
 import { RequestsModule } from './requests/requests.module';
@@ -65,6 +66,7 @@ const env = loadEnv();
     OrdersModule,
     PaymentsModule,
     SupplierOrdersModule,
+    ParcelsModule,
     ...(env.NODE_ENV !== 'production' && env.EMAIL_TRANSPORT === 'fake' ? [DevModule] : []),
   ],
   controllers: [HealthController],

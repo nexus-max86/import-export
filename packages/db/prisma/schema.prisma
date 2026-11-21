@@ -405,6 +405,7 @@ enum FilePurpose {
   product_screenshot
   payment_proof
   purchase_proof
+  parcel_photo
 }
 
 /// Fichier stocké chiffré (AES-256-GCM) ; le contenu n'est jamais servi sans contrôle d'accès.
@@ -803,6 +804,7 @@ model OrderItem {
 
   order         Order               @relation(fields: [orderId], references: [id])
   supplierItems SupplierOrderItem[]
+  parcelItems   ParcelItem[]
 
   @@index([orderId])
   @@map("order_items")
@@ -991,4 +993,69 @@ model SupplierOrderItem {
   @@unique([supplierOrderId, orderItemId])
   @@index([orderItemId])
   @@map("supplier_order_items")
+}
+
+enum ParcelStatus {
+  open
+  closed
+  delivered
+  lost
+  cancelled
+}
+
+enum ParcelCondition {
+  ok
+  damaged
+  opened
+}
+
+/// Colis préparé par le commissionnaire : peut mélanger des articles de plusieurs commandes et clients.
+model Parcel {
+  id                String          @id @default(uuid(7)) @db.Uuid
+  organizationId    String          @map("organization_id") @db.Uuid
+  /// Code lisible, ex. KZ-P-7KD3QX.
+  code              String          @unique
+  locationLabel     String?         @map("location_label")
+  weightG           Int?            @map("weight_g")
+  lengthMm          Int?            @map("length_mm")
+  widthMm           Int?            @map("width_mm")
+  heightMm          Int?            @map("height_mm")
+  /// Diviseur du transporteur (cm³ par kg), ex. 5000 ou 6000.
+  volumetricDivisor Int             @default(5000) @map("volumetric_divisor")
+  volumetricWeightG Int?            @map("volumetric_weight_g")
+  condition         ParcelCondition @default(ok)
+  status            ParcelStatus    @default(open)
+  photoFileIds      String[]        @default([]) @map("photo_file_ids") @db.Uuid
+  note              String?
+  createdBy         String          @map("created_by") @db.Uuid
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  items ParcelItem[]
+
+  @@index([organizationId, status])
+  @@map("parcels")
+}
+
+/// Article dans un colis. Retrait = marquage (removed_at), jamais suppression.
+model ParcelItem {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  parcelId       String    @map("parcel_id") @db.Uuid
+  orderItemId    String    @map("order_item_id") @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  orgCustomerId  String    @map("org_customer_id") @db.Uuid
+  customerUserId String?   @map("customer_user_id") @db.Uuid
+  quantity       Int
+  addedAt        DateTime  @default(now()) @map("added_at") @db.Timestamptz(3)
+  addedBy        String    @map("added_by") @db.Uuid
+  removedAt      DateTime? @map("removed_at") @db.Timestamptz(3)
+  removedBy      String?   @map("removed_by") @db.Uuid
+  removedReason  String?   @map("removed_reason")
+
+  parcel    Parcel    @relation(fields: [parcelId], references: [id])
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id])
+
+  @@index([parcelId])
+  @@index([orderItemId])
+  @@map("parcel_items")
 }

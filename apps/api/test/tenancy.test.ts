@@ -1,6 +1,6 @@
 import { PrismaClient } from '@konzia/db';
 import { createTestApp, tokenFrom, type TestContext } from './app';
-import { actor, addMember, approveOrg, asOrg, createOrg, PDF, type Actor } from './fixtures';
+import { actor, addMember, approveOrg, asOrg, createOrg, PDF, PNG, type Actor } from './fixtures';
 import { SYSTEM_ONLY_TABLES, TENANT_TABLES } from './tenancy-tables';
 
 /**
@@ -122,7 +122,7 @@ describe('Isolation entre commissionnaires', () => {
       .get(`/api/org/orders/${accepted.body.orderId}`)
       .set(...asOrg(orgA))
       .expect(200);
-    await a.agent
+    const so = await a.agent
       .post('/api/org/supplier-orders', {
         marketplace: 'shein',
         storeName: 'SHEIN',
@@ -132,6 +132,27 @@ describe('Isolation entre commissionnaires', () => {
         proofFileId: proof.body.fileId,
         items: [{ orderItemId: orderA.body.items[0].id, quantity: 1 }],
       })
+      .set(...asOrg(orgA))
+      .expect(201);
+    // Un colis avec cet article reçu, et sa photo.
+    await a.agent
+      .post(`/api/org/supplier-orders/${so.body.id}/receive`, {
+        items: [{ orderItemId: orderA.body.items[0].id, qtyReceived: 1 }],
+      })
+      .set(...asOrg(orgA))
+      .expect(201);
+    const parcel = await a.agent
+      .post('/api/org/parcels', {})
+      .set(...asOrg(orgA))
+      .expect(201);
+    await a.agent
+      .post(`/api/org/parcels/${parcel.body.id}/items`, {
+        items: [{ orderItemId: orderA.body.items[0].id, quantity: 1 }],
+      })
+      .set(...asOrg(orgA))
+      .expect(201);
+    await a.agent
+      .postFile(`/api/org/parcels/${parcel.body.id}/photos`, {}, PNG, 'colis.png')
       .set(...asOrg(orgA))
       .expect(201);
     await t.prisma.organization.update({ where: { id: orgA }, data: { status: 'pending' } });
