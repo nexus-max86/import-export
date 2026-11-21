@@ -21,6 +21,10 @@ const EnvSchema = z
     EMAIL_TRANSPORT: z.enum(['fake', 'smtp']).default('fake'),
     SMTP_URL: z.string().optional(),
     EMAIL_FROM: z.string().default('Konzia <no-reply@konzia.app>'),
+    /** Délai de base entre deux tentatives d'envoi (exponentiel) ; court en test. */
+    EMAIL_RETRY_BASE_MS: z.coerce.number().int().min(10).default(30_000),
+    /** Nombre maximal de tentatives d'envoi d'un e-mail. */
+    EMAIL_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(20).default(6),
     /** Lecture des pages produits : http (réelle) ou fake (développement hors ligne, tests). */
     PRODUCT_FETCHER: z.enum(['http', 'fake']).default('http'),
     /** Stockage des fichiers : disque local (développement, tests) ou S3/R2 (production). */

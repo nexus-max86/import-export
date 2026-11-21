@@ -182,6 +182,6 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 | 4 — Devis et commande | **Terminée** (#8, #15, #16, #17) le 21/11/2026 — 211 tests API, 55 tests partagés, 4 parcours Playwright |
 | 5 — Paiements directs | Terminée (#18 ; #8 livré en phase 4) |
 | 6 — Achats et colis | Terminée (#19 achats, #20 colis, #21 suivi et expéditions, #22 suivi client et exports) |
-| 7 — Notifications | En cours : #23 (centre de notifications) fait |
+| 7 — Notifications | En cours : #23 (centre de notifications), #24 (e-mails en file) faits |
 | 8 — Administration | À faire |
 | 9 — Production et pilote | À faire |

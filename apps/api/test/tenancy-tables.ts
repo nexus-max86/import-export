@@ -42,4 +42,10 @@ export const USER_TABLES: { table: string; userColumn: string }[] = [
 ];
 
 /** Tables jamais accessibles au rôle applicatif (chemins système uniquement). */
-export const SYSTEM_ONLY_TABLES = ['sessions', 'email_tokens', 'consents', '_prisma_migrations'];
+export const SYSTEM_ONLY_TABLES = [
+  'sessions',
+  'email_tokens',
+  'consents',
+  'outbound_messages',
+  '_prisma_migrations',
+];

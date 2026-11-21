@@ -1219,3 +1219,26 @@ model NotificationPreference {
   @@id([userId, type, channel])
   @@map("notification_preferences")
 }
+
+/// Message sortant (e-mail, plus tard WhatsApp) : file d'envoi avec nouvelles tentatives.
+/// Accès système uniquement : le rôle applicatif n'y a aucun droit.
+model OutboundMessage {
+  id              String    @id @default(uuid(7)) @db.Uuid
+  notificationId  String?   @map("notification_id") @db.Uuid
+  recipientUserId String    @map("recipient_user_id") @db.Uuid
+  channel         String
+  toAddress       String    @map("to_address")
+  subject         String
+  bodyText        String    @map("body_text")
+  /// queued, sent, failed, skipped.
+  status          String    @default("queued")
+  attempts        Int       @default(0)
+  /// Classe ou code d'erreur seulement : jamais le contenu du message.
+  lastError       String?   @map("last_error")
+  sentAt          DateTime? @map("sent_at") @db.Timestamptz(3)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([status, createdAt])
+  @@map("outbound_messages")
+}
