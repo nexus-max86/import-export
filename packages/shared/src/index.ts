@@ -8,3 +8,4 @@ export * from './phone';
 export * from './profile';
 export * from './customers';
 export * from './verification';
+export * from './directory';

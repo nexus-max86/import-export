@@ -6,6 +6,7 @@ import { CsrfMiddleware } from './common/csrf.middleware';
 import { ConfigModule } from './config/config.module';
 import { loadEnv } from './config/env';
 import { CustomersModule } from './customers/customers.module';
+import { DirectoryModule } from './directory/directory.module';
 import { DevModule } from './dev/dev.module';
 import { EmailModule } from './email/email.module';
 import { FilesModule } from './files/files.module';
@@ -49,6 +50,7 @@ const env = loadEnv();
     CustomersModule,
     FilesModule,
     VerificationModule,
+    DirectoryModule,
     ...(env.NODE_ENV !== 'production' && env.EMAIL_TRANSPORT === 'fake' ? [DevModule] : []),
   ],
   controllers: [HealthController],

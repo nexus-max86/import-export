@@ -20,6 +20,12 @@ export default function HomePage() {
           Créer un compte
         </Link>
         <Link
+          href="/commissionnaires"
+          className="flex min-h-11 items-center justify-center rounded-lg border border-line px-4 font-semibold"
+        >
+          Voir les commissionnaires vérifiés
+        </Link>
+        <Link
           href="/connexion"
           className="flex min-h-11 items-center justify-center rounded-lg border border-line px-4 font-semibold"
         >

@@ -25,6 +25,17 @@ export class TenantDb implements OnModuleDestroy {
     });
   }
 
+  /**
+   * Lecture publique (visiteur non connecté) : même rôle konzia_app, sans utilisateur.
+   * La RLS ne laisse alors voir que ce qui est public (organisations approuvées…).
+   */
+  runAnonymous<T>(work: (tx: TenantTx) => Promise<T>): Promise<T> {
+    return this.client.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT set_config('app.user_id', '', true)`;
+      return work(tx);
+    });
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.client.$disconnect();
   }
