@@ -11,6 +11,7 @@ import { DirectoryModule } from './directory/directory.module';
 import { DevModule } from './dev/dev.module';
 import { EmailModule } from './email/email.module';
 import { FilesModule } from './files/files.module';
+import { FxModule } from './fx/fx.module';
 import { GeoModule } from './geo/geo.module';
 import { HealthController } from './health/health.controller';
 import { OrganizationsModule } from './organizations/organizations.module';
@@ -55,6 +56,7 @@ const env = loadEnv();
     DirectoryModule,
     CatalogModule,
     RequestsModule,
+    FxModule,
     ...(env.NODE_ENV !== 'production' && env.EMAIL_TRANSPORT === 'fake' ? [DevModule] : []),
   ],
   controllers: [HealthController],

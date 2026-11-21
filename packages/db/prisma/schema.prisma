@@ -585,3 +585,21 @@ model QuoteRequestRecipient {
   @@index([organizationId, status])
   @@map("quote_request_recipients")
 }
+
+// ---------------------------------------------------------------------------
+// Taux de change (ticket #8) — insertion seule, copiés dans chaque devis (D3)
+// ---------------------------------------------------------------------------
+
+model ExchangeRate {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  /// Paire « USD_CDF » ou « USD_CNY » : 1 unité de la base = `rate` unités cotées.
+  pair      String
+  rate      Decimal  @db.Decimal(18, 8)
+  source    String
+  validFrom DateTime @default(now()) @map("valid_from") @db.Timestamptz(3)
+  createdBy String   @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([pair, validFrom])
+  @@map("exchange_rates")
+}
