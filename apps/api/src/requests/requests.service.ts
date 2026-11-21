@@ -423,6 +423,7 @@ export class RequestsService {
           id: true,
           status: true,
           declineReason: true,
+          quote: { select: { id: true } },
           organization: { select: { name: true, slug: true } },
           orgCustomer: { select: { id: true, fullName: true, phoneWhatsapp: true, userId: true } },
         },
@@ -465,6 +466,7 @@ export class RequestsService {
             declineReason: recipient.declineReason,
           },
         ],
+        quoteId: recipient.quote?.id ?? null,
         customer: {
           orgCustomerId: recipient.orgCustomer.id,
           fullName: recipient.orgCustomer.fullName,

@@ -177,7 +177,7 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 | 1 — Socle et isolation | **Terminée** (#1–#4) le 20/11/2026 — 58 tests API, 7 tests partagés, 2 parcours Playwright |
 | 2 — Profils et vérification | **Terminée** (#5, #6, #7, #10, #11, #12) le 21/11/2026 — 120 tests API, 20 tests partagés, 3 parcours Playwright |
 | 3 — Import et demande | **Terminée** (#9, #13, #14) le 21/11/2026 — 171 tests API, 47 tests partagés, 4 parcours Playwright |
-| 4 — Devis et commande | En cours (taux de change #8 fait) |
+| 4 — Devis et commande | En cours (#8 taux, #15 devis faits ; #16, #17 à faire) |
 | 5 — Paiements directs | À faire |
 | 6 — Achats et colis | À faire |
 | 7 — Notifications | À faire |

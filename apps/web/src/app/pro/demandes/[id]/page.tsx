@@ -104,9 +104,21 @@ export default function ProRequestPage() {
           </Card>
           {['sent', 'viewed', 'evaluating'].includes(mine.status) && (
             <Card>
-              <p className="text-sm text-muted">
-                La rédaction du devis arrive avec la prochaine étape de Konzia.
-              </p>
+              <Button
+                onClick={async () => {
+                  try {
+                    const q = await api<{ id: string }>(`/org/requests/${id}/quote`, {
+                      method: 'POST',
+                      org: org!,
+                    });
+                    router.push(`/pro/devis/${q.id}`);
+                  } catch (err) {
+                    setError(err instanceof ApiError ? err.message : 'Action impossible.');
+                  }
+                }}
+              >
+                {r.quoteId ? 'Continuer le devis' : 'Préparer le devis'}
+              </Button>
               {declining ? (
                 <form onSubmit={decline} className="flex flex-col gap-3">
                   <Field
@@ -127,6 +139,14 @@ export default function ProRequestPage() {
                 </Button>
               )}
             </Card>
+          )}
+          {mine.status === 'quoted' && r.quoteId && (
+            <Link
+              href={`/pro/devis/${r.quoteId}`}
+              className="flex min-h-11 items-center justify-center rounded-lg border border-line px-4 font-semibold"
+            >
+              Voir le devis envoyé
+            </Link>
           )}
           {mine.declineReason && <Notice>Demande déclinée : {mine.declineReason}</Notice>}
         </>

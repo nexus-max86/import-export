@@ -15,3 +15,4 @@ export * from './money';
 export * from './product';
 export * from './requests';
 export * from './fx';
+export * from './quotes';

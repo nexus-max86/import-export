@@ -10,6 +10,7 @@ import {
   type HandoverMode,
   type MarketplaceCode,
   type OrgServiceZoneInfo,
+  type QuoteSettings,
   type TransportMode,
   type VerificationInfo,
 } from '@konzia/shared';
@@ -19,6 +20,7 @@ import { ProNav } from '@/components/pro-nav';
 import { Button, Card, Notice } from '@/components/ui';
 import { getActiveOrg } from '@/lib/active-org';
 import { api, ApiError, apiUpload } from '@/lib/api';
+import { inputToMinor, minorToInput } from '@/lib/money-input';
 
 interface OrgProfile {
   name: string;
@@ -91,6 +93,7 @@ export default function ProProfilePage() {
             <VerificationCard org={org} orgStatus={profile.status} initial={verification} />
           )}
           <ServicesCard org={org} profile={profile} onSaved={setProfile} />
+          <QuoteSettingsCard org={org} />
           <ZonesCard org={org} cities={cities} initial={zones} />
         </>
       )}
@@ -401,6 +404,104 @@ function ZonesCard({
       <Button busy={busy} onClick={save}>
         Enregistrer les communes
       </Button>
+    </Card>
+  );
+}
+
+function QuoteSettingsCard({ org }: { org: string }) {
+  const [settings, setSettings] = useState<QuoteSettings>();
+  const [percent, setPercent] = useState('');
+  const [perKg, setPerKg] = useState('');
+  const [msg, setMsg] = useState<Msg>();
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    api<QuoteSettings>('/org/quote-settings', { org }).then(
+      (s) => {
+        setSettings(s);
+        setPercent(s.commissionBps !== null ? String(s.commissionBps / 100).replace('.', ',') : '');
+        setPerKg(s.transportPerKg ? minorToInput(s.transportPerKg.amount) : '');
+      },
+      () => undefined,
+    );
+  }, [org]);
+
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    const bps = percent.trim() ? inputToMinor(percent) : null; // « 10 » % → 1000 points de base
+    const kg = perKg.trim() ? inputToMinor(perKg) : null;
+    if ((percent.trim() && (bps === null || bps > 10000)) || (perKg.trim() && kg === null)) {
+      setMsg({ tone: 'error', text: 'Valeurs invalides. Exemple : 10 (%) et 11,90 (USD par kg).' });
+      return;
+    }
+    setBusy(true);
+    setMsg(undefined);
+    try {
+      setSettings(
+        await api<QuoteSettings>('/org/quote-settings', {
+          method: 'PUT',
+          org,
+          body: {
+            commissionBps: bps,
+            transportPerKg: kg !== null ? { amount: kg, currency: 'USD' } : null,
+          },
+        }),
+      );
+      setMsg({
+        tone: 'ok',
+        text: 'Réglages enregistrés : ils pré-remplissent vos prochains devis.',
+      });
+    } catch (err) {
+      setMsg({
+        tone: 'error',
+        text: err instanceof ApiError ? err.message : 'Enregistrement impossible.',
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!settings) return null;
+  return (
+    <Card>
+      <h2 className="font-display text-lg font-bold">Calcul de vos devis</h2>
+      <p className="text-sm text-muted">
+        Konzia pré-remplit chaque devis avec ces valeurs. Vous pouvez toujours les modifier.
+      </p>
+      <form onSubmit={save} className="flex flex-col gap-3">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="commission" className="text-sm font-semibold">
+              Commission (%)
+            </label>
+            <input
+              id="commission"
+              inputMode="decimal"
+              value={percent}
+              onChange={(e) => setPercent(e.target.value)}
+              placeholder="10"
+              className="min-h-11 rounded-lg border border-line bg-surface px-3"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="perKg" className="text-sm font-semibold">
+              Transport (USD par kg)
+            </label>
+            <input
+              id="perKg"
+              inputMode="decimal"
+              value={perKg}
+              onChange={(e) => setPerKg(e.target.value)}
+              placeholder="11,90"
+              className="min-h-11 rounded-lg border border-line bg-surface px-3"
+            />
+          </div>
+        </div>
+        {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
+        <Button type="submit" busy={busy}>
+          Enregistrer le calcul
+        </Button>
+      </form>
     </Card>
   );
 }

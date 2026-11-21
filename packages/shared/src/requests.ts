@@ -152,6 +152,8 @@ export interface RequestDetail {
     status: RecipientStatusCode;
     declineReason: string | null;
   }[];
+  /** Côté commissionnaire seulement : son devis pour cette demande, s'il existe. */
+  quoteId?: string | null;
   /** Côté commissionnaire seulement : la fiche client correspondante. */
   customer?: {
     orgCustomerId: string;

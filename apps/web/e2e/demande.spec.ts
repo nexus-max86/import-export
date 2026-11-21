@@ -60,6 +60,26 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await client.reload();
   await expect(client.getByText('Lue')).toBeVisible();
 
+  // --- Devis : pré-rempli, complété, envoyé (version figée) ---
+  await pro.getByRole('button', { name: 'Préparer le devis' }).click();
+  await expect(pro.getByRole('heading', { name: 'Devis · version 1' })).toBeVisible();
+  const prices = pro.getByLabel('Prix unitaire (USD)');
+  await prices.nth(0).fill('15,49');
+  await prices.nth(1).fill('8,00');
+  await prices.nth(2).fill('9,74');
+  await prices.nth(3).fill('28,56');
+  await prices.nth(4).fill('9,00');
+  await expect(pro.getByText('Total').locator('..')).toContainText('86,28 USD');
+  await pro.getByRole('button', { name: 'Enregistrer le brouillon' }).click();
+  await expect(pro.getByText('Brouillon enregistré.')).toBeVisible();
+  await pro.getByRole('button', { name: 'Envoyer le devis au client' }).click();
+  await pro.getByRole('button', { name: /Confirmer l’envoi de 86,28 USD/ }).click();
+  await expect(pro.getByText('Devis envoyé', { exact: true })).toBeVisible();
+  await expect(pro.getByRole('button', { name: 'Corriger (nouvelle version)' })).toBeVisible();
+
+  await client.reload();
+  await expect(client.getByText('Devis reçu').first()).toBeVisible();
+
   // --- Demande saisie pour un client géré (reçue par WhatsApp) ---
   await pro.getByRole('link', { name: 'Clients' }).click();
   await pro.getByRole('button', { name: 'Ajouter un client' }).click();

@@ -141,24 +141,28 @@ enum MemberStatus {
 }
 
 model Organization {
-  id                 String             @id @default(uuid(7)) @db.Uuid
-  type               OrganizationType
-  name               String
-  slug               String             @unique
-  description        String?
-  phoneWhatsapp      String?            @map("phone_whatsapp")
+  id                     String             @id @default(uuid(7)) @db.Uuid
+  type                   OrganizationType
+  name                   String
+  slug                   String             @unique
+  description            String?
+  phoneWhatsapp          String?            @map("phone_whatsapp")
   /// Service d'importation opéré par Konzia : aucun privilège lié à ce drapeau.
   /// Codes des marketplaces prises en charge (shein, aliexpress, amazon…).
-  marketplaces       String[]           @default([])
+  marketplaces           String[]           @default([])
   /// Modes de transport proposés : air, sea, road.
-  transportModes     String[]           @default([]) @map("transport_modes")
-  pricingPolicy      String?            @map("pricing_policy")
-  isPlatformOperated Boolean            @default(false) @map("is_platform_operated")
-  status             OrganizationStatus @default(pending)
+  transportModes         String[]           @default([]) @map("transport_modes")
+  pricingPolicy          String?            @map("pricing_policy")
+  /// Réglages de l'assistant de devis : commission (points de base, 1000 = 10 %) et transport au kilo.
+  commissionBps          Int?               @map("commission_bps")
+  transportPerKgAmount   BigInt?            @map("transport_per_kg_amount")
+  transportPerKgCurrency String?            @map("transport_per_kg_currency") @db.Char(3)
+  isPlatformOperated     Boolean            @default(false) @map("is_platform_operated")
+  status                 OrganizationStatus @default(pending)
   /// Date de la dernière approbation (publique : badge « Nouveau »). Écrite par l'administration.
-  verifiedAt         DateTime?          @map("verified_at") @db.Timestamptz(3)
-  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  verifiedAt             DateTime?          @map("verified_at") @db.Timestamptz(3)
+  createdAt              DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   members       OrganizationMember[]
   invitations   Invitation[]
@@ -166,6 +170,7 @@ model Organization {
   customers     OrgCustomer[]
   verifications OrganizationVerification[]
   requests      QuoteRequestRecipient[]
+  quotes        Quote[]
 
   @@map("organizations")
 }
@@ -580,6 +585,7 @@ model QuoteRequestRecipient {
   quoteRequest QuoteRequest @relation(fields: [quoteRequestId], references: [id])
   organization Organization @relation(fields: [organizationId], references: [id])
   orgCustomer  OrgCustomer  @relation(fields: [orgCustomerId], references: [id])
+  quote        Quote?
 
   @@unique([quoteRequestId, organizationId])
   @@index([organizationId, status])
@@ -602,4 +608,115 @@ model ExchangeRate {
 
   @@index([pair, validFrom])
   @@map("exchange_rates")
+}
+
+// ---------------------------------------------------------------------------
+// Devis (ticket #15) — versions figées à l'envoi
+// ---------------------------------------------------------------------------
+
+enum QuoteStatus {
+  draft
+  sent
+  accepted
+  rejected
+  changes_requested
+  expired
+  withdrawn
+}
+
+enum QuoteVersionStatus {
+  draft
+  sent
+  superseded
+  accepted
+  rejected
+  expired
+  withdrawn
+}
+
+enum QuoteLineKind {
+  product
+  seller_shipping
+  service_fee
+  international_shipping
+  handling
+  customs_estimate
+  local_delivery
+  insurance
+  discount
+}
+
+model Quote {
+  id             String      @id @default(uuid(7)) @db.Uuid
+  recipientId    String      @unique @map("recipient_id") @db.Uuid
+  quoteRequestId String      @map("quote_request_id") @db.Uuid
+  organizationId String      @map("organization_id") @db.Uuid
+  orgCustomerId  String      @map("org_customer_id") @db.Uuid
+  customerUserId String?     @map("customer_user_id") @db.Uuid
+  status         QuoteStatus @default(draft)
+  /// Motif d'une demande de correction du client.
+  changeRequest  String?     @map("change_request")
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  recipient    QuoteRequestRecipient @relation(fields: [recipientId], references: [id])
+  organization Organization          @relation(fields: [organizationId], references: [id])
+  versions     QuoteVersion[]
+
+  @@index([quoteRequestId])
+  @@index([organizationId, status])
+  @@map("quotes")
+}
+
+model QuoteVersion {
+  id                String             @id @default(uuid(7)) @db.Uuid
+  quoteId           String             @map("quote_id") @db.Uuid
+  organizationId    String             @map("organization_id") @db.Uuid
+  versionNo         Int                @map("version_no")
+  status            QuoteVersionStatus @default(draft)
+  currency          String             @db.Char(3)
+  productsAmount    BigInt             @default(0) @map("products_amount")
+  totalAmount       BigInt             @default(0) @map("total_amount")
+  /// Taux copiés à l'envoi (D3) : un nouveau taux ne modifie jamais ce devis.
+  fxUsdCdf          Decimal?           @map("fx_usd_cdf") @db.Decimal(18, 8)
+  fxUsdCny          Decimal?           @map("fx_usd_cny") @db.Decimal(18, 8)
+  fxSource          String?            @map("fx_source")
+  fxAt              DateTime?          @map("fx_at") @db.Timestamptz(3)
+  validUntil        DateTime           @map("valid_until") @db.Timestamptz(3)
+  leadTimeMinDays   Int                @map("lead_time_min_days")
+  leadTimeMaxDays   Int                @map("lead_time_max_days")
+  weightGrams       Int?               @map("weight_grams")
+  assumptions       String?
+  cancellationTerms String?            @map("cancellation_terms")
+  sentAt            DateTime?          @map("sent_at") @db.Timestamptz(3)
+  createdBy         String             @map("created_by") @db.Uuid
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  quote Quote       @relation(fields: [quoteId], references: [id])
+  lines QuoteLine[]
+
+  @@unique([quoteId, versionNo])
+  @@map("quote_versions")
+}
+
+model QuoteLine {
+  id                 String        @id @default(uuid(7)) @db.Uuid
+  quoteVersionId     String        @map("quote_version_id") @db.Uuid
+  organizationId     String        @map("organization_id") @db.Uuid
+  position           Int
+  kind               QuoteLineKind
+  quoteRequestItemId String?       @map("quote_request_item_id") @db.Uuid
+  description        String
+  quantity           Int
+  unitAmount         BigInt        @map("unit_amount")
+  /// Calculé par le serveur : quantité × prix unitaire (négatif pour une réduction).
+  amount             BigInt
+  isEstimate         Boolean       @default(false) @map("is_estimate")
+  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  version QuoteVersion @relation(fields: [quoteVersionId], references: [id], onDelete: Cascade)
+
+  @@index([quoteVersionId])
+  @@map("quote_lines")
 }
