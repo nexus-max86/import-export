@@ -9,6 +9,7 @@ const LINKS = [
   { href: '/pro/commandes', label: 'Commandes' },
   { href: '/pro/achats', label: 'Achats' },
   { href: '/pro/colis', label: 'Colis' },
+  { href: '/pro/expeditions', label: 'Expéditions' },
   { href: '/pro/paiements', label: 'Paiements' },
   { href: '/pro/clients', label: 'Clients' },
   { href: '/pro/profil', label: 'Profil et vérification' },

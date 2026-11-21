@@ -6,7 +6,7 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   playwright,
 }) => {
   // Parcours long : demande → devis → commande → ajustement → client géré.
-  test.setTimeout(120_000);
+  test.setTimeout(240_000);
   const suffix = Date.now();
   const orgName = `Kaseba Import ${suffix}`;
   const setup = await playwright.request.newContext();
@@ -207,9 +207,34 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   ).toBeVisible();
   await pro.getByRole('button', { name: 'Enregistrer les mesures' }).click();
   await expect(pro.getByText('Mesures enregistrées.')).toBeVisible();
+  await pro
+    .getByRole('combobox', { name: /^Étape/ })
+    .selectOption({ label: 'Reçu à l’entrepôt d’origine' });
+  await pro.getByLabel('Lieu (facultatif)').fill('Guangzhou');
+  await pro.getByRole('button', { name: 'Enregistrer l’étape' }).click();
+  await expect(pro.getByText('Étape enregistrée.')).toBeVisible();
   await pro.getByRole('button', { name: 'Fermer le colis' }).click();
   await expect(pro.getByText('Colis fermé.')).toBeVisible();
 
   await client.reload();
   await expect(client.getByText('En préparation logistique').first()).toBeVisible();
+
+  // --- Expédition : une étape enregistrée une fois vaut pour tous ses colis ---
+  await pro.getByRole('link', { name: 'Expéditions', exact: true }).click();
+  await pro.getByLabel('Départ').fill('Guangzhou');
+  await pro.getByLabel('Arrivée').fill('Lubumbashi');
+  await pro.getByRole('button', { name: 'Créer l’expédition' }).click();
+  await expect(pro.getByText('Expédition créée.')).toBeVisible();
+  await pro.getByRole('checkbox', { name: /Ajouter le colis KZ-P-/ }).check();
+  await pro.getByRole('button', { name: 'Ajouter à l’expédition' }).click();
+  await expect(pro.getByText('Colis ajoutés à l’expédition.')).toBeVisible();
+  await pro
+    .getByLabel('Étape pour toute l’expédition')
+    .selectOption({ label: 'Expédié vers la RDC' });
+  await pro.getByRole('button', { name: 'Enregistrer l’étape' }).click();
+  await expect(pro.getByText('Étape enregistrée pour tous les colis.')).toBeVisible();
+  await expect(pro.getByText('En route')).toBeVisible();
+
+  await client.reload();
+  await expect(client.getByText('En transport').first()).toBeVisible();
 });

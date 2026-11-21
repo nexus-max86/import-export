@@ -18,6 +18,8 @@ import {
   CreateParcelSchema,
   MAX_UPLOAD_BYTES,
   RemoveParcelItemSchema,
+  TrackingEventSchema,
+  type TrackingEventInput,
   UpdateParcelSchema,
   type AddParcelItemsInput,
   type CreateParcelInput,
@@ -102,6 +104,17 @@ export class ParcelsController {
     @Body(new ZodBody(RemoveParcelItemSchema)) body: { reason: string },
   ): Promise<ParcelDetail> {
     return this.parcels.removeItem(auth.userId, org, id, itemId, body.reason);
+  }
+
+  @Post('parcels/:id/events')
+  @ForOrg('tracking.record')
+  recordEvent(
+    @Auth() auth: AuthContext,
+    @Org() org: OrgContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodBody(TrackingEventSchema)) body: TrackingEventInput,
+  ): Promise<ParcelDetail> {
+    return this.parcels.recordEvent(auth.userId, org, id, body);
   }
 
   @Post('parcels/:id/close')

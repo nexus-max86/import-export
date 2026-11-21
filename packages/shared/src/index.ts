@@ -20,3 +20,4 @@ export * from './orders';
 export * from './payments';
 export * from './purchases';
 export * from './parcels';
+export * from './tracking';

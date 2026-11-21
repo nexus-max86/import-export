@@ -1,6 +1,8 @@
 'use client';
 
 import {
+  ANOMALY_LABELS,
+  ANOMALY_TYPES,
   chargeableWeightG,
   ORG_HEADER,
   PARCEL_CONDITION_LABELS,
@@ -12,6 +14,7 @@ import {
   type ParcelCondition,
   type ParcelDetail,
   type ParcelSummary,
+  type RouteTemplateInfo,
 } from '@konzia/shared';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -145,6 +148,10 @@ export function ParcelEditor({ org, id }: { org: string; id: string }) {
   const [error, setError] = useState<string>();
   const [info, setInfo] = useState<string>();
   const [busy, setBusy] = useState<string>();
+  const [templates, setTemplates] = useState<RouteTemplateInfo[]>([]);
+  useEffect(() => {
+    api<RouteTemplateInfo[]>('/org/route-templates', { org }).then(setTemplates, () => undefined);
+  }, [org]);
 
   const load = useCallback(() => {
     Promise.all([
@@ -261,6 +268,31 @@ export function ParcelEditor({ org, id }: { org: string; id: string }) {
         />
       )}
 
+      <TrackingCard
+        parcel={parcel}
+        templates={templates}
+        busy={busy}
+        onTemplate={(routeTemplateId) =>
+          run(
+            'route',
+            () =>
+              api<ParcelDetail>(`/org/parcels/${id}`, {
+                org,
+                method: 'PATCH',
+                body: { routeTemplateId },
+              }),
+            'Itinéraire enregistré.',
+          )
+        }
+        onEvent={(body) =>
+          run(
+            'event',
+            () => api<ParcelDetail>(`/org/parcels/${id}/events`, { org, body }),
+            'Étape enregistrée.',
+          )
+        }
+      />
+
       <PhotosCard
         org={org}
         parcel={parcel}
@@ -321,7 +353,7 @@ export function ParcelEditor({ org, id }: { org: string; id: string }) {
           )}
         </div>
         <p className="text-xs text-muted">
-          Un colis fermé est prêt à expédier. Les étapes de suivi arrivent avec les itinéraires.
+          Un colis fermé peut rejoindre une expédition (menu « Expéditions »).
         </p>
       </Card>
     </>
@@ -650,5 +682,164 @@ function ParcelPhoto({ org, parcelId, fileId }: { org: string; parcelId: string;
     <img src={src} alt="Photo du colis" className="aspect-square rounded-lg object-cover" />
   ) : (
     <div className="aspect-square rounded-lg bg-copper-soft" aria-hidden />
+  );
+}
+
+/** Itinéraire, frise des étapes et enregistrement d'une nouvelle étape (insertion seule). */
+function TrackingCard({
+  parcel,
+  templates,
+  busy,
+  onTemplate,
+  onEvent,
+}: {
+  parcel: ParcelDetail;
+  templates: RouteTemplateInfo[];
+  busy: string | undefined;
+  onTemplate: (id: string | null) => void;
+  onEvent: (body: object) => void;
+}) {
+  const template =
+    templates.find((t) => t.id === parcel.routeTemplateId) ?? templates.find((t) => t.global);
+  const [kind, setKind] = useState<'step' | 'anomaly' | 'correction'>('step');
+  const [error, setError] = useState<string>();
+  const currentIdx = template?.steps.findIndex((st) => st.code === parcel.currentStepCode) ?? -1;
+  const nextSteps = (template?.steps ?? []).filter(
+    (_, i) => kind === 'correction' || i > currentIdx,
+  );
+  const closed = parcel.status === 'delivered' || parcel.status === 'lost';
+
+  function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    const note = String(f.get('eventNote') ?? '').trim() || null;
+    if (kind !== 'step' && !note) return setError('Ajoutez une explication.');
+    setError(undefined);
+    onEvent({
+      kind,
+      ...(kind === 'anomaly'
+        ? { anomalyType: String(f.get('anomalyType')) }
+        : { stepCode: String(f.get('stepCode')) }),
+      location: String(f.get('eventLocation') ?? '').trim() || null,
+      note,
+    });
+  }
+
+  return (
+    <Card>
+      <h2 className="font-display text-lg font-bold">Suivi du colis</h2>
+      {parcel.events.length === 0 ? (
+        <label className="flex flex-col gap-1 text-sm font-semibold">
+          Itinéraire
+          <select
+            value={parcel.routeTemplateId ?? ''}
+            disabled={busy === 'route'}
+            onChange={(e) => onTemplate(e.target.value || null)}
+            className="min-h-11 rounded-lg border border-line px-3"
+          >
+            {templates.map((t) => (
+              <option key={t.id} value={t.global ? '' : t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : (
+        <p className="text-sm">
+          Itinéraire : <strong>{template?.name}</strong>
+        </p>
+      )}
+      {parcel.events.length > 0 && (
+        <ol className="flex flex-col gap-2 border-l-2 border-line pl-4 text-sm">
+          {parcel.events.map((ev) => (
+            <li key={ev.id} className="flex flex-col">
+              <span className="font-semibold">
+                {ev.kind === 'anomaly'
+                  ? `Anomalie : ${ev.anomalyType ? ANOMALY_LABELS[ev.anomalyType] : ''}`
+                  : ev.kind === 'correction'
+                    ? `Correction → ${ev.label}`
+                    : ev.label}
+                {!ev.visibleToCustomer && (
+                  <span className="font-normal text-muted"> (interne)</span>
+                )}
+              </span>
+              <span className="text-muted">
+                {[
+                  fmtDate(ev.occurredAt),
+                  ev.location,
+                  ev.viaShipment && 'via l’expédition',
+                  ev.note,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+      <form onSubmit={submit} className="flex flex-col gap-3 border-t border-line pt-3">
+        <h3 className="font-semibold">Enregistrer une étape</h3>
+        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Type d’événement">
+          {(
+            [
+              ['step', 'Étape suivante'],
+              ['anomaly', 'Anomalie'],
+              ['correction', 'Correction'],
+            ] as const
+          ).map(([k, label]) => (
+            <label key={k} className="flex items-center gap-1 text-sm">
+              <input
+                type="radio"
+                name="kind"
+                checked={kind === k}
+                disabled={closed && k !== 'correction'}
+                onChange={() => setKind(k)}
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+        {kind === 'anomaly' ? (
+          <label className="flex flex-col gap-1 text-sm font-semibold">
+            Nature de l’anomalie
+            <select name="anomalyType" className="min-h-11 rounded-lg border border-line px-3">
+              {ANOMALY_TYPES.map((a) => (
+                <option key={a} value={a}>
+                  {ANOMALY_LABELS[a]}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <label className="flex flex-col gap-1 text-sm font-semibold">
+            Étape
+            <select name="stepCode" className="min-h-11 rounded-lg border border-line px-3">
+              {nextSteps.map((st) => (
+                <option key={st.code} value={st.code}>
+                  {st.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        <Field id="eventLocation" label="Lieu (facultatif)" />
+        <Field
+          id="eventNote"
+          label={kind === 'step' ? 'Note interne (facultatif)' : 'Explication (obligatoire)'}
+        />
+        {error && <Notice tone="error">{error}</Notice>}
+        <Button
+          type="submit"
+          busy={busy === 'event'}
+          disabled={kind !== 'anomaly' && nextSteps.length === 0}
+        >
+          Enregistrer l’étape
+        </Button>
+        <p className="text-xs text-muted">
+          Chaque étape est horodatée et ne peut pas être effacée. Une erreur se corrige par une
+          nouvelle étape.
+        </p>
+      </form>
+    </Card>
   );
 }

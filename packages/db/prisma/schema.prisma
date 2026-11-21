@@ -1027,11 +1027,16 @@ model Parcel {
   status            ParcelStatus    @default(open)
   photoFileIds      String[]        @default([]) @map("photo_file_ids") @db.Uuid
   note              String?
+  /// Itinéraire suivi (nul = modèle global) et dernière étape enregistrée.
+  routeTemplateId   String?         @map("route_template_id") @db.Uuid
+  currentStepCode   String?         @map("current_step_code")
   createdBy         String          @map("created_by") @db.Uuid
   createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  items ParcelItem[]
+  items     ParcelItem[]
+  events    ParcelEvent[]
+  shipments ShipmentParcel[]
 
   @@index([organizationId, status])
   @@map("parcels")
@@ -1058,4 +1063,127 @@ model ParcelItem {
   @@index([parcelId])
   @@index([orderItemId])
   @@map("parcel_items")
+}
+
+/// Itinéraire : suite d'étapes de suivi. organization_id nul = modèle global (cahier §5.4).
+model RouteTemplate {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  name           String
+  mode           String?
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  steps RouteTemplateStep[]
+
+  @@index([organizationId])
+  @@map("route_templates")
+}
+
+model RouteTemplateStep {
+  id                String  @id @default(uuid(7)) @db.Uuid
+  routeTemplateId   String  @map("route_template_id") @db.Uuid
+  organizationId    String? @map("organization_id") @db.Uuid
+  position          Int
+  code              String
+  labelFr           String  @map("label_fr")
+  visibleToCustomer Boolean @default(true) @map("visible_to_customer")
+
+  template RouteTemplate @relation(fields: [routeTemplateId], references: [id])
+
+  @@unique([routeTemplateId, position])
+  @@unique([routeTemplateId, code])
+  @@map("route_template_steps")
+}
+
+/// Mouvement de colis : insertion seule. Une erreur se corrige par un événement « correction ».
+model ParcelEvent {
+  id                String   @id @default(uuid(7)) @db.Uuid
+  parcelId          String   @map("parcel_id") @db.Uuid
+  organizationId    String   @map("organization_id") @db.Uuid
+  /// step, anomaly ou correction.
+  kind              String
+  stepCode          String   @map("step_code")
+  anomalyType       String?  @map("anomaly_type")
+  occurredAt        DateTime @map("occurred_at") @db.Timestamptz(3)
+  recordedAt        DateTime @default(now()) @map("recorded_at") @db.Timestamptz(3)
+  location          String?
+  note              String?
+  photoFileIds      String[] @default([]) @map("photo_file_ids") @db.Uuid
+  visibleToCustomer Boolean  @default(true) @map("visible_to_customer")
+  shipmentEventId   String?  @map("shipment_event_id") @db.Uuid
+  recordedBy        String   @map("recorded_by") @db.Uuid
+
+  parcel Parcel @relation(fields: [parcelId], references: [id])
+
+  @@index([parcelId, recordedAt])
+  @@map("parcel_events")
+}
+
+/// Expédition : regroupe des colis fermés sur un même transport.
+model Shipment {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  mode           String
+  origin         String
+  destination    String
+  carrier        String?
+  reference      String?
+  trackingNumber String?   @map("tracking_number")
+  departureEst   DateTime? @map("departure_est") @db.Timestamptz(3)
+  departureAt    DateTime? @map("departure_at") @db.Timestamptz(3)
+  arrivalEst     DateTime? @map("arrival_est") @db.Timestamptz(3)
+  arrivalAt      DateTime? @map("arrival_at") @db.Timestamptz(3)
+  costAmount     BigInt?   @map("cost_amount")
+  currency       String?   @db.Char(3)
+  /// planned, in_transit, arrived, cancelled.
+  status         String    @default("planned")
+  createdBy      String    @map("created_by") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  parcels ShipmentParcel[]
+  events  ShipmentEvent[]
+
+  @@index([organizationId, status])
+  @@map("shipments")
+}
+
+model ShipmentParcel {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  shipmentId     String    @map("shipment_id") @db.Uuid
+  parcelId       String    @map("parcel_id") @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  addedAt        DateTime  @default(now()) @map("added_at") @db.Timestamptz(3)
+  addedBy        String    @map("added_by") @db.Uuid
+  removedAt      DateTime? @map("removed_at") @db.Timestamptz(3)
+  removedBy      String?   @map("removed_by") @db.Uuid
+  removedReason  String?   @map("removed_reason")
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+  parcel   Parcel   @relation(fields: [parcelId], references: [id])
+
+  @@index([shipmentId])
+  @@index([parcelId])
+  @@map("shipment_parcels")
+}
+
+/// Mouvement d'expédition (insertion seule), répercuté sur chacun de ses colis.
+model ShipmentEvent {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  shipmentId     String   @map("shipment_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  kind           String
+  stepCode       String   @map("step_code")
+  anomalyType    String?  @map("anomaly_type")
+  occurredAt     DateTime @map("occurred_at") @db.Timestamptz(3)
+  recordedAt     DateTime @default(now()) @map("recorded_at") @db.Timestamptz(3)
+  location       String?
+  note           String?
+  recordedBy     String   @map("recorded_by") @db.Uuid
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+
+  @@index([shipmentId, recordedAt])
+  @@map("shipment_events")
 }

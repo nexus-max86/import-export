@@ -7,6 +7,9 @@ import { fmtAmount, fmtDate } from '@/lib/format';
 const EVENT_LABELS: Record<string, string> = {
   created: 'Commande créée',
   adjustment_proposed: 'Ajustement proposé',
+  adjustment_accepted: 'Ajustement accepté',
+  adjustment_rejected: 'Ajustement refusé',
+  adjustment_cancelled: 'Ajustement annulé',
   purchase_rule_changed: 'Règle d’achat modifiée',
 };
 

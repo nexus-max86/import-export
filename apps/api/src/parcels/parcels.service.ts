@@ -13,10 +13,13 @@ import {
   type PackableItem,
   type ParcelDetail,
   type ParcelSummary,
+  type TrackingEventInput,
+  type TrackingStepCode,
   type UpdateParcelInput,
 } from '@konzia/shared';
 import { randomBytes } from 'node:crypto';
 import { AuditService } from '../audit/audit.service';
+import { EVENT_SELECT, toEventInfo, TrackingService } from '../tracking/tracking.service';
 import { FilesService, type UploadedBlob } from '../files/files.service';
 import type { OrgContext } from '../tenancy/org-context';
 import { TenantDb, type TenantTx } from '../tenancy/tenant-db.service';
@@ -35,7 +38,11 @@ const PARCEL_SELECT = {
   condition: true,
   note: true,
   photoFileIds: true,
+  routeTemplateId: true,
+  currentStepCode: true,
   createdAt: true,
+  events: { select: EVENT_SELECT, orderBy: { recordedAt: 'asc' } },
+  shipments: { where: { removedAt: null }, select: { shipmentId: true } },
   items: {
     select: {
       id: true,
@@ -65,10 +72,12 @@ export class ParcelsService {
     private readonly db: TenantDb,
     private readonly files: FilesService,
     private readonly audit: AuditService,
+    private readonly tracking: TrackingService,
   ) {}
 
   async create(userId: string, org: OrgContext, input: CreateParcelInput): Promise<ParcelDetail> {
     return this.db.run(userId, async (tx) => {
+      if (input.routeTemplateId) await this.tracking.assertTemplate(tx, org, input.routeTemplateId);
       // Collision très improbable (32^6 codes) : on retente quelques fois dans un point de sauvegarde.
       for (let attempt = 0; ; attempt++) {
         const code = parcelCode(randomBytes(6));
@@ -83,6 +92,7 @@ export class ParcelsService {
             code,
             locationLabel: input.locationLabel ?? null,
             volumetricDivisor: input.volumetricDivisor,
+            routeTemplateId: input.routeTemplateId ?? null,
             createdBy: userId,
           },
           select: { id: true },
@@ -103,6 +113,12 @@ export class ParcelsService {
       const p = await this.find(tx, org, id);
       if (p.status !== 'open' && p.status !== 'closed')
         throw new ConflictException('Ce colis est clos.');
+      if (input.routeTemplateId !== undefined) {
+        if (p.currentStepCode)
+          throw new ConflictException('Le suivi a commencé : l’itinéraire ne change plus.');
+        if (input.routeTemplateId)
+          await this.tracking.assertTemplate(tx, org, input.routeTemplateId);
+      }
       const next = {
         lengthMm: input.lengthMm !== undefined ? input.lengthMm : p.lengthMm,
         widthMm: input.widthMm !== undefined ? input.widthMm : p.widthMm,
@@ -219,6 +235,16 @@ export class ParcelsService {
       await this.record(tx, org, userId, 'parcel.items_added', id, { after: input });
       return this.read(tx, org, id);
     });
+  }
+
+  async recordEvent(
+    userId: string,
+    org: OrgContext,
+    id: string,
+    input: TrackingEventInput,
+  ): Promise<ParcelDetail> {
+    await this.tracking.recordParcelEvent(userId, org, id, input);
+    return this.get(userId, org, id);
   }
 
   async removeItem(
@@ -390,6 +416,7 @@ export class ParcelsService {
         volumetricDivisor: true,
         condition: true,
         photoFileIds: true,
+        currentStepCode: true,
       },
     });
     if (!p) throw new NotFoundException('Colis introuvable.');
@@ -406,6 +433,9 @@ export class ParcelsService {
       tx,
       p.items.map((i) => i.orgCustomerId),
     );
+    const labels = new Map(
+      (await this.tracking.templateSteps(tx, p.routeTemplateId)).map((st) => [st.code, st.labelFr]),
+    );
     return {
       ...summary(p),
       lengthMm: p.lengthMm,
@@ -415,6 +445,8 @@ export class ParcelsService {
       condition: p.condition,
       note: p.note,
       photoFileIds: p.photoFileIds,
+      routeTemplateId: p.routeTemplateId,
+      events: p.events.map((e) => toEventInfo(e, labels)),
       items: p.items.map((i) => ({
         id: i.id,
         orderItemId: i.orderItemId,
@@ -464,6 +496,8 @@ function summary(p: ParcelRow): ParcelSummary {
     customerCount: new Set(active.map((i) => i.orgCustomerId)).size,
     weightG: p.weightG,
     volumetricWeightG: p.volumetricWeightG,
+    currentStepCode: p.currentStepCode as TrackingStepCode | null,
+    shipmentId: p.shipments[0]?.shipmentId ?? null,
     createdAt: p.createdAt.toISOString(),
   };
 }

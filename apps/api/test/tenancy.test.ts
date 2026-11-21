@@ -155,6 +155,49 @@ describe('Isolation entre commissionnaires', () => {
       .postFile(`/api/org/parcels/${parcel.body.id}/photos`, {}, PNG, 'colis.png')
       .set(...asOrg(orgA))
       .expect(201);
+    // Un itinéraire propre à A, une étape, une expédition avec ce colis.
+    await a.agent
+      .post('/api/org/route-templates', {
+        name: 'Avion direct',
+        mode: 'air',
+        steps: [
+          { code: 'received_origin_warehouse' },
+          { code: 'shipped_to_drc' },
+          { code: 'delivered' },
+        ],
+      })
+      .set(...asOrg(orgA))
+      .expect(201);
+    await a.agent
+      .patch(`/api/org/parcels/${parcel.body.id}`, { weightG: 1200 })
+      .set(...asOrg(orgA))
+      .expect(200);
+    await a.agent
+      .post(`/api/org/parcels/${parcel.body.id}/events`, {
+        kind: 'step',
+        stepCode: 'received_origin_warehouse',
+      })
+      .set(...asOrg(orgA))
+      .expect(201);
+    await a.agent
+      .post(`/api/org/parcels/${parcel.body.id}/close`)
+      .set(...asOrg(orgA))
+      .expect(201);
+    const shipment = await a.agent
+      .post('/api/org/shipments', { mode: 'air', origin: 'Guangzhou', destination: 'Lubumbashi' })
+      .set(...asOrg(orgA))
+      .expect(201);
+    await a.agent
+      .post(`/api/org/shipments/${shipment.body.id}/parcels`, { parcelIds: [parcel.body.id] })
+      .set(...asOrg(orgA))
+      .expect(201);
+    await a.agent
+      .post(`/api/org/shipments/${shipment.body.id}/events`, {
+        kind: 'step',
+        stepCode: 'shipped_to_drc',
+      })
+      .set(...asOrg(orgA))
+      .expect(201);
     await t.prisma.organization.update({ where: { id: orgA }, data: { status: 'pending' } });
     await a.agent
       .postFile(

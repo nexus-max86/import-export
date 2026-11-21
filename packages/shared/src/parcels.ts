@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { TrackingEventInfo, TrackingStepCode } from './tracking';
 
 /** Alphabet des codes de colis : sans 0/O ni 1/I, pour la lecture à voix haute et au téléphone. */
 export const PARCEL_CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -56,6 +57,7 @@ export const PARCEL_CONDITION_LABELS: Record<ParcelCondition, string> = {
 export const CreateParcelSchema = z.object({
   locationLabel: z.string().trim().max(120).nullable().optional(),
   volumetricDivisor: z.number().int().min(1000).max(10000).default(5000),
+  routeTemplateId: z.uuid().nullable().optional(),
 });
 export type CreateParcelInput = z.infer<typeof CreateParcelSchema>;
 
@@ -68,6 +70,7 @@ export const UpdateParcelSchema = z.object({
   heightMm: measure(5_000),
   volumetricDivisor: z.number().int().min(1000).max(10000).optional(),
   condition: z.enum(PARCEL_CONDITIONS).optional(),
+  routeTemplateId: z.uuid().nullable().optional(),
   note: z.string().trim().max(1000).nullable().optional(),
 });
 export type UpdateParcelInput = z.infer<typeof UpdateParcelSchema>;
@@ -93,6 +96,8 @@ export interface ParcelSummary {
   customerCount: number;
   weightG: number | null;
   volumetricWeightG: number | null;
+  currentStepCode: TrackingStepCode | null;
+  shipmentId: string | null;
   createdAt: string;
 }
 
@@ -118,7 +123,9 @@ export interface ParcelDetail extends ParcelSummary {
   condition: ParcelCondition;
   note: string | null;
   photoFileIds: string[];
+  routeTemplateId: string | null;
   items: ParcelItemInfo[];
+  events: TrackingEventInfo[];
 }
 
 /** Article reçu à l'entrepôt, pas encore (entièrement) mis en colis. */
