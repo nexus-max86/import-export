@@ -25,7 +25,10 @@ export function OrgOrderActions({
   const [error, setError] = useState<string>();
   const [mode, setMode] = useState<'idle' | 'cancel' | 'adjust'>('idle');
   const [busy, setBusy] = useState<string>();
-  const next = ORG_NEXT_STATUSES[order.status] ?? [];
+  // Avant paiement complet, « Achat en cours » n'est proposé que si la règle d'achat le permet.
+  const next = (ORG_NEXT_STATUSES[order.status] ?? []).filter(
+    (s) => s !== 'purchasing' || order.status === 'paid' || order.purchaseRule !== 'full_payment',
+  );
   const pending = order.adjustments.find((a) => a.status === 'proposed');
   const closed = order.status === 'completed' || order.status === 'cancelled';
 

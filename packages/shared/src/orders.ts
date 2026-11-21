@@ -68,6 +68,9 @@ export interface OrderSummary {
 
 /** Étapes qu'un commissionnaire peut faire avancer lui-même (le paiement a ses propres écrans). */
 export const ORG_NEXT_STATUSES: Partial<Record<OrderStatus, OrderStatus[]>> = {
+  // Avant paiement complet : seulement si la règle d'achat le permet (acompte, fonds propres).
+  awaiting_payment: ['purchasing'],
+  payment_to_verify: ['purchasing'],
   paid: ['purchasing'],
   purchasing: ['partially_purchased', 'purchased'],
   partially_purchased: ['purchased'],
@@ -126,6 +129,8 @@ export interface OrderDetail extends OrderSummary {
   quoteId: string;
   quoteRequestId: string;
   cancelledReason: string | null;
+  purchaseRule: PurchaseRule;
+  depositBps: number | null;
   /** Vrai si le client a un compte Konzia (sinon le commissionnaire enregistre ses réponses). */
   customerHasAccount: boolean;
   adjustments: AdjustmentInfo[];
@@ -146,3 +151,20 @@ export interface OrderDetail extends OrderSummary {
     at: string;
   }[];
 }
+
+export const PURCHASE_RULES = ['full_payment', 'deposit', 'own_funds'] as const;
+export type PurchaseRule = (typeof PURCHASE_RULES)[number];
+export const PURCHASE_RULE_LABELS: Record<PurchaseRule, string> = {
+  full_payment: 'Achat après paiement complet',
+  deposit: 'Achat après un acompte',
+  own_funds: 'Achat sur mes fonds propres',
+};
+export const PurchaseRuleSchema = z
+  .object({
+    rule: z.enum(PURCHASE_RULES),
+    depositBps: z.number().int().min(1).max(10000).nullable().optional(),
+  })
+  .refine((r) => (r.rule === 'deposit') === (r.depositBps != null), {
+    message: 'Indiquez le pourcentage d’acompte.',
+    path: ['depositBps'],
+  });

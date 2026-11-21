@@ -39,7 +39,7 @@ export async function addMember(
   t: TestContext,
   orgId: string,
   userId: string,
-  role: 'sales' | 'owner' | 'accountant',
+  role: 'sales' | 'owner' | 'accountant' | 'buyer' | 'logistics',
 ) {
   return t.prisma.organizationMember.create({ data: { organizationId: orgId, userId, role } });
 }

@@ -1,8 +1,10 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put } from '@nestjs/common';
 import {
   CancelOrderSchema,
   DecideAdjustmentSchema,
   ProposeAdjustmentSchema,
+  PurchaseRuleSchema,
+  type PurchaseRule,
   RecordAdjustmentDecisionSchema,
   UpdateOrderStatusSchema,
   type OrderDetail,
@@ -54,6 +56,17 @@ export class OrdersController {
     @Body(new ZodBody(UpdateOrderStatusSchema)) body: { status: OrderStatus; note?: string | null },
   ): Promise<OrderDetail> {
     return this.orders.updateStatus(auth.userId, org, id, body.status, body.note ?? null);
+  }
+
+  @Put('org/orders/:id/purchase-rule')
+  @ForOrg('order.purchase_rule.edit')
+  setPurchaseRule(
+    @Auth() auth: AuthContext,
+    @Org() org: OrgContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodBody(PurchaseRuleSchema)) body: { rule: PurchaseRule; depositBps?: number | null },
+  ): Promise<OrderDetail> {
+    return this.orders.setPurchaseRule(auth.userId, org, id, body.rule, body.depositBps ?? null);
   }
 
   @Post('org/orders/:id/cancel')

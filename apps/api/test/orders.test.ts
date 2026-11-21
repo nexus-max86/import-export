@@ -42,7 +42,7 @@ describe('Cycle de vie des commandes', () => {
   });
 
   it('le commissionnaire fait avancer la commande, étape par étape, avec historique', async () => {
-    await move('purchasing').expect(400); // pas encore payée
+    await move('purchasing').expect(409); // règle d'achat par défaut : payée en totalité
     await setStatus('paid'); // le paiement arrive au ticket #18
     for (const s of [
       'purchasing',

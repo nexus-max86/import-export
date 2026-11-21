@@ -4,6 +4,12 @@ import { Card } from '@/components/ui';
 import { fmtAmount, fmtDate } from '@/lib/format';
 
 /** Vue d'une commande commune au client et au commissionnaire. */
+const EVENT_LABELS: Record<string, string> = {
+  created: 'Commande créée',
+  adjustment_proposed: 'Ajustement proposé',
+  purchase_rule_changed: 'Règle d’achat modifiée',
+};
+
 export function OrderView({ order }: { order: OrderDetail }) {
   return (
     <>
@@ -67,7 +73,7 @@ export function OrderView({ order }: { order: OrderDetail }) {
           {order.events.map((e, idx) => (
             <li key={idx} className="flex flex-col">
               <span className="font-semibold">
-                {e.toStatus ? ORDER_STATUS_LABELS[e.toStatus] : e.type}
+                {e.toStatus ? ORDER_STATUS_LABELS[e.toStatus] : (EVENT_LABELS[e.type] ?? e.type)}
               </span>
               <span className="text-muted">
                 {fmtDate(e.at)}

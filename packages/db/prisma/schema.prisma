@@ -404,6 +404,7 @@ enum FilePurpose {
   verification_document
   product_screenshot
   payment_proof
+  purchase_proof
 }
 
 /// Fichier stocké chiffré (AES-256-GCM) ; le contenu n'est jamais servi sans contrôle d'accès.
@@ -768,6 +769,9 @@ model Order {
   status            OrderStatus        @default(awaiting_payment)
   paymentStatus     OrderPaymentStatus @default(unpaid) @map("payment_status")
   cancelledReason   String?            @map("cancelled_reason")
+  /// Règle d'achat (retour terrain R3) : tout payé, acompte (depositBps) ou achat sur fonds propres.
+  purchaseRule      PurchaseRule       @default(full_payment) @map("purchase_rule")
+  depositBps        Int?               @map("deposit_bps")
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -797,7 +801,8 @@ model OrderItem {
   createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  order Order @relation(fields: [orderId], references: [id])
+  order         Order               @relation(fields: [orderId], references: [id])
+  supplierItems SupplierOrderItem[]
 
   @@index([orderId])
   @@map("order_items")
@@ -924,4 +929,66 @@ model PaymentEvent {
 
   @@index([paymentId])
   @@map("payment_events")
+}
+
+// ---------------------------------------------------------------------------
+// Achats fournisseurs (ticket #19) — coûts réels, jamais visibles du client
+// ---------------------------------------------------------------------------
+
+enum PurchaseRule {
+  full_payment
+  deposit
+  own_funds
+}
+
+enum SupplierOrderStatus {
+  placed
+  shipped_by_seller
+  partially_received
+  received
+  refunded
+  cancelled
+}
+
+model SupplierOrder {
+  id                   String              @id @default(uuid(7)) @db.Uuid
+  organizationId       String              @map("organization_id") @db.Uuid
+  marketplace          String?
+  storeName            String              @map("store_name")
+  externalRef          String?             @map("external_ref")
+  purchasedAt          DateTime            @map("purchased_at") @db.Timestamptz(3)
+  /// Montant réellement payé au vendeur, dans sa devise (souvent CNY ou USD).
+  amount               BigInt
+  currency             String              @db.Char(3)
+  conversionFeeAmount  BigInt              @default(0) @map("conversion_fee_amount")
+  sellerTrackingNumber String?             @map("seller_tracking_number")
+  proofFileId          String?             @map("proof_file_id") @db.Uuid
+  note                 String?
+  status               SupplierOrderStatus @default(placed)
+  createdBy            String              @map("created_by") @db.Uuid
+  createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  items SupplierOrderItem[]
+
+  @@index([organizationId, status])
+  @@map("supplier_orders")
+}
+
+model SupplierOrderItem {
+  id              String   @id @default(uuid(7)) @db.Uuid
+  supplierOrderId String   @map("supplier_order_id") @db.Uuid
+  orderItemId     String   @map("order_item_id") @db.Uuid
+  organizationId  String   @map("organization_id") @db.Uuid
+  qtyPurchased    Int      @map("qty_purchased")
+  qtyReceived     Int      @default(0) @map("qty_received")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  supplierOrder SupplierOrder @relation(fields: [supplierOrderId], references: [id])
+  orderItem     OrderItem     @relation(fields: [orderItemId], references: [id])
+
+  @@unique([supplierOrderId, orderItemId])
+  @@index([orderItemId])
+  @@map("supplier_order_items")
 }

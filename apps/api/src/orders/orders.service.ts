@@ -7,11 +7,13 @@ import {
 import { Prisma } from '@konzia/db';
 import {
   CANCELLABLE_STATUSES,
+  PURCHASE_RULE_LABELS,
   ORG_NEXT_STATUSES,
   ORDER_STATUS_LABELS,
   type OrderDetail,
   type OrderStatus,
   type OrderSummary,
+  type PurchaseRule,
 } from '@konzia/shared';
 import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -30,11 +32,41 @@ const SUMMARY_SELECT = {
   orgCustomerId: true,
 } as const;
 
+/**
+ * Règle d'achat (retour terrain R3) : peut-on commencer à acheter avant le paiement complet ?
+ * Renvoie la raison du refus, ou null. La base revérifie (déclencheur orders_app_transition).
+ */
+export async function purchaseBlockReason(
+  tx: Prisma.TransactionClient,
+  order: {
+    id: string;
+    status: OrderStatus;
+    purchaseRule: PurchaseRule;
+    depositBps: number | null;
+    finalAmount: bigint;
+  },
+): Promise<string | null> {
+  // La règle ne s'applique qu'au premier achat : ensuite la commande est déjà « en achat ».
+  if (!['awaiting_payment', 'payment_to_verify'].includes(order.status)) return null;
+  if (order.purchaseRule === 'own_funds') return null;
+  if (order.purchaseRule === 'full_payment')
+    return 'Règle d’achat : la commande doit être payée en totalité avant l’achat.';
+  const [row] = await tx.$queryRaw<
+    { paid: bigint }[]
+  >`SELECT order_net_paid(${order.id}::uuid) AS paid`;
+  const needed = (order.finalAmount * BigInt(order.depositBps ?? 10000) + 9999n) / 10000n;
+  if ((row?.paid ?? 0n) >= needed) return null;
+  return `Règle d’achat : acompte de ${(order.depositBps ?? 0) / 100} % non atteint.`;
+}
+
 /** Numéro lisible : KZ-AAAA-NNNNNN (séquence PostgreSQL, sans trou de concurrence). */
 export async function nextOrderNumber(tx: Prisma.TransactionClient): Promise<string> {
   const [row] = await tx.$queryRaw<{ n: bigint }[]>`SELECT nextval('order_number_seq') AS n`;
   return `KZ-${new Date().getUTCFullYear()}-${String(row!.n).padStart(6, '0')}`;
 }
+
+/** Statuts avant le premier achat fournisseur. */
+const PRE_PURCHASE_STATUSES: OrderStatus[] = ['awaiting_payment', 'payment_to_verify', 'paid'];
 
 @Injectable()
 export class OrdersService {
@@ -60,6 +92,10 @@ export class OrdersService {
           `Passage impossible de « ${ORDER_STATUS_LABELS[order.status]} » à « ${ORDER_STATUS_LABELS[to]} ».`,
         );
       }
+      if (to === 'purchasing') {
+        const blocked = await purchaseBlockReason(tx, { id: orderId, ...order });
+        if (blocked) throw new ConflictException(blocked);
+      }
       await tx.order.update({ where: { id: orderId }, data: { status: to }, select: { id: true } });
       await tx.orderEvent.create({
         data: {
@@ -72,6 +108,51 @@ export class OrdersService {
           note,
         },
         select: { id: true },
+      });
+      return this.detail(tx, { id: orderId });
+    });
+  }
+
+  /** Règle d'achat de la commande : modifiable tant que l'achat n'a pas commencé ; toujours tracée. */
+  async setPurchaseRule(
+    userId: string,
+    org: OrgContext,
+    orderId: string,
+    rule: PurchaseRule,
+    depositBps: number | null,
+  ): Promise<OrderDetail> {
+    return this.db.run(userId, async (tx) => {
+      const order = await this.orgOrder(tx, org, orderId);
+      if (!PRE_PURCHASE_STATUSES.includes(order.status))
+        throw new ConflictException('L’achat a déjà commencé : la règle ne peut plus changer.');
+      await tx.order.update({
+        where: { id: orderId },
+        data: { purchaseRule: rule, depositBps: rule === 'deposit' ? depositBps : null },
+        select: { id: true },
+      });
+      const note =
+        rule === 'deposit'
+          ? `${PURCHASE_RULE_LABELS.deposit} de ${(depositBps ?? 0) / 100} %`
+          : PURCHASE_RULE_LABELS[rule];
+      await tx.orderEvent.create({
+        data: {
+          orderId,
+          organizationId: org.organizationId,
+          type: 'purchase_rule_changed',
+          actorUserId: userId,
+          note,
+        },
+        select: { id: true },
+      });
+      await this.audit.record(tx, {
+        actorUserId: userId,
+        actorRole: org.role,
+        organizationId: org.organizationId,
+        action: 'order.purchase_rule_changed',
+        entityType: 'order',
+        entityId: orderId,
+        before: { rule: order.purchaseRule, depositBps: order.depositBps },
+        after: { rule, depositBps: rule === 'deposit' ? depositBps : null },
       });
       return this.detail(tx, { id: orderId });
     });
@@ -308,7 +389,13 @@ export class OrdersService {
   private async orgOrder(tx: TenantTx, org: OrgContext, orderId: string) {
     const o = await tx.order.findFirst({
       where: { id: orderId, organizationId: org.organizationId },
-      select: { status: true, finalAmount: true, customerUserId: true },
+      select: {
+        status: true,
+        finalAmount: true,
+        customerUserId: true,
+        purchaseRule: true,
+        depositBps: true,
+      },
     });
     if (!o) throw new NotFoundException('Commande introuvable.');
     return o;
@@ -339,7 +426,9 @@ export class OrdersService {
   }
 
   getForCustomer(userId: string, orderId: string): Promise<OrderDetail> {
-    return this.db.run(userId, (tx) => this.detail(tx, { id: orderId, customerUserId: userId }));
+    return this.db.run(userId, (tx) =>
+      this.detail(tx, { id: orderId, customerUserId: userId }, { forCustomer: true }),
+    );
   }
 
   getForOrg(userId: string, org: OrgContext, orderId: string): Promise<OrderDetail> {
@@ -376,7 +465,11 @@ export class OrdersService {
     }));
   }
 
-  private async detail(tx: TenantTx, where: Prisma.OrderWhereInput): Promise<OrderDetail> {
+  private async detail(
+    tx: TenantTx,
+    where: Prisma.OrderWhereInput,
+    opts: { forCustomer?: boolean } = {},
+  ): Promise<OrderDetail> {
     const o = await tx.order.findFirst({
       where,
       select: {
@@ -385,6 +478,8 @@ export class OrdersService {
         quoteId: true,
         quoteVersionId: true,
         cancelledReason: true,
+        purchaseRule: true,
+        depositBps: true,
         items: {
           select: {
             id: true,
@@ -398,6 +493,8 @@ export class OrdersService {
           orderBy: { createdAt: 'asc' },
         },
         events: {
+          // La règle d'achat est un choix interne du commissionnaire.
+          where: opts.forCustomer ? { type: { not: 'purchase_rule_changed' } } : {},
           select: { type: true, fromStatus: true, toStatus: true, note: true, at: true },
           orderBy: { at: 'asc' },
         },
@@ -433,6 +530,8 @@ export class OrdersService {
       quoteId: o.quoteId,
       quoteRequestId: quote?.quoteRequestId ?? '',
       cancelledReason: o.cancelledReason,
+      purchaseRule: o.purchaseRule,
+      depositBps: o.depositBps,
       customerHasAccount: o.customerUserId !== null,
       adjustments: o.adjustments.map((a) => ({
         ...a,

@@ -46,7 +46,9 @@ function makeAgent(app: INestApplication) {
 /** Démarre l'application complète contre la base de test réelle. */
 export async function createTestApp(): Promise<TestContext> {
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-  const app = setupApp(moduleRef.createNestApplication({ logger: false }));
+  const app = setupApp(
+    moduleRef.createNestApplication({ logger: process.env.TEST_NEST_LOGS ? ['error'] : false }),
+  );
   await app.init();
   const prisma = app.get(PrismaService);
   const redis = app.get<Redis>(REDIS);
@@ -58,7 +60,7 @@ export async function createTestApp(): Promise<TestContext> {
     agent: () => makeAgent(app),
     async reset() {
       await prisma.$executeRawUnsafe(
-        'TRUNCATE users, organizations, audit_logs, quote_requests, exchange_rates, orders CASCADE',
+        'TRUNCATE users, organizations, audit_logs, quote_requests, exchange_rates, orders, supplier_orders CASCADE',
       );
       // Référentiel : on ne garde que les données de la migration (villes du pilote, communes de Lubumbashi).
       await prisma.$executeRawUnsafe(

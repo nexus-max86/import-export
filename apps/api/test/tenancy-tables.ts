@@ -23,6 +23,8 @@ export const TENANT_TABLES: { table: string; orgColumn: string }[] = [
   { table: 'order_adjustments', orgColumn: 'organization_id' },
   { table: 'payments', orgColumn: 'organization_id' },
   { table: 'payment_events', orgColumn: 'organization_id' },
+  { table: 'supplier_orders', orgColumn: 'organization_id' },
+  { table: 'supplier_order_items', orgColumn: 'organization_id' },
 ];
 
 /** Données personnelles d'un utilisateur : seul leur propriétaire y accède. */

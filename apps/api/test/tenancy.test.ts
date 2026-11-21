@@ -109,6 +109,31 @@ describe('Isolation entre commissionnaires', () => {
         idempotencyKey: '00000000-0000-4000-8000-000000000001',
       })
       .expect(201);
+    // Un achat fournisseur (coûts réels) avec sa preuve, sur fonds propres.
+    await a.agent
+      .put(`/api/org/orders/${accepted.body.orderId}/purchase-rule`, { rule: 'own_funds' })
+      .set(...asOrg(orgA))
+      .expect(200);
+    const proof = await a.agent
+      .postFile('/api/org/purchase-proofs', {}, PDF, 'achat.pdf')
+      .set(...asOrg(orgA))
+      .expect(201);
+    const orderA = await a.agent
+      .get(`/api/org/orders/${accepted.body.orderId}`)
+      .set(...asOrg(orgA))
+      .expect(200);
+    await a.agent
+      .post('/api/org/supplier-orders', {
+        marketplace: 'shein',
+        storeName: 'SHEIN',
+        purchasedAt: new Date().toISOString(),
+        amount: 700,
+        currency: 'USD',
+        proofFileId: proof.body.fileId,
+        items: [{ orderItemId: orderA.body.items[0].id, quantity: 1 }],
+      })
+      .set(...asOrg(orgA))
+      .expect(201);
     await t.prisma.organization.update({ where: { id: orgA }, data: { status: 'pending' } });
     await a.agent
       .postFile(

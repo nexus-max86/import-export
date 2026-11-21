@@ -41,8 +41,10 @@ Les permissions sont des chaînes `domaine.action`. Au MVP, les rôles sont **pr
 | `order.view` | ✅ | ✅ | ✅ | ✅ | ✅ | 👁 |
 | `order.status.update` | ✅ | ✅ | ✅ | ✅ | — | — |
 | `order.adjustment.propose` | ✅ | ✅ | — | — | — | — |
+| `order.purchase_rule.edit` (règle d'achat : tout payé, acompte, fonds propres) | ✅ | ✅ | — | — | — | — |
 | `order.cancel` | ✅ | — | — | — | — | — |
-| `supplier_order.manage` (coûts réels) | ✅ | — | ✅ | — | 👁 | — |
+| `supplier_order.manage` (coûts réels : achat, suivi vendeur, réception) | ✅ | — | ✅ | — | — | — |
+| `supplier_order.view` (lecture des achats et preuves) | ✅ | — | ✅ | — | ✅ | — |
 | `parcel.manage` / `shipment.manage` / `tracking.record` | ✅ | — | — | ✅ | — | — |
 | `parcel.deliver` (preuve de remise) | ✅ | — | — | ✅ | — | ✅ |
 | `payment.view` | ✅ | 👁 | — | — | ✅ | — |

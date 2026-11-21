@@ -23,6 +23,8 @@ export const PERMISSIONS = [
   'order.adjustment.propose',
   'order.cancel',
   'supplier_order.manage',
+  'supplier_order.view',
+  'order.purchase_rule.edit',
   'parcel.manage',
   'shipment.manage',
   'tracking.record',
@@ -53,6 +55,7 @@ const SALES: Permission[] = [
   'order.view',
   'order.status.update',
   'order.adjustment.propose',
+  'order.purchase_rule.edit',
   'payment.view',
   'dispute.respond',
 ];
@@ -66,6 +69,7 @@ export const ROLE_PERMISSIONS: Record<OrgRole, ReadonlySet<Permission>> = {
     'order.view',
     'order.status.update',
     'supplier_order.manage',
+    'supplier_order.view',
   ]),
   logistics: new Set<Permission>([
     'customer.view',
@@ -85,6 +89,7 @@ export const ROLE_PERMISSIONS: Record<OrgRole, ReadonlySet<Permission>> = {
     'payment.record_offline',
     'payment.refund',
     'finance.margins.view',
+    'supplier_order.view',
     'export.csv',
   ]),
   courier: new Set<Permission>(['customer.view', 'order.view', 'parcel.deliver']),

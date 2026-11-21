@@ -18,3 +18,4 @@ export * from './fx';
 export * from './quotes';
 export * from './orders';
 export * from './payments';
+export * from './purchases';

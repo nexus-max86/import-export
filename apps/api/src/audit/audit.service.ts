@@ -26,7 +26,8 @@ export class AuditService {
 
   /** Entrée écrite par le rôle applicatif (RLS : en son propre nom, dans ses organisations). */
   async record(tx: TenantTx, entry: AuditEntry): Promise<void> {
-    await tx.auditLog.create({ data: toData(entry), select: { id: true } });
+    // Sans RETURNING : seuls les propriétaires lisent le journal, les autres rôles y écrivent quand même.
+    await tx.auditLog.createMany({ data: [toData(entry)] });
   }
 
   /** Entrée écrite par un chemin système (authentification, amorçage, administration). */

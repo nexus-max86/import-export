@@ -160,4 +160,29 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await expect(
     pro.getByText('Devis version 1 accepté · Accord par WhatsApp', { exact: false }),
   ).toBeVisible();
+
+  // --- Règle d'achat : le commissionnaire avance l'argent pour ce client géré ---
+  await pro.getByRole('radio', { name: /Achat sur mes fonds propres/ }).check();
+  await pro.getByRole('button', { name: 'Enregistrer la règle' }).click();
+  await expect(pro.getByText('Règle d’achat modifiée')).toBeVisible();
+
+  // --- Achat groupé chez un vendeur : articles de deux commandes dans un même panier ---
+  await pro.getByRole('link', { name: 'Achats', exact: true }).click();
+  await pro.getByRole('checkbox', { name: /Acheter Robe/ }).check();
+  await pro.getByRole('checkbox', { name: /Acheter Organiseur/ }).check();
+  await pro.getByRole('checkbox', { name: /Acheter Chaussures/ }).check();
+  await pro.getByLabel('Site').selectOption({ label: 'SHEIN' });
+  await pro.getByLabel('Boutique ou vendeur').fill('SHEIN');
+  await pro.getByLabel('Montant payé au vendeur').fill('118,40');
+  await pro.getByRole('button', { name: 'Enregistrer l’achat' }).click();
+  await expect(pro.getByText('payé 118,40', { exact: false })).toBeVisible();
+  await expect(pro.getByText('Aucun article à acheter pour l’instant.')).toBeVisible();
+  await pro.getByRole('button', { name: 'Réception à l’entrepôt' }).click();
+  await pro.getByRole('button', { name: 'Enregistrer la réception' }).click();
+  await expect(pro.getByText('Reçu', { exact: true })).toBeVisible();
+
+  // Le client voit l'avancement, jamais le coût réel ni la boutique.
+  await client.reload();
+  await expect(client.getByText('Achetée').first()).toBeVisible();
+  await expect(client.getByText('118,40', { exact: false })).toHaveCount(0);
 });
