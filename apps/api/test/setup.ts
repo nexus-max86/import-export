@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { tmpdir } from 'node:os';
 
 // Valeurs par défaut pour les tests locaux et la CI ; surchargeables par l'environnement.
 process.env.NODE_ENV ??= 'test';
@@ -10,3 +11,5 @@ process.env.APP_URL ??= 'http://localhost:3000';
 process.env.LOG_LEVEL ??= 'silent';
 process.env.HASH_SALT ??= 'test-salt-test-salt-test-salt-1234';
 process.env.EMAIL_TRANSPORT ??= 'fake';
+process.env.FILES_ENCRYPTION_KEY ??= Buffer.alloc(32, 9).toString('base64');
+process.env.FILE_STORAGE_DIR ??= `${tmpdir()}/konzia-test-storage`;

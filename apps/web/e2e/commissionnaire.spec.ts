@@ -17,6 +17,24 @@ test('un commissionnaire ajoute un client géré, qui réclame ensuite sa fiche'
   await pro.getByRole('button', { name: 'Créer mon espace' }).click();
 
   await expect(pro.getByRole('heading', { name: 'Clients' })).toBeVisible();
+
+  // Vérification : RCCM + pièce d'identité, puis envoi du dossier.
+  await pro.getByRole('link', { name: 'Profil et vérification' }).click();
+  const pdf = {
+    name: 'rccm.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-1.4\n%%EOF\n'),
+  };
+  await pro.getByLabel('Envoyer : RCCM (registre du commerce)').setInputFiles(pdf);
+  await expect(pro.getByText('rccm.pdf')).toBeVisible();
+  await pro
+    .getByLabel(/Envoyer : Pièce d’identité/)
+    .setInputFiles({ ...pdf, name: 'carte-electeur.pdf' });
+  await expect(pro.getByText('carte-electeur.pdf')).toBeVisible();
+  await pro.getByRole('button', { name: 'Envoyer mon dossier' }).click();
+  await expect(pro.getByText('Dossier en cours d’examen par l’équipe Konzia.')).toBeVisible();
+  await pro.getByRole('link', { name: 'Clients' }).click();
+  await expect(pro.getByRole('heading', { name: 'Clients' })).toBeVisible();
   await pro.getByRole('button', { name: 'Ajouter un client' }).click();
   await pro.getByLabel('Nom complet').fill('Patrick Mbuyi');
   await pro.getByLabel('Numéro WhatsApp').fill('081 234 5678');

@@ -148,15 +148,21 @@ model Organization {
   description        String?
   phoneWhatsapp      String?            @map("phone_whatsapp")
   /// Service d'importation opéré par Konzia : aucun privilège lié à ce drapeau.
+  /// Codes des marketplaces prises en charge (shein, aliexpress, amazon…).
+  marketplaces       String[]           @default([])
+  /// Modes de transport proposés : air, sea, road.
+  transportModes     String[]           @default([]) @map("transport_modes")
+  pricingPolicy      String?            @map("pricing_policy")
   isPlatformOperated Boolean            @default(false) @map("is_platform_operated")
   status             OrganizationStatus @default(pending)
   createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  members      OrganizationMember[]
-  invitations  Invitation[]
-  serviceZones OrganizationServiceZone[]
-  customers    OrgCustomer[]
+  members       OrganizationMember[]
+  invitations   Invitation[]
+  serviceZones  OrganizationServiceZone[]
+  customers     OrgCustomer[]
+  verifications OrganizationVerification[]
 
   @@map("organizations")
 }
@@ -376,4 +382,79 @@ model OrgCustomer {
   @@index([organizationId, status])
   @@index([userId])
   @@map("org_customers")
+}
+
+// ---------------------------------------------------------------------------
+// Fichiers et vérification des commissionnaires (ticket #10)
+// ---------------------------------------------------------------------------
+
+enum FilePurpose {
+  verification_document
+}
+
+/// Fichier stocké chiffré (AES-256-GCM) ; le contenu n'est jamais servi sans contrôle d'accès.
+model StoredFile {
+  id             String      @id @default(uuid(7)) @db.Uuid
+  organizationId String?     @map("organization_id") @db.Uuid
+  ownerUserId    String      @map("owner_user_id") @db.Uuid
+  purpose        FilePurpose
+  storageKey     String      @unique @map("storage_key")
+  originalName   String      @map("original_name")
+  mime           String
+  sizeBytes      Int         @map("size_bytes")
+  sha256         String
+  /// Identifiant de la clé de chiffrement (rotation).
+  keyId          String      @map("key_id")
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  documents VerificationDocument[]
+
+  @@index([organizationId])
+  @@map("files")
+}
+
+enum VerificationStatus {
+  draft
+  submitted
+  approved
+  rejected
+}
+
+enum VerificationDocumentKind {
+  rccm
+  identity
+}
+
+model OrganizationVerification {
+  id             String             @id @default(uuid(7)) @db.Uuid
+  organizationId String             @map("organization_id") @db.Uuid
+  status         VerificationStatus @default(draft)
+  submittedAt    DateTime?          @map("submitted_at") @db.Timestamptz(3)
+  submittedBy    String?            @map("submitted_by") @db.Uuid
+  decidedAt      DateTime?          @map("decided_at") @db.Timestamptz(3)
+  decidedBy      String?            @map("decided_by") @db.Uuid
+  reason         String?
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization Organization           @relation(fields: [organizationId], references: [id])
+  documents    VerificationDocument[]
+
+  @@index([organizationId])
+  @@map("organization_verifications")
+}
+
+model VerificationDocument {
+  id             String                   @id @default(uuid(7)) @db.Uuid
+  verificationId String                   @map("verification_id") @db.Uuid
+  organizationId String                   @map("organization_id") @db.Uuid
+  kind           VerificationDocumentKind
+  fileId         String                   @map("file_id") @db.Uuid
+  createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  verification OrganizationVerification @relation(fields: [verificationId], references: [id])
+  file         StoredFile               @relation(fields: [fileId], references: [id])
+
+  @@unique([verificationId, kind])
+  @@map("verification_documents")
 }

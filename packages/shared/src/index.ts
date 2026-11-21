@@ -7,3 +7,4 @@ export * from './geo';
 export * from './phone';
 export * from './profile';
 export * from './customers';
+export * from './verification';

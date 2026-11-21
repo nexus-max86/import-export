@@ -34,6 +34,12 @@ function makeAgent(app: INestApplication) {
     patch: (url: string, body?: object) =>
       a.patch(url).set(CSRF_HEADER, CSRF_HEADER_VALUE).send(body),
     delete: (url: string) => a.delete(url).set(CSRF_HEADER, CSRF_HEADER_VALUE),
+    /** Envoi multipart d'un fichier (champ « file ») avec des champs texte. */
+    postFile: (url: string, fields: Record<string, string>, content: Buffer, filename: string) => {
+      let req = a.post(url).set(CSRF_HEADER, CSRF_HEADER_VALUE);
+      for (const [k, v] of Object.entries(fields)) req = req.field(k, v);
+      return req.attach('file', content, filename);
+    },
   };
 }
 

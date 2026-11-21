@@ -6,6 +6,7 @@ const valid = {
   APP_DATABASE_URL: 'postgresql://a:p@localhost:5432/db',
   REDIS_URL: 'redis://localhost:6379',
   HASH_SALT: 'x'.repeat(32),
+  FILES_ENCRYPTION_KEY: Buffer.alloc(32, 1).toString('base64'),
 };
 
 describe('loadEnv', () => {
@@ -17,6 +18,16 @@ describe('loadEnv', () => {
   });
   it("refuse l'envoi factice d'e-mails en production", () => {
     expect(() => loadEnv({ ...valid, NODE_ENV: 'production' })).toThrow(/EMAIL_TRANSPORT/);
+  });
+  it('refuse le stockage local en production', () => {
+    expect(() =>
+      loadEnv({ ...valid, NODE_ENV: 'production', EMAIL_TRANSPORT: 'smtp', SMTP_URL: 'smtp://x' }),
+    ).toThrow(/FILE_STORAGE/);
+  });
+  it('refuse une clé de chiffrement de mauvaise taille', () => {
+    expect(() => loadEnv({ ...valid, FILES_ENCRYPTION_KEY: 'court' })).toThrow(
+      /FILES_ENCRYPTION_KEY/,
+    );
   });
   it('exige SMTP_URL avec le transport SMTP', () => {
     expect(() => loadEnv({ ...valid, EMAIL_TRANSPORT: 'smtp' })).toThrow(/SMTP_URL/);

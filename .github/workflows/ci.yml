@@ -31,6 +31,8 @@ jobs:
       REDIS_URL: redis://localhost:6379
       APP_URL: http://localhost:3000
       HASH_SALT: ci-salt-ci-salt-ci-salt-ci-salt-ci
+      # Clé de test uniquement (32 octets à zéro), jamais utilisée hors CI.
+      FILES_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4

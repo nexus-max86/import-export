@@ -8,6 +8,7 @@ import { loadEnv } from './config/env';
 import { CustomersModule } from './customers/customers.module';
 import { DevModule } from './dev/dev.module';
 import { EmailModule } from './email/email.module';
+import { FilesModule } from './files/files.module';
 import { GeoModule } from './geo/geo.module';
 import { HealthController } from './health/health.controller';
 import { OrganizationsModule } from './organizations/organizations.module';
@@ -15,6 +16,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ProfileModule } from './profile/profile.module';
 import { RedisModule } from './redis/redis.module';
 import { TenancyModule } from './tenancy/tenancy.module';
+import { VerificationModule } from './verification/verification.module';
 
 const env = loadEnv();
 
@@ -45,6 +47,8 @@ const env = loadEnv();
     GeoModule,
     ProfileModule,
     CustomersModule,
+    FilesModule,
+    VerificationModule,
     ...(env.NODE_ENV !== 'production' && env.EMAIL_TRANSPORT === 'fake' ? [DevModule] : []),
   ],
   controllers: [HealthController],

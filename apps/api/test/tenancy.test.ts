@@ -1,6 +1,6 @@
 import { PrismaClient } from '@konzia/db';
 import { createTestApp, tokenFrom, type TestContext } from './app';
-import { actor, addMember, asOrg, createOrg, type Actor } from './fixtures';
+import { actor, addMember, asOrg, createOrg, PDF, type Actor } from './fixtures';
 import { SYSTEM_ONLY_TABLES, TENANT_TABLES } from './tenancy-tables';
 
 /**
@@ -46,6 +46,10 @@ describe('Isolation entre commissionnaires', () => {
       })
       .set(...asOrg(orgA))
       .expect(200);
+    await a.agent
+      .postFile('/api/org/verification/documents', { kind: 'rccm' }, PDF, 'rccm.pdf')
+      .set(...asOrg(orgA))
+      .expect(201);
     await a.agent
       .post('/api/org/customers', { fullName: 'Client de A', phoneWhatsapp: '0810000001' })
       .set(...asOrg(orgA))

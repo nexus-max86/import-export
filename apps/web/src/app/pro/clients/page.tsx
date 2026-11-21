@@ -7,11 +7,11 @@ import {
   type ClaimLink,
   type OrgCustomerInfo,
 } from '@konzia/shared';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { PlaceSelect } from '@/components/place-select';
-import { Button, Card, Field, Logo, Notice } from '@/components/ui';
+import { ProNav } from '@/components/pro-nav';
+import { Button, Card, Field, Notice } from '@/components/ui';
 import { getActiveOrg } from '@/lib/active-org';
 import { api, ApiError, fieldErrors } from '@/lib/api';
 
@@ -57,12 +57,7 @@ export default function CustomersPage() {
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 py-10">
-      <div className="flex items-center justify-between gap-3">
-        <Logo />
-        <Link href="/pro" className="text-sm font-semibold text-copper underline">
-          Changer d’activité
-        </Link>
-      </div>
+      <ProNav />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-2xl font-bold">Clients</h1>
         {!adding && <Button onClick={() => setAdding(true)}>Ajouter un client</Button>}

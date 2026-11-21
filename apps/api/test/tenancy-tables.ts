@@ -9,6 +9,9 @@ export const TENANT_TABLES: { table: string; orgColumn: string }[] = [
   { table: 'audit_logs', orgColumn: 'organization_id' },
   { table: 'organization_service_zones', orgColumn: 'organization_id' },
   { table: 'org_customers', orgColumn: 'organization_id' },
+  { table: 'files', orgColumn: 'organization_id' },
+  { table: 'organization_verifications', orgColumn: 'organization_id' },
+  { table: 'verification_documents', orgColumn: 'organization_id' },
 ];
 
 /** Données personnelles d'un utilisateur : seul leur propriétaire y accède. */

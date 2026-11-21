@@ -58,3 +58,29 @@ export function fieldErrors(issues: { path: PropertyKey[]; message: string }[]) 
 export function safeNext(value: string | null): string | null {
   return value && value.startsWith('/') && !value.startsWith('//') ? value : null;
 }
+
+/** Envoi d'un fichier (multipart). Le navigateur fixe lui-même l'en-tête Content-Type. */
+export async function apiUpload<T>(path: string, form: FormData, org?: string): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`/api${path}`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { [CSRF_HEADER]: CSRF_HEADER_VALUE, ...(org ? { [ORG_HEADER]: org } : {}) },
+      body: form,
+    });
+  } catch {
+    throw new ApiError(NETWORK_MESSAGE, 0);
+  }
+  const data: unknown = await res.json().catch(() => null);
+  if (!res.ok) {
+    const message =
+      res.status === 413
+        ? 'Fichier trop lourd (5 Mo maximum). Prenez une photo moins lourde ou un PDF.'
+        : typeof (data as { message?: unknown })?.message === 'string'
+          ? (data as { message: string }).message
+          : 'L’envoi a échoué. Réessayez.';
+    throw new ApiError(message, res.status);
+  }
+  return data as T;
+}

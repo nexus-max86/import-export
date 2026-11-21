@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1161.0",
     "@konzia/db": "workspace:*",
     "@konzia/shared": "workspace:*",
     "@nestjs/common": "11.1.9",
@@ -33,6 +34,7 @@
     "@swc/core": "1.15.2",
     "@types/cookie-parser": "1.4.10",
     "@types/express": "5.0.5",
+    "@types/multer": "2.0.0",
     "@types/node": "22.19.1",
     "@types/nodemailer": "7.0.3",
     "@types/supertest": "6.0.3",

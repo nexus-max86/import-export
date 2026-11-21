@@ -21,6 +21,21 @@ const EnvSchema = z
     EMAIL_TRANSPORT: z.enum(['fake', 'smtp']).default('fake'),
     SMTP_URL: z.string().optional(),
     EMAIL_FROM: z.string().default('Konzia <no-reply@konzia.app>'),
+    /** Stockage des fichiers : disque local (développement, tests) ou S3/R2 (production). */
+    FILE_STORAGE: z.enum(['local', 's3']).default('local'),
+    FILE_STORAGE_DIR: z.string().default('.storage'),
+    S3_ENDPOINT: z.url().optional(),
+    S3_REGION: z.string().default('auto'),
+    S3_BUCKET: z.string().optional(),
+    S3_ACCESS_KEY_ID: z.string().optional(),
+    S3_SECRET_ACCESS_KEY: z.string().optional(),
+    /** Clé AES-256 des documents (32 octets en base64). Générez-la : openssl rand -base64 32 */
+    FILES_ENCRYPTION_KEY: z
+      .string()
+      .refine(
+        (v) => Buffer.from(v, 'base64').length === 32,
+        'doit faire 32 octets encodés en base64.',
+      ),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && env.EMAIL_TRANSPORT === 'fake') {
@@ -29,6 +44,24 @@ const EnvSchema = z
         path: ['EMAIL_TRANSPORT'],
         message: "l'envoi factice d'e-mails est interdit en production.",
       });
+    }
+    if (env.NODE_ENV === 'production' && env.FILE_STORAGE === 'local') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['FILE_STORAGE'],
+        message: 'le stockage local est interdit en production (utilisez s3).',
+      });
+    }
+    if (env.FILE_STORAGE === 's3') {
+      for (const key of [
+        'S3_ENDPOINT',
+        'S3_BUCKET',
+        'S3_ACCESS_KEY_ID',
+        'S3_SECRET_ACCESS_KEY',
+      ] as const) {
+        if (!env[key])
+          ctx.addIssue({ code: 'custom', path: [key], message: 'requis avec FILE_STORAGE=s3.' });
+      }
     }
     if (env.EMAIL_TRANSPORT === 'smtp' && !env.SMTP_URL) {
       ctx.addIssue({

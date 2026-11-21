@@ -109,6 +109,9 @@ export class OrganizationsService {
           phoneWhatsapp: true,
           status: true,
           isPlatformOperated: true,
+          marketplaces: true,
+          transportModes: true,
+          pricingPolicy: true,
         },
       }),
     );
@@ -116,7 +119,14 @@ export class OrganizationsService {
 
   async update(userId: string, org: OrgContext, input: UpdateOrganizationInput): Promise<void> {
     await this.db.run(userId, async (tx) => {
-      const fields = { name: true, description: true, phoneWhatsapp: true } as const;
+      const fields = {
+        name: true,
+        description: true,
+        phoneWhatsapp: true,
+        marketplaces: true,
+        transportModes: true,
+        pricingPolicy: true,
+      } as const;
       const before = await tx.organization.findUniqueOrThrow({
         where: { id: org.organizationId },
         select: fields,

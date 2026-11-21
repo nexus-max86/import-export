@@ -27,7 +27,32 @@ export const CreateOrganizationSchema = z.object({
 });
 export type CreateOrganizationInput = z.infer<typeof CreateOrganizationSchema>;
 
-export const UpdateOrganizationSchema = CreateOrganizationSchema.omit({ type: true }).partial();
+export const MARKETPLACES = {
+  shein: 'SHEIN',
+  aliexpress: 'AliExpress',
+  alibaba: 'Alibaba',
+  '1688': '1688',
+  amazon: 'Amazon',
+  temu: 'Temu',
+  taobao: 'Taobao',
+  pinduoduo: 'Pinduoduo',
+  ebay: 'eBay',
+} as const;
+export type MarketplaceCode = keyof typeof MARKETPLACES;
+export const MARKETPLACE_CODES = Object.keys(MARKETPLACES) as MarketplaceCode[];
+
+export const TRANSPORT_MODES = { air: 'Avion', sea: 'Bateau', road: 'Route' } as const;
+export type TransportMode = keyof typeof TRANSPORT_MODES;
+
+export const UpdateOrganizationSchema = CreateOrganizationSchema.omit({ type: true })
+  .extend({
+    marketplaces: z
+      .array(z.enum(MARKETPLACE_CODES as [MarketplaceCode, ...MarketplaceCode[]]))
+      .max(20),
+    transportModes: z.array(z.enum(['air', 'sea', 'road'])).max(3),
+    pricingPolicy: z.string().trim().max(1000),
+  })
+  .partial();
 export type UpdateOrganizationInput = z.infer<typeof UpdateOrganizationSchema>;
 
 export const InviteMemberSchema = z.object({
