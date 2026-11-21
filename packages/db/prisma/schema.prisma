@@ -460,3 +460,23 @@ model VerificationDocument {
   @@unique([verificationId, kind])
   @@map("verification_documents")
 }
+
+// ---------------------------------------------------------------------------
+// Imports de clients (ticket #12) — résumé seulement, le fichier n'est pas conservé
+// ---------------------------------------------------------------------------
+
+model CustomerImport {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  importedBy     String   @map("imported_by") @db.Uuid
+  fileName       String   @map("file_name")
+  rowsTotal      Int      @map("rows_total")
+  rowsImported   Int      @map("rows_imported")
+  rowsSkipped    Int      @map("rows_skipped")
+  /// Lignes ignorées : { line, reason } (sans données personnelles).
+  issues         Json
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([organizationId])
+  @@map("customer_imports")
+}

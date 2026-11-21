@@ -52,6 +52,20 @@ test('un commissionnaire ajoute un client géré, qui réclame ensuite sa fiche'
   const link = (await pro.locator('p.font-mono').textContent())?.trim() ?? '';
   expect(link).toContain('/reclamer?jeton=');
 
+  // Import Excel (CSV « Excel français ») : aperçu puis confirmation.
+  await pro.getByRole('button', { name: 'Importer depuis Excel' }).click();
+  await pro.getByLabel('Choisir le fichier de clients').setInputFiles({
+    name: 'clients.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(
+      'Nom;Téléphone;Commune\nGrace Ilunga;0997001122;Kenya\nDoublon;081 234 5678;\n',
+    ),
+  });
+  await expect(pro.getByText('1 client(s) à importer · 1 doublon(s) ignoré(s)')).toBeVisible();
+  await pro.getByRole('button', { name: 'Importer 1 client(s)' }).click();
+  await expect(pro.getByText('1 client(s) importé(s), 1 ligne(s) ignorée(s).')).toBeVisible();
+  await expect(pro.getByText('Grace Ilunga', { exact: true })).toBeVisible();
+
   // --- Client, sur son propre téléphone ---
   const client = await browser.newPage();
   await client.goto(new URL(link).pathname + new URL(link).search);

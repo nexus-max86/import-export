@@ -148,6 +148,7 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 | Vérification des commissionnaires | RCCM **et** pièce d'identité du responsable | Retour terrain (R5), décision du 21/11 |
 | Paiements | Acomptes, paiements partiels, soldes « qui doit combien » ; règle d'achat par commande (tout payé / acompte / fonds propres), tracée | Retour terrain (R2, R3), décision du 21/11 |
 | Assistant de devis | Commission en % et transport au kilo pré-remplis depuis les réglages du commissionnaire, montants modifiables | Retour terrain (R4) ; propriétaire sans préférence, version recommandée retenue |
+| Import Excel | Traité directement par l'API (2 000 lignes, 2 Mo max), aperçu puis confirmation ; pas de file d'attente | Volume des pilotes (10–30 commandes/mois) : 500 lignes en moins d'une seconde ; une file d'attente n'apporterait que de la complexité |
 | Lien de suivi sans compte | **Reporté après le MVP** | Décision du 21/11 ; le client géré est suivi par le commissionnaire via WhatsApp |
 | Audit | Appels explicites dans la transaction du changement (pas d'intercepteur) | Avant/après précis et atomicité garantie ; journal immuable par déclencheur |
 
@@ -172,7 +173,7 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 |---|---|
 | 0 — Conception | Livrée (docs 01–07, maquettes, tickets #1–#31) — relecture du propriétaire |
 | 1 — Socle et isolation | **Terminée** (#1–#4) le 20/11/2026 — 58 tests API, 7 tests partagés, 2 parcours Playwright |
-| 2 — Profils et vérification | En cours : #5, #6, #7, #10, #11 faits ; #12 à faire |
+| 2 — Profils et vérification | **Terminée** (#5, #6, #7, #10, #11, #12) le 21/11/2026 — 120 tests API, 20 tests partagés, 3 parcours Playwright |
 | 3 — Import et demande | À faire |
 | 4 — Devis et commande | À faire |
 | 5 — Paiements directs | À faire |

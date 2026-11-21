@@ -8,11 +8,17 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   OrgCustomerSchema,
   TokenSchema,
+  MAX_IMPORT_BYTES,
   type ClaimLink,
+  type ImportPreview,
+  type ImportReport,
   type ClaimResult,
   type OrgCustomerInfo,
   type OrgCustomerInput,
@@ -22,13 +28,46 @@ import { Auth } from '../auth/decorators';
 import { RequireVerifiedEmail } from '../auth/verified-email.guard';
 import { ZodBody } from '../common/zod-body.pipe';
 import { ForOrg, Org, type OrgContext } from '../tenancy/org-context';
+import { CustomerImportService } from './customer-import.service';
 import { CustomersService } from './customers.service';
+import type { UploadedBlob } from '../files/files.service';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
 @Controller()
 export class CustomersController {
-  constructor(private readonly customers: CustomersService) {}
+  constructor(
+    private readonly customers: CustomersService,
+    private readonly imports: CustomerImportService,
+  ) {}
+
+  @Post('org/customers/import/preview')
+  @ForOrg('customer.import')
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: MAX_IMPORT_BYTES + 1, files: 1 } }),
+  )
+  previewImport(
+    @Auth() auth: AuthContext,
+    @Org() org: OrgContext,
+    @UploadedFile() file: UploadedBlob | undefined,
+  ): Promise<ImportPreview> {
+    if (!file) throw new BadRequestException('Choisissez un fichier.');
+    return this.imports.preview(auth.userId, org, file);
+  }
+
+  @Post('org/customers/import')
+  @ForOrg('customer.import')
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: MAX_IMPORT_BYTES + 1, files: 1 } }),
+  )
+  commitImport(
+    @Auth() auth: AuthContext,
+    @Org() org: OrgContext,
+    @UploadedFile() file: UploadedBlob | undefined,
+  ): Promise<ImportReport> {
+    if (!file) throw new BadRequestException('Choisissez un fichier.');
+    return this.imports.commit(auth.userId, org, file);
+  }
 
   @Get('org/customers')
   @ForOrg('customer.view')

@@ -51,6 +51,15 @@ describe('Isolation entre commissionnaires', () => {
       .set(...asOrg(orgA))
       .expect(201);
     await a.agent
+      .postFile(
+        '/api/org/customers/import',
+        {},
+        Buffer.from('Nom;Téléphone\nImporté;0810000002\n'),
+        'clients.csv',
+      )
+      .set(...asOrg(orgA))
+      .expect(201);
+    await a.agent
       .post('/api/org/customers', { fullName: 'Client de A', phoneWhatsapp: '0810000001' })
       .set(...asOrg(orgA))
       .expect(201);

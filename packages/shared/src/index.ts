@@ -9,3 +9,4 @@ export * from './profile';
 export * from './customers';
 export * from './verification';
 export * from './directory';
+export * from './customer-import';

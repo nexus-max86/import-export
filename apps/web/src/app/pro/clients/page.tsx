@@ -9,6 +9,7 @@ import {
 } from '@konzia/shared';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { CustomerImport } from '@/components/customer-import';
 import { PlaceSelect } from '@/components/place-select';
 import { ProNav } from '@/components/pro-nav';
 import { Button, Card, Field, Notice } from '@/components/ui';
@@ -24,6 +25,7 @@ export default function CustomersPage() {
   const [page, setPage] = useState<Page>();
   const [query, setQuery] = useState('');
   const [adding, setAdding] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string }>();
 
   const load = useCallback(
@@ -60,9 +62,30 @@ export default function CustomersPage() {
       <ProNav />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-2xl font-bold">Clients</h1>
-        {!adding && <Button onClick={() => setAdding(true)}>Ajouter un client</Button>}
+        {!adding && !importing && (
+          <div className="flex flex-wrap gap-2">
+            <Button variant="ghost" onClick={() => setImporting(true)}>
+              Importer depuis Excel
+            </Button>
+            <Button onClick={() => setAdding(true)}>Ajouter un client</Button>
+          </div>
+        )}
       </div>
       {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
+      {importing && (
+        <CustomerImport
+          org={org}
+          onCancel={() => setImporting(false)}
+          onDone={async (r) => {
+            setImporting(false);
+            setNotice({
+              tone: 'ok',
+              text: `${r.imported} client(s) importé(s)${r.skipped ? `, ${r.skipped} ligne(s) ignorée(s)` : ''}.`,
+            });
+            await load(org, query);
+          }}
+        />
+      )}
       {adding && (
         <NewCustomerForm
           org={org}
