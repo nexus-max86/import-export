@@ -11,3 +11,5 @@ export * from './verification';
 export * from './directory';
 export * from './customer-import';
 export * from './product-url';
+export * from './money';
+export * from './product';

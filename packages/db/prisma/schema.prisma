@@ -392,6 +392,7 @@ model OrgCustomer {
 
 enum FilePurpose {
   verification_document
+  product_screenshot
 }
 
 /// Fichier stocké chiffré (AES-256-GCM) ; le contenu n'est jamais servi sans contrôle d'accès.

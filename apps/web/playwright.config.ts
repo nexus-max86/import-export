@@ -28,6 +28,7 @@ export default defineConfig({
         REDIS_URL: process.env.E2E_REDIS_URL ?? 'redis://localhost:6379/2',
         HASH_SALT: 'e2e-salt-e2e-salt-e2e-salt-e2e-salt',
         EMAIL_TRANSPORT: 'fake',
+        PRODUCT_FETCHER: 'fake',
         FILES_ENCRYPTION_KEY: Buffer.alloc(32, 5).toString('base64'),
         FILE_STORAGE_DIR: '/tmp/konzia-e2e-storage',
         LOG_LEVEL: 'warn',

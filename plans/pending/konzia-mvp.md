@@ -149,6 +149,7 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 | Paiements | Acomptes, paiements partiels, soldes « qui doit combien » ; règle d'achat par commande (tout payé / acompte / fonds propres), tracée | Retour terrain (R2, R3), décision du 21/11 |
 | Assistant de devis | Commission en % et transport au kilo pré-remplis depuis les réglages du commissionnaire, montants modifiables | Retour terrain (R4) ; propriétaire sans préférence, version recommandée retenue |
 | Sites reconnus (liste blanche) | Constante versionnée `MARKETPLACE_DOMAINS` (packages/shared), pas de table | Toute modification est relue et testée ; un écran d'administration pourra venir après le pilote |
+| Lecture des pages produits | Directement dans l'API (5 s, 2 Mo), sans file d'attente ; aucune donnée conservée avant l'ajout à une demande | Simplicité ; un échec de lecture est un cas normal (saisie manuelle) |
 | Import Excel | Traité directement par l'API (2 000 lignes, 2 Mo max), aperçu puis confirmation ; pas de file d'attente | Volume des pilotes (10–30 commandes/mois) : 500 lignes en moins d'une seconde ; une file d'attente n'apporterait que de la complexité |
 | Lien de suivi sans compte | **Reporté après le MVP** | Décision du 21/11 ; le client géré est suivi par le commissionnaire via WhatsApp |
 | Audit | Appels explicites dans la transaction du changement (pas d'intercepteur) | Avant/après précis et atomicité garantie ; journal immuable par déclencheur |
@@ -175,7 +176,7 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 | 0 — Conception | Livrée (docs 01–07, maquettes, tickets #1–#31) — relecture du propriétaire |
 | 1 — Socle et isolation | **Terminée** (#1–#4) le 20/11/2026 — 58 tests API, 7 tests partagés, 2 parcours Playwright |
 | 2 — Profils et vérification | **Terminée** (#5, #6, #7, #10, #11, #12) le 21/11/2026 — 120 tests API, 20 tests partagés, 3 parcours Playwright |
-| 3 — Import et demande | En cours : #9 fait |
+| 3 — Import et demande | En cours : #9, #13 (API) faits ; écran 02 livré avec #14 |
 | 4 — Devis et commande | À faire |
 | 5 — Paiements directs | À faire |
 | 6 — Achats et colis | À faire |

@@ -27,28 +27,32 @@ export class FilesService {
   }
 
   /** Vérifie, chiffre, stocke le contenu, puis enregistre la ligne `files` dans la transaction donnée. */
-  async storeVerificationDocument(
+  async store(
     tx: TenantTx,
     userId: string,
-    organizationId: string,
+    organizationId: string | null,
+    purpose: 'verification_document' | 'product_screenshot',
     upload: UploadedBlob,
   ) {
     if (upload.size > MAX_UPLOAD_BYTES)
       throw new PayloadTooLargeException('Fichier trop lourd (5 Mo maximum).');
     const mime = sniffMime(upload.buffer);
-    if (!mime)
+    const allowed = purpose === 'product_screenshot' ? mime && mime !== 'application/pdf' : mime;
+    if (!mime || !allowed) {
       throw new BadRequestException(
-        'Format non accepté. Envoyez un PDF ou une photo (JPEG, PNG, WebP).',
+        purpose === 'product_screenshot'
+          ? 'Envoyez une capture d’écran (JPEG, PNG ou WebP).'
+          : 'Format non accepté. Envoyez un PDF ou une photo (JPEG, PNG, WebP).',
       );
-
-    const storageKey = `verification/${organizationId}/${randomUUID()}`;
+    }
+    const storageKey = `${purpose === 'product_screenshot' ? 'screenshots' : 'verification'}/${organizationId ?? userId}/${randomUUID()}`;
     // Le contenu est écrit avant la ligne en base : un échec SQL laisse au pire un fichier orphelin chiffré.
     await this.storage.put(storageKey, this.crypto.encrypt(upload.buffer));
     return tx.storedFile.create({
       data: {
         organizationId,
         ownerUserId: userId,
-        purpose: 'verification_document',
+        purpose,
         storageKey,
         originalName: upload.originalname.slice(0, 200),
         mime,

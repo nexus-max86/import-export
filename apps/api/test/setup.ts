@@ -13,3 +13,4 @@ process.env.HASH_SALT ??= 'test-salt-test-salt-test-salt-1234';
 process.env.EMAIL_TRANSPORT ??= 'fake';
 process.env.FILES_ENCRYPTION_KEY ??= Buffer.alloc(32, 9).toString('base64');
 process.env.FILE_STORAGE_DIR ??= `${tmpdir()}/konzia-test-storage`;
+process.env.PRODUCT_FETCHER ??= 'fake';

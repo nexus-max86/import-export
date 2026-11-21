@@ -21,6 +21,8 @@ const EnvSchema = z
     EMAIL_TRANSPORT: z.enum(['fake', 'smtp']).default('fake'),
     SMTP_URL: z.string().optional(),
     EMAIL_FROM: z.string().default('Konzia <no-reply@konzia.app>'),
+    /** Lecture des pages produits : http (réelle) ou fake (développement hors ligne, tests). */
+    PRODUCT_FETCHER: z.enum(['http', 'fake']).default('http'),
     /** Stockage des fichiers : disque local (développement, tests) ou S3/R2 (production). */
     FILE_STORAGE: z.enum(['local', 's3']).default('local'),
     FILE_STORAGE_DIR: z.string().default('.storage'),
@@ -43,6 +45,13 @@ const EnvSchema = z
         code: 'custom',
         path: ['EMAIL_TRANSPORT'],
         message: "l'envoi factice d'e-mails est interdit en production.",
+      });
+    }
+    if (env.NODE_ENV === 'production' && env.PRODUCT_FETCHER === 'fake') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['PRODUCT_FETCHER'],
+        message: 'le lecteur factice est interdit en production.',
       });
     }
     if (env.NODE_ENV === 'production' && env.FILE_STORAGE === 'local') {

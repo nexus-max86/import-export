@@ -42,10 +42,11 @@ export class VerificationService {
   ): Promise<VerificationInfo> {
     return this.db.run(userId, async (tx) => {
       const verification = await this.openDraft(tx, org.organizationId);
-      const file = await this.files.storeVerificationDocument(
+      const file = await this.files.store(
         tx,
         userId,
         org.organizationId,
+        'verification_document',
         upload,
       );
       // Remplace le document de même type (le fichier précédent reste archivé, jamais modifié).
