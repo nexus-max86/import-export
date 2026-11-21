@@ -17,3 +17,4 @@ export * from './requests';
 export * from './fx';
 export * from './quotes';
 export * from './orders';
+export * from './payments';

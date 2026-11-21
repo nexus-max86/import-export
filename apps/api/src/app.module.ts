@@ -16,6 +16,7 @@ import { GeoModule } from './geo/geo.module';
 import { HealthController } from './health/health.controller';
 import { OrdersModule } from './orders/orders.module';
 import { OrganizationsModule } from './organizations/organizations.module';
+import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProfileModule } from './profile/profile.module';
 import { RequestsModule } from './requests/requests.module';
@@ -61,6 +62,7 @@ const env = loadEnv();
     FxModule,
     QuotesModule,
     OrdersModule,
+    PaymentsModule,
     ...(env.NODE_ENV !== 'production' && env.EMAIL_TRANSPORT === 'fake' ? [DevModule] : []),
   ],
   controllers: [HealthController],

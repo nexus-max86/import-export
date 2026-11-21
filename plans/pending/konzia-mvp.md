@@ -180,7 +180,7 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 | 2 — Profils et vérification | **Terminée** (#5, #6, #7, #10, #11, #12) le 21/11/2026 — 120 tests API, 20 tests partagés, 3 parcours Playwright |
 | 3 — Import et demande | **Terminée** (#9, #13, #14) le 21/11/2026 — 171 tests API, 47 tests partagés, 4 parcours Playwright |
 | 4 — Devis et commande | **Terminée** (#8, #15, #16, #17) le 21/11/2026 — 211 tests API, 55 tests partagés, 4 parcours Playwright |
-| 5 — Paiements directs | À faire |
+| 5 — Paiements directs | En cours : #18 fait (#8 déjà livré en phase 4) |
 | 6 — Achats et colis | À faire |
 | 7 — Notifications | À faire |
 | 8 — Administration | À faire |

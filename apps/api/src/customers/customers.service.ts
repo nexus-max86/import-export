@@ -71,6 +71,7 @@ const ORG_CUSTOMER_REFERENCES: { table: string; column: string }[] = [
   { table: 'quote_request_recipients', column: 'org_customer_id' },
   { table: 'quotes', column: 'org_customer_id' },
   { table: 'orders', column: 'org_customer_id' },
+  { table: 'payments', column: 'org_customer_id' },
 ];
 
 @Injectable()

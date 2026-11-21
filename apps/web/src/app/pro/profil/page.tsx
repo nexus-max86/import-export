@@ -11,6 +11,10 @@ import {
   type MarketplaceCode,
   type OrgServiceZoneInfo,
   type QuoteSettings,
+  type PaymentInstruction,
+  type PaymentMethod,
+  PAYMENT_METHOD_LABELS,
+  PAYMENT_METHODS,
   type TransportMode,
   type VerificationInfo,
 } from '@konzia/shared';
@@ -94,6 +98,7 @@ export default function ProProfilePage() {
           )}
           <ServicesCard org={org} profile={profile} onSaved={setProfile} />
           <QuoteSettingsCard org={org} />
+          <PaymentInstructionsCard org={org} />
           <ZonesCard org={org} cities={cities} initial={zones} />
         </>
       )}
@@ -500,6 +505,159 @@ function QuoteSettingsCard({ org }: { org: string }) {
         {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
         <Button type="submit" busy={busy}>
           Enregistrer le calcul
+        </Button>
+      </form>
+    </Card>
+  );
+}
+
+const emptyInstruction = (): PaymentInstruction => ({
+  method: 'mobile_money',
+  provider: 'M-Pesa',
+  accountName: '',
+  accountNumber: '',
+  details: '',
+});
+
+function PaymentInstructionsCard({ org }: { org: string }) {
+  const [list, setList] = useState<PaymentInstruction[]>();
+  const [msg, setMsg] = useState<Msg>();
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    api<PaymentInstruction[]>('/org/payment-instructions', { org }).then(
+      (l) => setList(l.length ? l : [emptyInstruction()]),
+      () => setList([]),
+    );
+  }, [org]);
+
+  const set = (idx: number, patch: Partial<PaymentInstruction>) =>
+    setList((l) => l!.map((x, i) => (i === idx ? { ...x, ...patch } : x)));
+
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setMsg(undefined);
+    try {
+      const cleaned = list!.filter((i) => i.accountName.trim());
+      setList(
+        await api<PaymentInstruction[]>('/org/payment-instructions', {
+          method: 'PUT',
+          org,
+          body: { instructions: cleaned },
+        }),
+      );
+      setMsg({
+        tone: 'ok',
+        text: 'Moyens de paiement enregistrés : vos clients les voient sur leurs commandes.',
+      });
+    } catch (err) {
+      setMsg({
+        tone: 'error',
+        text: err instanceof ApiError ? err.message : 'Enregistrement impossible.',
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!list) return null;
+  return (
+    <Card>
+      <h2 className="font-display text-lg font-bold">Comment vos clients vous paient</h2>
+      <form onSubmit={save} className="flex flex-col gap-3">
+        {list.map((i, idx) => (
+          <fieldset key={idx} className="flex flex-col gap-2 rounded-lg border border-line p-3">
+            <legend className="px-1 text-sm font-semibold">Moyen {idx + 1}</legend>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
+                <label htmlFor={`pm-${idx}`} className="text-sm font-semibold">
+                  Moyen
+                </label>
+                <select
+                  id={`pm-${idx}`}
+                  value={i.method}
+                  onChange={(e) => set(idx, { method: e.target.value as PaymentMethod })}
+                  className="min-h-11 rounded-lg border border-line bg-surface px-2"
+                >
+                  {PAYMENT_METHODS.map((m) => (
+                    <option key={m} value={m}>
+                      {PAYMENT_METHOD_LABELS[m]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label htmlFor={`pp-${idx}`} className="text-sm font-semibold">
+                  Opérateur ou banque
+                </label>
+                <input
+                  id={`pp-${idx}`}
+                  value={i.provider ?? ''}
+                  onChange={(e) => set(idx, { provider: e.target.value })}
+                  className="min-h-11 rounded-lg border border-line bg-surface px-3"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
+                <label htmlFor={`pa-${idx}`} className="text-sm font-semibold">
+                  Titulaire
+                </label>
+                <input
+                  id={`pa-${idx}`}
+                  value={i.accountName}
+                  onChange={(e) => set(idx, { accountName: e.target.value })}
+                  className="min-h-11 rounded-lg border border-line bg-surface px-3"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label htmlFor={`pn-${idx}`} className="text-sm font-semibold">
+                  Numéro ou compte
+                </label>
+                <input
+                  id={`pn-${idx}`}
+                  value={i.accountNumber ?? ''}
+                  onChange={(e) => set(idx, { accountNumber: e.target.value })}
+                  className="min-h-11 rounded-lg border border-line bg-surface px-3"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor={`pd-${idx}`} className="text-sm font-semibold">
+                Précisions (facultatif)
+              </label>
+              <input
+                id={`pd-${idx}`}
+                value={i.details ?? ''}
+                placeholder="Ex. : espèces à la boutique, 9h–17h"
+                onChange={(e) => set(idx, { details: e.target.value })}
+                className="min-h-11 rounded-lg border border-line bg-surface px-3"
+              />
+            </div>
+            {list.length > 1 && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setList((l) => l!.filter((_, j) => j !== idx))}
+              >
+                Retirer le moyen {idx + 1}
+              </Button>
+            )}
+          </fieldset>
+        ))}
+        {list.length < 10 && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setList((l) => [...l!, emptyInstruction()])}
+          >
+            Ajouter un moyen de paiement
+          </Button>
+        )}
+        {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
+        <Button type="submit" busy={busy}>
+          Enregistrer les moyens de paiement
         </Button>
       </form>
     </Card>

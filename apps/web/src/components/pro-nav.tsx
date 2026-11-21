@@ -7,6 +7,7 @@ import { Logo } from '@/components/ui';
 const LINKS = [
   { href: '/pro/demandes', label: 'Demandes' },
   { href: '/pro/commandes', label: 'Commandes' },
+  { href: '/pro/paiements', label: 'Paiements' },
   { href: '/pro/clients', label: 'Clients' },
   { href: '/pro/profil', label: 'Profil et vérification' },
 ];

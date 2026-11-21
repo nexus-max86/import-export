@@ -153,6 +153,8 @@ model Organization {
   /// Modes de transport proposés : air, sea, road.
   transportModes         String[]           @default([]) @map("transport_modes")
   pricingPolicy          String?            @map("pricing_policy")
+  /// Instructions de paiement direct affichées au client (moyens, numéros, titulaires).
+  paymentInstructions    Json?              @map("payment_instructions")
   /// Réglages de l'assistant de devis : commission (points de base, 1000 = 10 %) et transport au kilo.
   commissionBps          Int?               @map("commission_bps")
   transportPerKgAmount   BigInt?            @map("transport_per_kg_amount")
@@ -401,6 +403,7 @@ model OrgCustomer {
 enum FilePurpose {
   verification_document
   product_screenshot
+  payment_proof
 }
 
 /// Fichier stocké chiffré (AES-256-GCM) ; le contenu n'est jamais servi sans contrôle d'accès.
@@ -771,6 +774,7 @@ model Order {
   items       OrderItem[]
   events      OrderEvent[]
   adjustments OrderAdjustment[]
+  payments    Payment[]
 
   @@index([organizationId, status])
   @@index([customerUserId])
@@ -845,4 +849,79 @@ model OrderAdjustment {
 
   @@index([orderId])
   @@map("order_adjustments")
+}
+
+// ---------------------------------------------------------------------------
+// Paiements directs (ticket #18) — la plateforme ne détient aucun fonds
+// ---------------------------------------------------------------------------
+
+enum PaymentKind {
+  payment
+  refund
+}
+
+enum PaymentMethod {
+  mobile_money
+  cash
+  bank_transfer
+  other
+}
+
+enum PaymentStatus {
+  pending_verification
+  confirmed
+  rejected
+  cancelled
+}
+
+model Payment {
+  id              String        @id @default(uuid(7)) @db.Uuid
+  organizationId  String        @map("organization_id") @db.Uuid
+  orderId         String        @map("order_id") @db.Uuid
+  orgCustomerId   String        @map("org_customer_id") @db.Uuid
+  customerUserId  String?       @map("customer_user_id") @db.Uuid
+  kind            PaymentKind   @default(payment)
+  method          PaymentMethod
+  /// Opérateur : M-Pesa, Orange Money, Airtel Money, nom de la banque…
+  provider        String?
+  amount          BigInt
+  currency        String        @db.Char(3)
+  /// Montant converti dans la devise de la commande, au taux figé ci-dessous.
+  orderAmount     BigInt        @map("order_amount")
+  fxRate          Decimal?      @map("fx_rate") @db.Decimal(18, 8)
+  payerReference  String?       @map("payer_reference")
+  proofFileId     String?       @map("proof_file_id") @db.Uuid
+  note            String?
+  status          PaymentStatus
+  declaredBy      String        @map("declared_by") @db.Uuid
+  confirmedBy     String?       @map("confirmed_by") @db.Uuid
+  confirmedAt     DateTime?     @map("confirmed_at") @db.Timestamptz(3)
+  rejectionReason String?       @map("rejection_reason")
+  idempotencyKey  String?       @unique @map("idempotency_key")
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  order  Order          @relation(fields: [orderId], references: [id])
+  events PaymentEvent[]
+
+  @@index([organizationId, status])
+  @@index([orderId])
+  @@index([orgCustomerId])
+  @@map("payments")
+}
+
+/// Historique d'un paiement : insertion seule.
+model PaymentEvent {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  paymentId      String   @map("payment_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  type           String
+  actorUserId    String?  @map("actor_user_id") @db.Uuid
+  note           String?
+  at             DateTime @default(now()) @db.Timestamptz(3)
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@index([paymentId])
+  @@map("payment_events")
 }

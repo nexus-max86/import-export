@@ -99,6 +99,16 @@ describe('Isolation entre commissionnaires', () => {
       })
       .set(...asOrg(orgA))
       .expect(201);
+    await buyer.agent
+      .post(`/api/orders/${accepted.body.orderId}/payments`, {
+        method: 'mobile_money',
+        provider: 'M-Pesa',
+        amount: 500,
+        currency: 'USD',
+        reference: 'MP-TEST',
+        idempotencyKey: '00000000-0000-4000-8000-000000000001',
+      })
+      .expect(201);
     await t.prisma.organization.update({ where: { id: orgA }, data: { status: 'pending' } });
     await a.agent
       .postFile(

@@ -31,7 +31,7 @@ export class FilesService {
     tx: TenantTx,
     userId: string,
     organizationId: string | null,
-    purpose: 'verification_document' | 'product_screenshot',
+    purpose: 'verification_document' | 'product_screenshot' | 'payment_proof',
     upload: UploadedBlob,
   ) {
     if (upload.size > MAX_UPLOAD_BYTES)
@@ -45,7 +45,12 @@ export class FilesService {
           : 'Format non accepté. Envoyez un PDF ou une photo (JPEG, PNG, WebP).',
       );
     }
-    const storageKey = `${purpose === 'product_screenshot' ? 'screenshots' : 'verification'}/${organizationId ?? userId}/${randomUUID()}`;
+    const folder = {
+      product_screenshot: 'screenshots',
+      verification_document: 'verification',
+      payment_proof: 'payments',
+    }[purpose];
+    const storageKey = `${folder}/${organizationId ?? userId}/${randomUUID()}`;
     // Le contenu est écrit avant la ligne en base : un échec SQL laisse au pire un fichier orphelin chiffré.
     await this.storage.put(storageKey, this.crypto.encrypt(upload.buffer));
     return tx.storedFile.create({

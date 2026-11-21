@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { CustomerOrderActions } from '@/components/order-actions';
 import { OrderView } from '@/components/order-view';
+import { CustomerPayments } from '@/components/payments';
 import { Logo, Notice } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 
@@ -31,13 +32,11 @@ export default function OrderPage() {
       {order && (
         <>
           <OrderView order={order} />
+          <CustomerPayments
+            order={order}
+            onChanged={() => void api<OrderDetail>(`/orders/${id}`).then(setOrder)}
+          />
           <CustomerOrderActions order={order} onChange={setOrder} />
-          {order.status === 'awaiting_payment' && (
-            <Notice>
-              Prochaine étape : payer {order.organizationName}. Les instructions de paiement
-              arrivent avec la prochaine version de Konzia.
-            </Notice>
-          )}
         </>
       )}
     </main>

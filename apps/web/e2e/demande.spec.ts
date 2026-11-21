@@ -105,7 +105,32 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   ).toBeVisible();
   await client.getByRole('button', { name: 'Accepter l’ajustement' }).click();
   await expect(client.getByText('ajustements acceptés', { exact: false })).toBeVisible();
-  await expect(client.getByText('91,28 USD')).toBeVisible();
+  await expect(client.getByText('91,28 USD').first()).toBeVisible();
+
+  // --- Paiement direct : déclaré par le client, confirmé par le commissionnaire ---
+  await expect(client.getByLabel('Montant payé')).toHaveValue('91,28');
+  await client.getByLabel('Référence de la transaction').fill('MP241121.1042.K93811');
+  await client.getByRole('button', { name: 'Envoyer mon paiement' }).click();
+  await expect(client.getByText('Paiement envoyé.', { exact: false })).toBeVisible();
+  await expect(client.getByText('Paiement à vérifier').first()).toBeVisible();
+
+  await pro.getByRole('link', { name: 'Paiements', exact: true }).click();
+  await expect(pro.getByRole('heading', { name: 'À vérifier (1)' })).toBeVisible();
+  await expect(pro.getByText('Ruth', { exact: false }).first()).toBeVisible();
+  await pro.getByRole('button', { name: 'Confirmer la réception' }).click();
+  await expect(pro.getByText('Paiement de 91,28 USD confirmé.')).toBeVisible();
+  await expect(pro.getByText('Aucun solde en attente : tout est payé.')).toBeVisible();
+
+  await client.reload();
+  await expect(client.getByText('Payée').first()).toBeVisible();
+
+  await pro.getByRole('link', { name: 'Commandes', exact: true }).click();
+  await pro
+    .getByText(/KZ-\d{4}-\d{6}/)
+    .first()
+    .click();
+  await pro.getByRole('button', { name: 'Passer à « Achat en cours »' }).click();
+  await expect(pro.getByText('Achat en cours').first()).toBeVisible();
 
   // --- Demande saisie pour un client géré (reçue par WhatsApp) ---
   await pro.getByRole('link', { name: 'Clients' }).click();
