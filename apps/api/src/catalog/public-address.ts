@@ -1,0 +1,48 @@
+import { BlockList, isIP } from 'node:net';
+
+/** Plages non publiques : boucle locale, réseaux privés, lien local (métadonnées cloud), réservées… */
+const blocked = new BlockList();
+for (const [net, prefix] of [
+  ['0.0.0.0', 8],
+  ['10.0.0.0', 8],
+  ['100.64.0.0', 10],
+  ['127.0.0.0', 8],
+  ['169.254.0.0', 16],
+  ['172.16.0.0', 12],
+  ['192.0.0.0', 24],
+  ['192.0.2.0', 24],
+  ['192.88.99.0', 24],
+  ['192.168.0.0', 16],
+  ['198.18.0.0', 15],
+  ['198.51.100.0', 24],
+  ['203.0.113.0', 24],
+  ['224.0.0.0', 4],
+  ['240.0.0.0', 4],
+] as const) {
+  blocked.addSubnet(net, prefix, 'ipv4');
+}
+for (const [net, prefix] of [
+  ['::', 128],
+  ['::1', 128],
+  ['fc00::', 7],
+  ['fe80::', 10],
+  ['ff00::', 8],
+  ['2001:db8::', 32],
+  ['64:ff9b::', 96],
+  ['100::', 64],
+] as const) {
+  blocked.addSubnet(net, prefix, 'ipv6');
+}
+
+/** Vrai si l'adresse IP est publique et joignable sans risque SSRF. */
+export function isPublicAddress(address: string): boolean {
+  const family = isIP(address);
+  if (family === 0) return false;
+  if (family === 6) {
+    // Adresse IPv4 encapsulée (::ffff:127.0.0.1) : on contrôle la partie IPv4.
+    const mapped = address.toLowerCase().match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+    if (mapped?.[1]) return isPublicAddress(mapped[1]);
+    return !blocked.check(address, 'ipv6');
+  }
+  return !blocked.check(address, 'ipv4');
+}

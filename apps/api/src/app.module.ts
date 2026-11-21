@@ -3,6 +3,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
 import { CsrfMiddleware } from './common/csrf.middleware';
+import { CatalogModule } from './catalog/catalog.module';
 import { ConfigModule } from './config/config.module';
 import { loadEnv } from './config/env';
 import { CustomersModule } from './customers/customers.module';
@@ -51,6 +52,7 @@ const env = loadEnv();
     FilesModule,
     VerificationModule,
     DirectoryModule,
+    CatalogModule,
     ...(env.NODE_ENV !== 'production' && env.EMAIL_TRANSPORT === 'fake' ? [DevModule] : []),
   ],
   controllers: [HealthController],
