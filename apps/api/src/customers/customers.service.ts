@@ -258,6 +258,7 @@ export class CustomersService {
         where: { id: target.id },
         data: { userId, claimedAt: new Date(), claimTokenHash: null, claimTokenExpiresAt: null },
       });
+      await this.linkHistory(tx, target.id, userId);
       await this.audit.recordSystem(
         {
           actorUserId: userId,
@@ -304,6 +305,27 @@ export class CustomersService {
       select: { id: true },
     });
     return created.id;
+  }
+
+  /**
+   * Rattache au compte l'historique saisi pour le client géré (commandes, paiements, colis) :
+   * sans cela, il ne verrait pas ses commandes passées par WhatsApp après la réclamation.
+   */
+  private async linkHistory(tx: Prisma.TransactionClient, orgCustomerId: string, userId: string) {
+    await tx.$executeRaw`UPDATE orders SET customer_user_id = ${userId}::uuid
+      WHERE org_customer_id = ${orgCustomerId}::uuid AND customer_user_id IS NULL`;
+    await tx.$executeRaw`UPDATE order_items oi SET customer_user_id = ${userId}::uuid
+      FROM orders o WHERE oi.order_id = o.id AND o.org_customer_id = ${orgCustomerId}::uuid
+        AND oi.customer_user_id IS NULL`;
+    await tx.$executeRaw`UPDATE order_adjustments a SET customer_user_id = ${userId}::uuid
+      FROM orders o WHERE a.order_id = o.id AND o.org_customer_id = ${orgCustomerId}::uuid
+        AND a.customer_user_id IS NULL`;
+    await tx.$executeRaw`UPDATE payments SET customer_user_id = ${userId}::uuid
+      WHERE org_customer_id = ${orgCustomerId}::uuid AND customer_user_id IS NULL`;
+    // Les lignes retirées d'un colis sont figées (déclencheur) : seules les actives sont rattachées.
+    await tx.$executeRaw`UPDATE parcel_items SET customer_user_id = ${userId}::uuid
+      WHERE org_customer_id = ${orgCustomerId}::uuid AND customer_user_id IS NULL
+        AND removed_at IS NULL`;
   }
 
   /** Fusionne la fiche `fromId` dans `intoId` : références réaffectées, fiche source marquée « fusionnée ». */

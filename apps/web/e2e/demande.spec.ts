@@ -237,4 +237,17 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
 
   await client.reload();
   await expect(client.getByText('En transport').first()).toBeVisible();
+
+  // --- Écran 06 : le client suit SES articles ; le colis partagé ne révèle pas l'autre client ---
+  await expect(client.getByRole('heading', { name: 'Suivi de mes colis' })).toBeVisible();
+  await expect(client.getByText('Expédié vers la RDC').first()).toBeVisible();
+  await expect(client.getByText('Reçu à l’entrepôt d’origine')).toBeVisible();
+  await expect(client.getByText('Chaussures de sécurité')).toHaveCount(0);
+  await expect(client.getByText('Patrick', { exact: false })).toHaveCount(0);
+
+  // --- Export Excel des colis ---
+  await pro.getByRole('link', { name: 'Colis', exact: true }).click();
+  const download = pro.waitForEvent('download');
+  await pro.getByRole('button', { name: 'Exporter les colis (Excel)' }).click();
+  expect((await download).suggestedFilename()).toMatch(/^konzia-colis-\d{4}-\d{2}-\d{2}\.csv$/);
 });

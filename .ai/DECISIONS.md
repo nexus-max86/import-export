@@ -40,3 +40,9 @@ Ne figurent ici que les décisions difficiles à défaire, surprenantes sans con
 - **Décision** : un client géré a son adresse directement sur `org_customers` (ville, commune, adresse, repère). La table `addresses` reste strictement personnelle (RLS par utilisateur). Quand un client réclame sa fiche alors qu'il en avait déjà une chez ce commissionnaire (créée à l'inscription), la fiche d'inscription est marquée `merged` et ses références sont réaffectées à la fiche réclamée, qui porte l'historique.
 - **Pourquoi** : éviter qu'un commissionnaire puisse lire ou modifier le carnet d'adresses personnel d'un client ; garder un seul dossier client par commissionnaire.
 - **Coût** : chaque table qui référence `org_customer_id` doit être déclarée dans `ORG_CUSTOMER_REFERENCES`.
+
+## D8 — Suivi client par vues filtrées ; historique rattaché à la réclamation (21/11/2026)
+
+- **Contexte** : un colis mélange les articles de plusieurs clients (EF-84) ; la RLS par ligne ne suffit pas à masquer les autres articles ni les notes internes d'un même colis.
+- **Décision** : le client ne lit le suivi qu'à travers deux vues (`customer_parcel_tracking`, `customer_parcel_events`) appartenant au propriétaire du schéma, filtrées sur `app_current_user_id()` via `org_customers.user_id`, sans colonnes de notes ni d'identité d'autres clients. Lors d'une réclamation de compte, l'historique du client géré (commandes, lignes, ajustements, paiements, colis) est rattaché à l'utilisateur par un chemin système ; les déclencheurs de paiements et d'articles de colis l'autorisent hors rôle applicatif, et seulement pour les colonnes de rattachement.
+- **Coût** : toute nouvelle donnée de suivi destinée au client passe par ces vues (pas d'accès direct aux tables) ; toute table avec `customer_user_id` doit être ajoutée au rattachement (`CustomersService.linkHistory`).

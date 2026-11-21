@@ -1,5 +1,6 @@
 'use client';
 
+import { CsvExportButton } from '@/components/tracking';
 import type { OrderSummary } from '@konzia/shared';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -26,6 +27,7 @@ export default function ProOrdersPage() {
     <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 py-10">
       <ProNav />
       <h1 className="font-display text-2xl font-bold">Commandes</h1>
+      <CsvExportButton org={org} kind="orders" label="Exporter les commandes (Excel)" />
       {!orders && <p className="text-muted">Chargement…</p>}
       {orders?.length === 0 && (
         <Card>

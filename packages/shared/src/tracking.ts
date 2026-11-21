@@ -195,3 +195,17 @@ export interface ShipmentInfo {
   events: TrackingEventInfo[];
   createdAt: string;
 }
+
+/** Suivi d'un colis vu par le client : ses articles seulement, étapes visibles, sans notes. */
+export interface CustomerParcelTracking {
+  parcelCode: string;
+  status: 'open' | 'closed' | 'delivered' | 'lost';
+  currentLabel: string | null;
+  items: { orderNumber: string; description: string; quantity: number }[];
+  events: {
+    kind: 'step' | 'anomaly' | 'correction';
+    label: string;
+    occurredAt: string;
+    location: string | null;
+  }[];
+}

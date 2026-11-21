@@ -172,7 +172,7 @@ Modèle global par défaut : les 19 étapes du cahier §5.4 ; chaque commissionn
 | `supplier_orders`, `supplier_order_items` | **organisation uniquement** (coûts réels privés) | organisation (`owner`, `buyer`) |
 | `payments`, `payment_events` | organisation ; client propriétaire | client : déclarer ; organisation : confirmer/refuser |
 | `parcels`, `shipments`, `*_events` | **organisation uniquement** | organisation (`owner`, `logistics`) |
-| Vue `customer_parcel_tracking` | client : ses `parcel_items` + événements visibles du colis | — |
+| Vues `customer_parcel_tracking`, `customer_parcel_events` | client (via `org_customers.user_id`) : ses `parcel_items` + étapes visibles du colis, sans notes (D8) | — |
 | `disputes`, `dispute_entries` | organisation ; client propriétaire ; support (notes internes masquées au client) | selon le côté |
 | `audit_logs` | admin plateforme ; membres `owner` pour leur organisation | insertion par l'application uniquement |
 
