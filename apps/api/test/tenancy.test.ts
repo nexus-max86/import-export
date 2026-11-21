@@ -1,6 +1,6 @@
 import { PrismaClient } from '@konzia/db';
 import { createTestApp, tokenFrom, type TestContext } from './app';
-import { actor, addMember, asOrg, createOrg, PDF, type Actor } from './fixtures';
+import { actor, addMember, approveOrg, asOrg, createOrg, PDF, type Actor } from './fixtures';
 import { SYSTEM_ONLY_TABLES, TENANT_TABLES } from './tenancy-tables';
 
 /**
@@ -50,6 +50,20 @@ describe('Isolation entre commissionnaires', () => {
       .postFile('/api/org/verification/documents', { kind: 'rccm' }, PDF, 'rccm.pdf')
       .set(...asOrg(orgA))
       .expect(201);
+    // Une demande de devis reçue par A (A approuvée le temps de l'envoi).
+    const slugA = await approveOrg(t, orgA);
+    const buyer = await actor(t, 'Acheteuse');
+    const lub = await t.prisma.city.findUniqueOrThrow({ where: { name: 'Lubumbashi' } });
+    await buyer.agent
+      .put('/api/me/profile', { displayName: 'Acheteuse', cityId: lub.id })
+      .expect(200);
+    const draft = await buyer.agent
+      .post('/api/requests/draft/items', { source: 'manual', title: 'Article test', quantity: 1 })
+      .expect(201);
+    await buyer.agent
+      .post(`/api/requests/${draft.body.id}/send`, { commissioners: [slugA] })
+      .expect(201);
+    await t.prisma.organization.update({ where: { id: orgA }, data: { status: 'pending' } });
     await a.agent
       .postFile(
         '/api/org/customers/import',

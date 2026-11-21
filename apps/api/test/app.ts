@@ -57,7 +57,9 @@ export async function createTestApp(): Promise<TestContext> {
     outbox,
     agent: () => makeAgent(app),
     async reset() {
-      await prisma.$executeRawUnsafe('TRUNCATE users, organizations, audit_logs CASCADE');
+      await prisma.$executeRawUnsafe(
+        'TRUNCATE users, organizations, audit_logs, quote_requests CASCADE',
+      );
       // Référentiel : on ne garde que les données de la migration (villes du pilote, communes de Lubumbashi).
       await prisma.$executeRawUnsafe(
         `DELETE FROM service_zones WHERE city_id IN (SELECT id FROM cities WHERE name NOT IN (${SEED_CITIES}))

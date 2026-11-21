@@ -16,6 +16,7 @@ import { HealthController } from './health/health.controller';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProfileModule } from './profile/profile.module';
+import { RequestsModule } from './requests/requests.module';
 import { RedisModule } from './redis/redis.module';
 import { TenancyModule } from './tenancy/tenancy.module';
 import { VerificationModule } from './verification/verification.module';
@@ -53,6 +54,7 @@ const env = loadEnv();
     VerificationModule,
     DirectoryModule,
     CatalogModule,
+    RequestsModule,
     ...(env.NODE_ENV !== 'production' && env.EMAIL_TRANSPORT === 'fake' ? [DevModule] : []),
   ],
   controllers: [HealthController],

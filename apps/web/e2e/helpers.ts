@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { expect, type APIRequestContext, type Page } from '@playwright/test';
 
 export const API = 'http://localhost:3101';
@@ -26,4 +27,39 @@ export async function login(page: Page, email: string): Promise<void> {
   await page.getByLabel('Adresse e-mail').fill(email);
   await page.getByLabel('Mot de passe').fill(PASSWORD);
   await page.getByRole('button', { name: 'Se connecter' }).click();
+}
+
+const DB = process.env.E2E_DATABASE_URL ?? 'postgresql://konzia:konzia@localhost:5432/konzia_test';
+
+/** Approuve une organisation directement en base (l'écran d'administration arrive au ticket #27). */
+export function approveOrgInDb(name: string): void {
+  execFileSync('psql', [
+    DB,
+    '-qc',
+    `UPDATE organizations SET status = 'approved', verified_at = now() WHERE name = '${name.replace(/'/g, "''")}'`,
+  ]);
+}
+
+/** Crée une activité de commissionnaire par l'API, connecté avec `request` (cookies partagés). */
+export async function createOrgViaApi(
+  request: APIRequestContext,
+  email: string,
+  name: string,
+): Promise<void> {
+  expect(
+    (
+      await request.post(`${API}/api/auth/login`, {
+        headers: CSRF,
+        data: { email, password: PASSWORD },
+      })
+    ).status(),
+  ).toBe(204);
+  expect(
+    (
+      await request.post(`${API}/api/organizations`, {
+        headers: CSRF,
+        data: { name, type: 'independent' },
+      })
+    ).status(),
+  ).toBe(201);
 }

@@ -165,6 +165,7 @@ model Organization {
   serviceZones  OrganizationServiceZone[]
   customers     OrgCustomer[]
   verifications OrganizationVerification[]
+  requests      QuoteRequestRecipient[]
 
   @@map("organizations")
 }
@@ -252,6 +253,7 @@ model City {
   profiles  CustomerProfile[]
   addresses Address[]
   customers OrgCustomer[]
+  requests  QuoteRequest[]
 
   @@map("cities")
 }
@@ -376,10 +378,11 @@ model OrgCustomer {
   createdAt           DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt           DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  user         User?        @relation(fields: [userId], references: [id])
-  city         City?        @relation(fields: [cityId], references: [id])
-  serviceZone  ServiceZone? @relation(fields: [serviceZoneId], references: [id])
+  organization Organization            @relation(fields: [organizationId], references: [id])
+  user         User?                   @relation(fields: [userId], references: [id])
+  city         City?                   @relation(fields: [cityId], references: [id])
+  serviceZone  ServiceZone?            @relation(fields: [serviceZoneId], references: [id])
+  requests     QuoteRequestRecipient[]
 
   @@index([organizationId, status])
   @@index([userId])
@@ -480,4 +483,105 @@ model CustomerImport {
 
   @@index([organizationId])
   @@map("customer_imports")
+}
+
+// ---------------------------------------------------------------------------
+// Demandes de devis (ticket #14)
+// ---------------------------------------------------------------------------
+
+enum QuoteRequestStatus {
+  draft
+  sent
+  partially_quoted
+  quoted
+  expired
+  cancelled
+  converted
+}
+
+enum RecipientStatus {
+  sent
+  viewed
+  evaluating
+  quoted
+  declined
+  expired
+}
+
+enum ItemSource {
+  lookup
+  manual
+}
+
+model QuoteRequest {
+  id                      String             @id @default(uuid(7)) @db.Uuid
+  /// Client avec compte ; nul pour une demande saisie par un commissionnaire pour un client géré.
+  customerUserId          String?            @map("customer_user_id") @db.Uuid
+  createdByOrganizationId String?            @map("created_by_organization_id") @db.Uuid
+  createdByUserId         String             @map("created_by_user_id") @db.Uuid
+  cityId                  String?            @map("city_id") @db.Uuid
+  /// Copie de l'adresse au moment de l'envoi (l'adresse d'origine peut changer ensuite).
+  deliveryAddress         Json?              @map("delivery_address")
+  note                    String?
+  status                  QuoteRequestStatus @default(draft)
+  deadlineAt              DateTime?          @map("deadline_at") @db.Timestamptz(3)
+  sentAt                  DateTime?          @map("sent_at") @db.Timestamptz(3)
+  createdAt               DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt               DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  items      QuoteRequestItem[]
+  recipients QuoteRequestRecipient[]
+  city       City?                   @relation(fields: [cityId], references: [id])
+
+  @@index([customerUserId, status])
+  @@index([createdByOrganizationId])
+  @@map("quote_requests")
+}
+
+model QuoteRequestItem {
+  id                      String     @id @default(uuid(7)) @db.Uuid
+  quoteRequestId          String     @map("quote_request_id") @db.Uuid
+  position                Int
+  source                  ItemSource
+  sourceUrl               String?    @map("source_url")
+  marketplace             String?
+  title                   String
+  variant                 String?
+  size                    String?
+  color                   String?
+  quantity                Int
+  notes                   String?
+  imageUrl                String?    @map("image_url")
+  /// Prix lu sur la page : INDICATIF, daté (priceFetchedAt), jamais un prix final.
+  indicativePriceAmount   BigInt?    @map("indicative_price_amount")
+  indicativePriceCurrency String?    @map("indicative_price_currency") @db.Char(3)
+  priceFetchedAt          DateTime?  @map("price_fetched_at") @db.Timestamptz(3)
+  screenshotFileId        String?    @map("screenshot_file_id") @db.Uuid
+  createdAt               DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt               DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  quoteRequest QuoteRequest @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
+
+  @@index([quoteRequestId])
+  @@map("quote_request_items")
+}
+
+model QuoteRequestRecipient {
+  id             String          @id @default(uuid(7)) @db.Uuid
+  quoteRequestId String          @map("quote_request_id") @db.Uuid
+  organizationId String          @map("organization_id") @db.Uuid
+  orgCustomerId  String          @map("org_customer_id") @db.Uuid
+  status         RecipientStatus @default(sent)
+  viewedAt       DateTime?       @map("viewed_at") @db.Timestamptz(3)
+  declineReason  String?         @map("decline_reason")
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  quoteRequest QuoteRequest @relation(fields: [quoteRequestId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+  orgCustomer  OrgCustomer  @relation(fields: [orgCustomerId], references: [id])
+
+  @@unique([quoteRequestId, organizationId])
+  @@index([organizationId, status])
+  @@map("quote_request_recipients")
 }

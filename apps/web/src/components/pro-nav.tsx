@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Logo } from '@/components/ui';
 
 const LINKS = [
+  { href: '/pro/demandes', label: 'Demandes' },
   { href: '/pro/clients', label: 'Clients' },
   { href: '/pro/profil', label: 'Profil et vérification' },
 ];
@@ -25,7 +26,7 @@ export function ProNav() {
           <Link
             key={l.href}
             href={l.href}
-            aria-current={path === l.href ? 'page' : undefined}
+            aria-current={path === l.href || path.startsWith(`${l.href}/`) ? 'page' : undefined}
             className="min-h-10 shrink-0 rounded-full border border-line px-4 py-2 text-sm font-semibold aria-[current=page]:border-copper aria-[current=page]:bg-copper-soft"
           >
             {l.label}

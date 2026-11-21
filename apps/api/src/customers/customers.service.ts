@@ -67,7 +67,9 @@ function toInfo(r: Row): OrgCustomerInfo {
  * réaffectées à la fiche conservée. RÈGLE : toute nouvelle table avec `org_customer_id`
  * doit être ajoutée ici (voir `merge`).
  */
-const ORG_CUSTOMER_REFERENCES: { table: string; column: string }[] = [];
+const ORG_CUSTOMER_REFERENCES: { table: string; column: string }[] = [
+  { table: 'quote_request_recipients', column: 'org_customer_id' },
+];
 
 @Injectable()
 export class CustomersService {
@@ -266,6 +268,38 @@ export class CustomersService {
       );
       return { organizationName: target.organization.name, merged: existing !== null };
     });
+  }
+
+  /**
+   * Fiche du client connecté chez un commissionnaire, créée si besoin (source « signup »).
+   * Chemin système : appelé lors de l'envoi d'une demande, dans la transaction d'envoi.
+   */
+  async ensureForUser(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    userId: string,
+  ): Promise<string> {
+    const existing = await tx.orgCustomer.findFirst({
+      where: { organizationId, userId, status: 'active' },
+      select: { id: true },
+    });
+    if (existing) return existing.id;
+    const user = await tx.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { displayName: true, email: true, phoneWhatsapp: true },
+    });
+    const created = await tx.orgCustomer.create({
+      data: {
+        organizationId,
+        userId,
+        fullName: user.displayName,
+        email: user.email,
+        phoneWhatsapp: user.phoneWhatsapp,
+        source: 'signup',
+      },
+      select: { id: true },
+    });
+    return created.id;
   }
 
   /** Fusionne la fiche `fromId` dans `intoId` : références réaffectées, fiche source marquée « fusionnée ». */

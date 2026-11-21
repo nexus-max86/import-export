@@ -53,3 +53,12 @@ export async function makeAdmin(t: TestContext, who: Actor): Promise<Actor> {
 /** Petit PDF factice (signature %PDF-) pour les tests d'envoi de documents. */
 export const PDF = Buffer.from('%PDF-1.4\n% document de test Konzia\n%%EOF\n');
 export const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+
+/** Approuve directement une organisation (raccourci de test, l'écran admin arrive au ticket #27). */
+export async function approveOrg(t: TestContext, orgId: string): Promise<string> {
+  const org = await t.prisma.organization.update({
+    where: { id: orgId },
+    data: { status: 'approved', verifiedAt: new Date() },
+  });
+  return org.slug;
+}

@@ -95,6 +95,20 @@ export default function AccountPage() {
           </Button>
         </Card>
       )}
+      <div className="grid grid-cols-2 gap-3">
+        <Link
+          href="/demande"
+          className="flex min-h-11 items-center justify-center rounded-lg bg-copper px-4 text-center font-semibold text-white"
+        >
+          Nouvelle demande
+        </Link>
+        <Link
+          href="/demandes"
+          className="flex min-h-11 items-center justify-center rounded-lg border border-line px-4 text-center font-semibold"
+        >
+          Mes demandes
+        </Link>
+      </div>
       <Link
         href="/compte/profil"
         className="flex min-h-11 items-center justify-between rounded-2xl border border-line bg-surface px-5 py-4 font-semibold"

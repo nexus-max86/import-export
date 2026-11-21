@@ -13,6 +13,7 @@ export const TENANT_TABLES: { table: string; orgColumn: string }[] = [
   { table: 'organization_verifications', orgColumn: 'organization_id' },
   { table: 'verification_documents', orgColumn: 'organization_id' },
   { table: 'customer_imports', orgColumn: 'organization_id' },
+  { table: 'quote_request_recipients', orgColumn: 'organization_id' },
 ];
 
 /** Données personnelles d'un utilisateur : seul leur propriétaire y accède. */
