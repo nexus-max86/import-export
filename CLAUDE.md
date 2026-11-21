@@ -7,7 +7,7 @@
 ## Commandes (racine)
 
 - Installer : `pnpm install` · Construire les paquets partagés d'abord : `pnpm --filter @konzia/shared --filter @konzia/db build`
-- Vérifier : `pnpm lint && pnpm typecheck && pnpm test && pnpm build`
+- Vérifier avant chaque commit : `pnpm verify` (formatage, lint, types, build, tests). Ne jamais masquer son code de sortie par un `| grep`.
 - Tests API : base `postgresql://konzia:konzia@localhost:5432/konzia_test`, Redis `redis://localhost:6379` (valeurs par défaut dans `apps/api/test/setup.ts`).
 
 ## Règles
