@@ -58,7 +58,7 @@ export async function createTestApp(): Promise<TestContext> {
     agent: () => makeAgent(app),
     async reset() {
       await prisma.$executeRawUnsafe(
-        'TRUNCATE users, organizations, audit_logs, quote_requests, exchange_rates CASCADE',
+        'TRUNCATE users, organizations, audit_logs, quote_requests, exchange_rates, orders CASCADE',
       );
       // Référentiel : on ne garde que les données de la migration (villes du pilote, communes de Lubumbashi).
       await prisma.$executeRawUnsafe(

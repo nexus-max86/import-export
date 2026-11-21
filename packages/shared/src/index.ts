@@ -16,3 +16,4 @@ export * from './product';
 export * from './requests';
 export * from './fx';
 export * from './quotes';
+export * from './orders';

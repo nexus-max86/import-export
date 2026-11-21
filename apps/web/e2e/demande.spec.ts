@@ -77,8 +77,18 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await expect(pro.getByText('Devis envoyé', { exact: true })).toBeVisible();
   await expect(pro.getByRole('button', { name: 'Corriger (nouvelle version)' })).toBeVisible();
 
+  // --- Le client compare et accepte : la commande est créée ---
   await client.reload();
-  await expect(client.getByText('Devis reçu').first()).toBeVisible();
+  await expect(client.getByRole('heading', { name: 'Devis reçu' })).toBeVisible();
+  await expect(client.getByText('86,28 USD').first()).toBeVisible();
+  await client.getByRole('button', { name: 'Accepter ce devis' }).click();
+  await client.getByRole('button', { name: 'Confirmer et créer la commande' }).click();
+  await expect(client.getByRole('heading', { name: /^KZ-\d{4}-\d{6}$/ })).toBeVisible();
+  await expect(client.getByText('En attente de paiement').first()).toBeVisible();
+  await expect(client.getByText(/· Devis version 1 accepté$/)).toBeVisible();
+
+  await pro.getByRole('link', { name: 'Commandes', exact: true }).click();
+  await expect(pro.getByText(/KZ-\d{4}-\d{6}/)).toBeVisible();
 
   // --- Demande saisie pour un client géré (reçue par WhatsApp) ---
   await pro.getByRole('link', { name: 'Clients' }).click();

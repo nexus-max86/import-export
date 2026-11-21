@@ -1,9 +1,10 @@
 'use client';
 
-import type { RequestDetail } from '@konzia/shared';
+import type { QuoteInfo, RequestDetail } from '@konzia/shared';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { QuoteCard } from '@/components/quote-card';
 import { RequestItems } from '@/components/request-items';
 import { StatusPill } from '@/components/status-pill';
 import { Button, Card, Logo, Notice } from '@/components/ui';
@@ -22,8 +23,13 @@ export default function RequestPage() {
   const [r, setR] = useState<RequestDetail>();
   const [error, setError] = useState<string>();
   const [confirm, setConfirm] = useState(false);
+  const [quotes, setQuotes] = useState<QuoteInfo[]>([]);
+
+  const loadQuotes = () =>
+    api<QuoteInfo[]>(`/requests/${id}/quotes`).then(setQuotes, () => undefined);
 
   useEffect(() => {
+    void api<QuoteInfo[]>(`/requests/${id}/quotes`).then(setQuotes, () => undefined);
     api<RequestDetail>(`/requests/${id}`).then(setR, (err: unknown) => {
       if (err instanceof ApiError && err.status === 401)
         router.replace(`/connexion?suite=/demandes/${id}`);
@@ -52,6 +58,25 @@ export default function RequestPage() {
         </h1>
         <StatusPill tone={requestTone(r.status)}>{REQUEST_STATUS_LABELS[r.status]}</StatusPill>
       </div>
+      {quotes.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="font-display text-lg font-bold">
+            {quotes.length > 1 ? `Comparer les ${quotes.length} devis` : 'Devis reçu'}
+          </h2>
+          <p className="text-sm text-muted">
+            Chaque devis vient d’un commissionnaire différent ; chaque devis accepté devient une
+            commande séparée.
+          </p>
+          {quotes.map((q) => (
+            <QuoteCard
+              key={q.id}
+              quote={q}
+              onAccepted={(orderId) => router.push(`/commandes/${orderId}`)}
+              onChanged={() => void loadQuotes()}
+            />
+          ))}
+        </section>
+      )}
       <Card>
         <h2 className="font-display text-lg font-bold">Commissionnaires</h2>
         <ul className="flex flex-col gap-2">

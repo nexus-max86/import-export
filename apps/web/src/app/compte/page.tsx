@@ -108,6 +108,12 @@ export default function AccountPage() {
         >
           Mes demandes
         </Link>
+        <Link
+          href="/commandes"
+          className="col-span-2 flex min-h-11 items-center justify-center rounded-lg border border-line px-4 text-center font-semibold"
+        >
+          Mes commandes
+        </Link>
       </div>
       <Link
         href="/compte/profil"

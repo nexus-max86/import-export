@@ -720,3 +720,98 @@ model QuoteLine {
   @@index([quoteVersionId])
   @@map("quote_lines")
 }
+
+// ---------------------------------------------------------------------------
+// Commandes (tickets #16-#17) — créées à l'acceptation d'une version de devis
+// ---------------------------------------------------------------------------
+
+enum OrderStatus {
+  awaiting_payment
+  payment_to_verify
+  paid
+  purchasing
+  partially_purchased
+  purchased
+  in_logistics
+  in_transit
+  at_distribution_point
+  ready_for_handover
+  completed
+  cancelled
+  in_dispute
+}
+
+enum OrderPaymentStatus {
+  unpaid
+  partially_paid
+  paid
+  partially_refunded
+  refunded
+}
+
+model Order {
+  id                String             @id @default(uuid(7)) @db.Uuid
+  /// Numéro lisible, ex. KZ-2026-000123.
+  number            String             @unique
+  organizationId    String             @map("organization_id") @db.Uuid
+  orgCustomerId     String             @map("org_customer_id") @db.Uuid
+  customerUserId    String?            @map("customer_user_id") @db.Uuid
+  quoteId           String             @map("quote_id") @db.Uuid
+  quoteVersionId    String             @unique @map("quote_version_id") @db.Uuid
+  currency          String             @db.Char(3)
+  agreedTotalAmount BigInt             @map("agreed_total_amount")
+  /// Montant facturé : convenu + ajustements acceptés par le client.
+  finalAmount       BigInt             @map("final_amount")
+  status            OrderStatus        @default(awaiting_payment)
+  paymentStatus     OrderPaymentStatus @default(unpaid) @map("payment_status")
+  cancelledReason   String?            @map("cancelled_reason")
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  items  OrderItem[]
+  events OrderEvent[]
+
+  @@index([organizationId, status])
+  @@index([customerUserId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id                 String   @id @default(uuid(7)) @db.Uuid
+  orderId            String   @map("order_id") @db.Uuid
+  organizationId     String   @map("organization_id") @db.Uuid
+  customerUserId     String?  @map("customer_user_id") @db.Uuid
+  quoteLineId        String   @map("quote_line_id") @db.Uuid
+  quoteRequestItemId String?  @map("quote_request_item_id") @db.Uuid
+  description        String
+  quantity           Int
+  unitAmount         BigInt   @map("unit_amount")
+  amount             BigInt
+  qtyPurchased       Int      @default(0) @map("qty_purchased")
+  qtyReceived        Int      @default(0) @map("qty_received")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+/// Historique d'une commande : insertion seule.
+model OrderEvent {
+  id             String       @id @default(uuid(7)) @db.Uuid
+  orderId        String       @map("order_id") @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  type           String
+  fromStatus     OrderStatus? @map("from_status")
+  toStatus       OrderStatus? @map("to_status")
+  actorUserId    String?      @map("actor_user_id") @db.Uuid
+  note           String?
+  at             DateTime     @default(now()) @db.Timestamptz(3)
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId, at])
+  @@map("order_events")
+}
