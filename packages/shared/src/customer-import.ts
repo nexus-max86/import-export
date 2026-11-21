@@ -1,7 +1,14 @@
 export const MAX_IMPORT_ROWS = 2000;
 export const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
 
-export type ImportField = 'fullName' | 'phone' | 'email' | 'zone' | 'address' | 'landmark' | 'notes';
+export type ImportField =
+  | 'fullName'
+  | 'phone'
+  | 'email'
+  | 'zone'
+  | 'address'
+  | 'landmark'
+  | 'notes';
 
 export const IMPORT_FIELD_LABELS: Record<ImportField, string> = {
   fullName: 'Nom',
