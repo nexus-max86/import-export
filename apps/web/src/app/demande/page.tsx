@@ -64,6 +64,7 @@ export default function NewRequestPage() {
               actions={(item) => (
                 <Button
                   variant="ghost"
+                  aria-label={`Retirer « ${item.title} »`}
                   onClick={async () => {
                     try {
                       setDraft(
@@ -76,7 +77,7 @@ export default function NewRequestPage() {
                     }
                   }}
                 >
-                  Retirer « {item.title.slice(0, 30)} »
+                  Retirer cet article
                 </Button>
               )}
             />
@@ -372,9 +373,12 @@ function SendForm({ draft, onSent }: { draft: RequestDetail; onSent: (id: string
                 <span className="ml-2 text-xs font-semibold">Service opéré par Konzia</span>
               )}
               <span className="block text-sm text-muted">
-                {[...new Set(c.zones.map((z) => z.cityName))].join(', ')}
-                {c.marketplaces.length > 0 &&
-                  ` · ${c.marketplaces.map((m) => MARKETPLACES[m]).join(', ')}`}
+                {[
+                  [...new Set(c.zones.map((z) => z.cityName))].join(', '),
+                  c.marketplaces.map((m) => MARKETPLACES[m]).join(', '),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
               </span>
             </span>
           </label>
