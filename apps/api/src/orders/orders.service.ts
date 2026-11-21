@@ -515,6 +515,36 @@ export class OrdersService {
     });
     if (!o) throw new NotFoundException('Commande introuvable.');
     const [summary] = await this.summaries(tx, [o]);
+    const contact = opts.forCustomer
+      ? // Lecture système : le numéro public du commissionnaire de SA commande.
+        (
+          await this.system.organization.findUnique({
+            where: { id: o.organizationId },
+            select: { phoneWhatsapp: true },
+          })
+        )?.phoneWhatsapp
+      : (
+          await tx.orgCustomer.findUnique({
+            where: { id: o.orgCustomerId },
+            select: { phoneWhatsapp: true },
+          })
+        )?.phoneWhatsapp;
+    const paid = opts.forCustomer
+      ? await tx.payment.findMany({
+          where: { orderId: o.id, status: 'confirmed' },
+          select: { kind: true, orderAmount: true },
+        })
+      : null;
+    const [net] = paid
+      ? [
+          {
+            paid: paid.reduce(
+              (n, p) => n + (p.kind === 'refund' ? -p.orderAmount : p.orderAmount),
+              0n,
+            ),
+          },
+        ]
+      : await tx.$queryRaw<{ paid: bigint }[]>`SELECT order_net_paid(${o.id}::uuid) AS paid`;
     const version = await tx.quoteVersion.findUnique({
       where: { id: o.quoteVersionId },
       select: { versionNo: true },
@@ -533,6 +563,8 @@ export class OrdersService {
       purchaseRule: o.purchaseRule,
       depositBps: o.depositBps,
       customerHasAccount: o.customerUserId !== null,
+      contactWhatsapp: contact ?? null,
+      netPaid: Number(net?.paid ?? 0n),
       adjustments: o.adjustments.map((a) => ({
         ...a,
         amountDelta: Number(a.amountDelta),

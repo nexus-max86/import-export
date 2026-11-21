@@ -162,6 +162,16 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
     pro.getByText('Devis version 1 accepté · Accord par WhatsApp', { exact: false }),
   ).toBeVisible();
 
+  // --- Message WhatsApp prérempli selon l'étape (R6) : ici, rappel de paiement ---
+  await expect(pro.getByRole('heading', { name: 'Écrire au client sur WhatsApp' })).toBeVisible();
+  await expect(pro.getByLabel('Texte (modifiable)')).toHaveValue(
+    /^Bonjour Patrick, il reste 75,00 USD à payer/,
+  );
+  await expect(pro.getByRole('link', { name: 'Ouvrir dans WhatsApp' })).toHaveAttribute(
+    'href',
+    /^https:\/\/wa\.me\/243812345678\?text=Bonjour%20Patrick%2C%20il%20reste/,
+  );
+
   // --- Règle d'achat : le commissionnaire avance l'argent pour ce client géré ---
   await pro.getByRole('radio', { name: /Achat sur mes fonds propres/ }).check();
   await pro.getByRole('button', { name: 'Enregistrer la règle' }).click();

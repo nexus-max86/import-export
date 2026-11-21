@@ -23,3 +23,4 @@ export * from './parcels';
 export * from './tracking';
 export * from './csv';
 export * from './notifications';
+export * from './whatsapp';

@@ -133,6 +133,10 @@ export interface OrderDetail extends OrderSummary {
   depositBps: number | null;
   /** Vrai si le client a un compte Konzia (sinon le commissionnaire enregistre ses réponses). */
   customerHasAccount: boolean;
+  /** WhatsApp de l'autre partie : le client (vue commissionnaire) ou le commissionnaire (vue client). */
+  contactWhatsapp: string | null;
+  /** Total net encaissé (paiements confirmés moins remboursements), dans la devise de la commande. */
+  netPaid: number;
   adjustments: AdjustmentInfo[];
   items: {
     id: string;

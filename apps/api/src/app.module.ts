@@ -22,6 +22,7 @@ import { ParcelsModule } from './parcels/parcels.module';
 import { TrackingModule } from './tracking/tracking.module';
 import { ExportsModule } from './exports/exports.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProfileModule } from './profile/profile.module';
 import { RequestsModule } from './requests/requests.module';
@@ -73,6 +74,7 @@ const env = loadEnv();
     TrackingModule,
     ExportsModule,
     NotificationsModule,
+    WhatsAppModule,
     ...(env.NODE_ENV !== 'production' && env.EMAIL_TRANSPORT === 'fake' ? [DevModule] : []),
   ],
   controllers: [HealthController],

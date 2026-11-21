@@ -8,6 +8,7 @@ import { OrgOrderActions } from '@/components/order-actions';
 import { OrderView } from '@/components/order-view';
 import { OrgOrderPayments } from '@/components/payments';
 import { OrderPurchases, PurchaseRuleCard } from '@/components/purchases';
+import { OrgWhatsAppCard } from '@/components/whatsapp';
 import { ProNav } from '@/components/pro-nav';
 import { Notice } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
@@ -36,6 +37,7 @@ export default function ProOrderPage() {
         <>
           <OrderView order={order} />
           <OrgOrderActions org={org} order={order} onChange={setOrder} />
+          <OrgWhatsAppCard key={`${order.status}-${order.netPaid}`} order={order} />
           <PurchaseRuleCard
             key={`${order.purchaseRule}-${order.depositBps}`}
             org={org}

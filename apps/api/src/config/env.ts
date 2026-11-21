@@ -25,6 +25,17 @@ const EnvSchema = z
     EMAIL_RETRY_BASE_MS: z.coerce.number().int().min(10).default(30_000),
     /** Nombre maximal de tentatives d'envoi d'un e-mail. */
     EMAIL_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(20).default(6),
+    /**
+     * WhatsApp automatique (API Cloud officielle, EF-93, V1) : désactivé tant que Meta n'a pas
+     * validé le compte. « fake » sert aux tests et est interdit en production.
+     */
+    WHATSAPP_TRANSPORT: z.enum(['disabled', 'fake', 'cloud']).default('disabled'),
+    WHATSAPP_TOKEN: z.string().optional(),
+    WHATSAPP_PHONE_NUMBER_ID: z.string().regex(/^\d+$/).optional(),
+    WHATSAPP_API_VERSION: z
+      .string()
+      .regex(/^v\d+\.\d+$/)
+      .default('v21.0'),
     /** Lecture des pages produits : http (réelle) ou fake (développement hors ligne, tests). */
     PRODUCT_FETCHER: z.enum(['http', 'fake']).default('http'),
     /** Stockage des fichiers : disque local (développement, tests) ou S3/R2 (production). */
@@ -75,6 +86,22 @@ const EnvSchema = z
         if (!env[key])
           ctx.addIssue({ code: 'custom', path: [key], message: 'requis avec FILE_STORAGE=s3.' });
       }
+    }
+    if (env.NODE_ENV === 'production' && env.WHATSAPP_TRANSPORT === 'fake') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['WHATSAPP_TRANSPORT'],
+        message: "l'envoi WhatsApp factice est interdit en production.",
+      });
+    }
+    if (env.WHATSAPP_TRANSPORT === 'cloud') {
+      for (const key of ['WHATSAPP_TOKEN', 'WHATSAPP_PHONE_NUMBER_ID'] as const)
+        if (!env[key])
+          ctx.addIssue({
+            code: 'custom',
+            path: [key],
+            message: 'requis avec WHATSAPP_TRANSPORT=cloud.',
+          });
     }
     if (env.EMAIL_TRANSPORT === 'smtp' && !env.SMTP_URL) {
       ctx.addIssue({
