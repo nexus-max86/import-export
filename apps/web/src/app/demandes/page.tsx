@@ -1,11 +1,12 @@
 'use client';
 
+import { ClientHeader } from '@/components/notifications';
 import type { RequestSummary } from '@konzia/shared';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { StatusPill } from '@/components/status-pill';
-import { Card, Logo } from '@/components/ui';
+import { Card } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { fmtDate } from '@/lib/format';
 import { REQUEST_STATUS_LABELS, requestTone } from '@/lib/request-status';
@@ -23,7 +24,7 @@ export default function MyRequestsPage() {
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-5 px-4 py-10">
-      <Logo />
+      <ClientHeader />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-2xl font-bold">Mes demandes</h1>
         <Link

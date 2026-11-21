@@ -1,5 +1,6 @@
 'use client';
 
+import { ClientHeader } from '@/components/notifications';
 import {
   MARKETPLACES,
   RequestItemSchema,
@@ -12,7 +13,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { RequestItems } from '@/components/request-items';
-import { Button, Card, Field, Logo, Notice } from '@/components/ui';
+import { Button, Card, Field, Notice } from '@/components/ui';
 import { api, ApiError, apiUpload, fieldErrors } from '@/lib/api';
 import { fmtAmount, fmtDate } from '@/lib/format';
 
@@ -42,7 +43,7 @@ export default function NewRequestPage() {
   return (
     <main className="mx-auto flex max-w-md flex-col gap-5 px-4 py-10">
       <div className="flex items-center justify-between">
-        <Logo />
+        <ClientHeader />
         <Link href="/demandes" className="text-sm font-semibold text-copper underline">
           Mes demandes
         </Link>

@@ -1,3 +1,4 @@
+import { NotificationsService, type DomainEvent } from '../notifications/notifications.service';
 import {
   BadRequestException,
   ConflictException,
@@ -23,6 +24,13 @@ import { TenantDb, type TenantTx } from '../tenancy/tenant-db.service';
 
 /** Modèle global semé par la migration (cahier §5.4). */
 export const GLOBAL_ROUTE_TEMPLATE_ID = '00000000-0000-7000-8000-000000000001';
+
+/** Fait à notifier pour un événement de colis (les étapes sans notification sont ignorées plus loin). */
+export function parcelStepEvent(parcelId: string, input: TrackingEventInput): DomainEvent {
+  return input.kind === 'anomaly'
+    ? { kind: 'parcel_step', parcelId, stepCode: 'anomaly', anomaly: true }
+    : { kind: 'parcel_step', parcelId, stepCode: input.stepCode };
+}
 
 /** À partir de cette étape, le colis voyage : il doit être fermé. */
 const SHIPPED_FROM: TrackingStepCode = 'shipped_to_drc';
@@ -71,6 +79,7 @@ export class TrackingService {
   constructor(
     private readonly db: TenantDb,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // --- Itinéraires ---------------------------------------------------------------
@@ -175,7 +184,7 @@ export class TrackingService {
     parcelId: string,
     input: TrackingEventInput,
   ): Promise<void> {
-    await this.db.run(userId, async (tx) => {
+    const completed = await this.db.run(userId, async (tx) => {
       const outcome = await this.applyEvent(tx, org, userId, parcelId, input, null);
       if (outcome !== 'applied') throw new ConflictException(outcome);
       await this.audit.record(tx, {
@@ -188,8 +197,12 @@ export class TrackingService {
         after: input,
         reason: input.kind === 'step' ? null : (input.note ?? null),
       });
-      await this.syncOrders(tx, org, userId, [parcelId]);
+      return this.syncOrders(tx, org, userId, [parcelId]);
     });
+    await this.notifications.emitMany([
+      parcelStepEvent(parcelId, input),
+      ...completed.map((orderId) => ({ kind: 'order_completed' as const, orderId })),
+    ]);
   }
 
   /**
@@ -272,7 +285,13 @@ export class TrackingService {
    * Fait avancer les commandes concernées : chaque commande suit son colis le moins avancé,
    * et seulement quand tous ses articles sont en colis. Jamais de retour en arrière automatique.
    */
-  async syncOrders(tx: TenantTx, org: OrgContext, userId: string, parcelIds: string[]) {
+  async syncOrders(
+    tx: TenantTx,
+    org: OrgContext,
+    userId: string,
+    parcelIds: string[],
+  ): Promise<string[]> {
+    const completed: string[] = [];
     const touched = await tx.parcelItem.findMany({
       where: { parcelId: { in: parcelIds }, removedAt: null },
       select: { orderItem: { select: { orderId: true } } },
@@ -331,7 +350,9 @@ export class TrackingService {
           select: { id: true },
         });
         prev = to;
+        if (to === 'completed') completed.push(orderId);
       }
     }
+    return completed;
   }
 }

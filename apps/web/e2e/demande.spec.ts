@@ -53,6 +53,7 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await pro.getByRole('button', { name: new RegExp(orgName) }).click();
   await pro.getByRole('link', { name: 'Demandes', exact: true }).click();
   await expect(pro.getByText('À traiter (1)')).toBeVisible();
+  await expect(pro.getByRole('link', { name: 'Notifications, 1 non lue(s)' })).toBeVisible();
   await pro.getByRole('link', { name: /Ruth/ }).click();
   await expect(pro.getByText('Robe midi plissée à col montant (exemple)')).toBeVisible();
   await expect(pro.getByText('Organiseur de cuisine en bambou')).toBeVisible();
@@ -244,6 +245,13 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await expect(client.getByText('Reçu à l’entrepôt d’origine')).toBeVisible();
   await expect(client.getByText('Chaussures de sécurité')).toHaveCount(0);
   await expect(client.getByText('Patrick', { exact: false })).toHaveCount(0);
+
+  // --- Notifications du client : chaque étape importante, sans rien demander ---
+  await client.getByRole('link', { name: /^Notifications/ }).click();
+  await expect(client.getByRole('button', { name: /Colis expédié/ })).toBeVisible();
+  await expect(client.getByRole('button', { name: /Paiement confirmé/ })).toBeVisible();
+  await client.getByRole('button', { name: 'Tout marquer comme lu' }).click();
+  await expect(client.getByRole('button', { name: /^Non lue/ })).toHaveCount(0);
 
   // --- Export Excel des colis ---
   await pro.getByRole('link', { name: 'Colis', exact: true }).click();

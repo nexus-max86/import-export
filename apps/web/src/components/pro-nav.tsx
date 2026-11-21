@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { NotificationBell } from '@/components/notifications';
 import { Logo } from '@/components/ui';
 
 const LINKS = [
@@ -22,9 +23,12 @@ export function ProNav() {
     <header className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
         <Logo />
-        <Link href="/pro" className="text-sm font-semibold text-copper underline">
-          Changer d’activité
-        </Link>
+        <div className="flex items-center gap-3">
+          <NotificationBell />
+          <Link href="/pro" className="text-sm font-semibold text-copper underline">
+            Changer d’activité
+          </Link>
+        </div>
       </div>
       <nav aria-label="Espace professionnel" className="flex gap-2 overflow-x-auto">
         {LINKS.map((l) => (

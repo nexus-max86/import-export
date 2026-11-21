@@ -1,5 +1,6 @@
 'use client';
 
+import { ClientHeader } from '@/components/notifications';
 import {
   AddressSchema,
   UpdateProfileSchema,
@@ -11,7 +12,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { PlaceSelect } from '@/components/place-select';
-import { Button, Card, Field, Logo, Notice } from '@/components/ui';
+import { Button, Card, Field, Notice } from '@/components/ui';
 import { api, ApiError, fieldErrors } from '@/lib/api';
 
 type Notice = { tone: 'ok' | 'error'; text: string };
@@ -49,7 +50,7 @@ export default function ProfilePage() {
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-5 px-4 py-10">
-      <Logo />
+      <ClientHeader />
       <Link href="/compte" className="text-sm font-semibold text-copper underline">
         ← Mon compte
       </Link>

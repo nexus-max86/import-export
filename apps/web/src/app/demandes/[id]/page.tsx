@@ -1,5 +1,6 @@
 'use client';
 
+import { ClientHeader } from '@/components/notifications';
 import type { QuoteInfo, RequestDetail } from '@konzia/shared';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -7,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { QuoteCard } from '@/components/quote-card';
 import { RequestItems } from '@/components/request-items';
 import { StatusPill } from '@/components/status-pill';
-import { Button, Card, Logo, Notice } from '@/components/ui';
+import { Button, Card, Notice } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { fmtDate } from '@/lib/format';
 import {
@@ -48,7 +49,7 @@ export default function RequestPage() {
   const open = ['sent', 'partially_quoted', 'quoted'].includes(r.status);
   return (
     <main className="mx-auto flex max-w-md flex-col gap-5 px-4 py-10">
-      <Logo />
+      <ClientHeader />
       <Link href="/demandes" className="text-sm font-semibold text-copper underline">
         ← Mes demandes
       </Link>

@@ -1,3 +1,4 @@
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   BadRequestException,
   ConflictException,
@@ -17,7 +18,7 @@ import {
 import { AuditService } from '../audit/audit.service';
 import type { OrgContext } from '../tenancy/org-context';
 import { TenantDb, type TenantTx } from '../tenancy/tenant-db.service';
-import { TrackingService } from './tracking.service';
+import { parcelStepEvent, TrackingService } from './tracking.service';
 
 const SHIPMENT_SELECT = {
   id: true,
@@ -77,6 +78,7 @@ export class ShipmentsService {
     private readonly db: TenantDb,
     private readonly tracking: TrackingService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async create(userId: string, org: OrgContext, input: ShipmentInput): Promise<ShipmentInfo> {
@@ -196,7 +198,9 @@ export class ShipmentsService {
     id: string,
     input: TrackingEventInput,
   ): Promise<ShipmentInfo & { skipped: string[] }> {
-    return this.db.run(userId, async (tx) => {
+    const applied: string[] = [];
+    let completed: string[] = [];
+    const result = await this.db.run(userId, async (tx) => {
       const s = await this.find(tx, org, id);
       if (s.status === 'cancelled') throw new ConflictException('Expédition annulée.');
       const links = await tx.shipmentParcel.findMany({
@@ -231,6 +235,7 @@ export class ShipmentsService {
           ev.id,
         );
         if (outcome !== 'applied') skipped.push(outcome);
+        else applied.push(l.parcelId);
       }
       if (skipped.length === links.length)
         throw new ConflictException(`Aucun colis mis à jour. ${skipped[0]}`);
@@ -249,7 +254,7 @@ export class ShipmentsService {
         after: input,
         reason: input.kind === 'step' ? undefined : (input.note ?? undefined),
       });
-      await this.tracking.syncOrders(
+      completed = await this.tracking.syncOrders(
         tx,
         org,
         userId,
@@ -257,6 +262,11 @@ export class ShipmentsService {
       );
       return { ...(await this.read(tx, org, id)), skipped };
     });
+    await this.notifications.emitMany([
+      ...applied.map((parcelId) => parcelStepEvent(parcelId, input)),
+      ...completed.map((orderId) => ({ kind: 'order_completed' as const, orderId })),
+    ]);
+    return result;
   }
 
   list(userId: string, org: OrgContext): Promise<ShipmentInfo[]> {

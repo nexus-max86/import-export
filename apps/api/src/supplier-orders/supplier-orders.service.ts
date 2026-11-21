@@ -1,3 +1,4 @@
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   BadRequestException,
   ConflictException,
@@ -93,6 +94,7 @@ export class SupplierOrdersService {
     private readonly db: TenantDb,
     private readonly files: FilesService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async create(
@@ -100,7 +102,7 @@ export class SupplierOrdersService {
     org: OrgContext,
     input: SupplierOrderInput,
   ): Promise<SupplierOrderInfo> {
-    return this.db.run(userId, async (tx) => {
+    const info = await this.db.run(userId, async (tx) => {
       const ids = input.items.map((i) => i.orderItemId);
       if (new Set(ids).size !== ids.length)
         throw new BadRequestException('Un article apparaît deux fois dans cet achat.');
@@ -199,6 +201,11 @@ export class SupplierOrdersService {
       });
       return this.read(tx, org, created.id);
     });
+    await this.notifications.emit({
+      kind: 'purchase_done',
+      orderIds: [...new Set(info.items.map((i) => i.orderId))],
+    });
+    return info;
   }
 
   /** Fait suivre l'état de la commande : achat en cours, puis partiellement acheté ou acheté. */
@@ -285,7 +292,8 @@ export class SupplierOrdersService {
     id: string,
     input: ReceiveInput,
   ): Promise<SupplierOrderInfo> {
-    return this.db.run(userId, async (tx) => {
+    const arrived = new Set<string>();
+    const info = await this.db.run(userId, async (tx) => {
       const so = await this.find(tx, org, id);
       if (so.status === 'cancelled' || so.status === 'refunded')
         throw new ConflictException('Cet achat est clos.');
@@ -314,6 +322,7 @@ export class SupplierOrdersService {
           select: { id: true },
         });
         line.qtyReceived = r.qtyReceived;
+        if (delta > 0) arrived.add(r.orderItemId);
       }
       const all = [...byItem.values()];
       const status = all.every((l) => l.qtyReceived === l.qtyPurchased)
@@ -337,6 +346,10 @@ export class SupplierOrdersService {
       });
       return this.read(tx, org, id);
     });
+    const orderIds = info.items.filter((i) => arrived.has(i.orderItemId)).map((i) => i.orderId);
+    if (orderIds.length > 0)
+      await this.notifications.emit({ kind: 'items_received', orderIds: [...new Set(orderIds)] });
+    return info;
   }
 
   list(userId: string, org: OrgContext, orderId?: string): Promise<SupplierOrderInfo[]> {

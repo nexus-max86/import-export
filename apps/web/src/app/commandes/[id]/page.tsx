@@ -1,5 +1,6 @@
 'use client';
 
+import { ClientHeader } from '@/components/notifications';
 import type { OrderDetail } from '@konzia/shared';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -8,7 +9,7 @@ import { CustomerOrderActions } from '@/components/order-actions';
 import { OrderView } from '@/components/order-view';
 import { CustomerPayments } from '@/components/payments';
 import { CustomerTracking } from '@/components/tracking';
-import { Logo, Notice } from '@/components/ui';
+import { Notice } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 
 export default function OrderPage() {
@@ -25,7 +26,7 @@ export default function OrderPage() {
   }, [id, router]);
   return (
     <main className="mx-auto flex max-w-md flex-col gap-5 px-4 py-10">
-      <Logo />
+      <ClientHeader />
       <Link href="/commandes" className="text-sm font-semibold text-copper underline">
         ← Mes commandes
       </Link>

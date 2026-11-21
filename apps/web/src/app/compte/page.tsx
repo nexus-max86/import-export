@@ -1,10 +1,11 @@
 'use client';
 
+import { ClientHeader } from '@/components/notifications';
 import type { MeResponse, SessionInfo } from '@konzia/shared';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { Button, Card, Logo, Notice } from '@/components/ui';
+import { Button, Card, Notice } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 
 function deviceLabel(ua: string | null): string {
@@ -71,7 +72,7 @@ export default function AccountPage() {
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-5 px-4 py-10">
-      <Logo />
+      <ClientHeader />
       <h1 className="font-display text-2xl font-bold">Bonjour {me.displayName}</h1>
       {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
       {!me.emailVerified && (

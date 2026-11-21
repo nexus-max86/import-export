@@ -1,3 +1,4 @@
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   BadRequestException,
   ConflictException,
@@ -87,6 +88,7 @@ export class PaymentsService {
     private readonly fx: FxService,
     private readonly files: FilesService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // --- Instructions de paiement -------------------------------------------------
@@ -152,6 +154,7 @@ export class PaymentsService {
 
   /** Le client déclare un paiement : « à vérifier » jusqu'à la confirmation du commissionnaire. */
   async declare(userId: string, orderId: string, input: DeclarePaymentInput): Promise<PaymentInfo> {
+    let created = false;
     const id = await this.system.$transaction(async (tx) => {
       const existing = await tx.payment.findUnique({
         where: { idempotencyKey: input.idempotencyKey },
@@ -188,6 +191,7 @@ export class PaymentsService {
         input.currency,
         order.currency,
       );
+      created = true;
       const p = await tx.payment.create({
         data: {
           organizationId: order.organizationId,
@@ -226,6 +230,7 @@ export class PaymentsService {
       );
       return p.id;
     });
+    if (created) await this.notifications.emit({ kind: 'payment_declared', paymentId: id });
     return this.readOne(id);
   }
 
@@ -284,6 +289,7 @@ export class PaymentsService {
         tx,
       );
     });
+    await this.notifications.emit({ kind: 'payment_confirmed', paymentId });
     return this.readOne(paymentId);
   }
 
@@ -356,6 +362,7 @@ export class PaymentsService {
     kind: 'payment' | 'refund',
     input: RecordPaymentInput,
   ) {
+    let created = false;
     const id = await this.system.$transaction(async (tx) => {
       const existing = await tx.payment.findUnique({
         where: { idempotencyKey: input.idempotencyKey },
@@ -386,6 +393,7 @@ export class PaymentsService {
             'Le remboursement dépasse les sommes reçues pour cette commande.',
           );
       }
+      created = true;
       const p = await tx.payment.create({
         data: {
           organizationId: org.organizationId,
@@ -433,6 +441,8 @@ export class PaymentsService {
       );
       return p.id;
     });
+    if (created && kind === 'payment')
+      await this.notifications.emit({ kind: 'payment_confirmed', paymentId: id });
     return this.readOne(id);
   }
 

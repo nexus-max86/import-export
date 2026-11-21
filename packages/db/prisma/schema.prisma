@@ -1187,3 +1187,35 @@ model ShipmentEvent {
   @@index([shipmentId, recordedAt])
   @@map("shipment_events")
 }
+
+/// Notification dans l'application (EF-90). Créée par un chemin système ; lue par son destinataire.
+model Notification {
+  id              String    @id @default(uuid(7)) @db.Uuid
+  recipientUserId String    @map("recipient_user_id") @db.Uuid
+  organizationId  String?   @map("organization_id") @db.Uuid
+  type            String
+  title           String
+  body            String
+  link            String?
+  /// Objet concerné (anti-doublon des rappels, ex. version de devis).
+  entityType      String?   @map("entity_type")
+  entityId        String?   @map("entity_id") @db.Uuid
+  readAt          DateTime? @map("read_at") @db.Timestamptz(3)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([recipientUserId, createdAt])
+  @@index([entityId, type])
+  @@map("notifications")
+}
+
+/// Préférence par type et canal. Absence de ligne = canal activé.
+model NotificationPreference {
+  userId    String   @map("user_id") @db.Uuid
+  type      String
+  channel   String
+  enabled   Boolean
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@id([userId, type, channel])
+  @@map("notification_preferences")
+}

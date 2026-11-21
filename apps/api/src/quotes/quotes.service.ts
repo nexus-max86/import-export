@@ -1,3 +1,4 @@
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   BadRequestException,
   ConflictException,
@@ -147,6 +148,7 @@ export class QuotesService {
     private readonly system: PrismaService,
     private readonly fx: FxService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // --- Réglages de l'assistant ------------------------------------------------
@@ -458,6 +460,7 @@ export class QuotesService {
         tx,
       );
     });
+    await this.notifications.emit({ kind: 'quote_sent', quoteId });
     return this.get(userId, org, quoteId);
   }
 

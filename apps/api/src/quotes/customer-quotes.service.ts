@@ -1,3 +1,4 @@
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   ConflictException,
   Injectable,
@@ -24,12 +25,16 @@ export class CustomerQuotesService implements OnModuleInit, OnModuleDestroy {
     private readonly db: TenantDb,
     private readonly system: PrismaService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /** Passage périodique d'expiration (hors tests : les tests l'appellent explicitement). */
   onModuleInit(): void {
     if (process.env.NODE_ENV === 'test') return;
-    this.timer = setInterval(() => void this.expireDue().catch(() => undefined), 10 * 60_000);
+    this.timer = setInterval(() => {
+      void this.expireDue().catch(() => undefined);
+      void this.notifications.remindExpiringQuotes().catch(() => undefined);
+    }, 10 * 60_000);
     this.timer.unref();
   }
 

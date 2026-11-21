@@ -1,3 +1,4 @@
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   BadRequestException,
   ConflictException,
@@ -94,6 +95,7 @@ export class RequestsService {
     private readonly system: PrismaService,
     private readonly customers: CustomersService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // --- Client ---------------------------------------------------------------
@@ -240,7 +242,7 @@ export class RequestsService {
       : null;
     if (input.addressId && !address) throw new NotFoundException('Adresse introuvable.');
 
-    await this.system.$transaction(async (tx) => {
+    const organizationIds = await this.system.$transaction(async (tx) => {
       const request = await tx.quoteRequest.findFirst({
         where: { id: requestId, customerUserId: userId, status: 'draft' },
         select: { id: true, _count: { select: { items: true } } },
@@ -310,7 +312,9 @@ export class RequestsService {
         },
         tx,
       );
+      return orgs.map((o) => o.id);
     });
+    await this.notifications.emit({ kind: 'request_sent', requestId, organizationIds });
     return this.getForCustomer(userId, requestId);
   }
 
