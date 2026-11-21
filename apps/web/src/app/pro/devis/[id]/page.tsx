@@ -547,6 +547,9 @@ function SentView({
         </table>
       </Card>
       {error && <Notice tone="error">{error}</Notice>}
+      {canChange && !quote.customerHasAccount && v.status === 'sent' && (
+        <ManagedAccept org={org} quoteId={quote.id} versionId={v.id} />
+      )}
       {canChange && (
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => run('revise')}>Corriger (nouvelle version)</Button>
@@ -576,5 +579,55 @@ function SentView({
         </div>
       )}
     </>
+  );
+}
+
+function ManagedAccept({
+  org,
+  quoteId,
+  versionId,
+}: {
+  org: string;
+  quoteId: string;
+  versionId: string;
+}) {
+  const router = useRouter();
+  const [note, setNote] = useState('');
+  const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState(false);
+  return (
+    <Card>
+      <h2 className="font-display text-lg font-bold">Le client a donné son accord ?</h2>
+      <p className="text-sm text-muted">
+        Ce client n’a pas de compte Konzia. Enregistrez son accord pour créer la commande.
+      </p>
+      <Field
+        id="managedNote"
+        label="Comment le client a accepté"
+        placeholder="Ex. : accord par WhatsApp le 21/11"
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+      />
+      {error && <Notice tone="error">{error}</Notice>}
+      <Button
+        busy={busy}
+        onClick={async () => {
+          setBusy(true);
+          setError(undefined);
+          try {
+            const r = await api<{ orderId: string }>(`/org/quotes/${quoteId}/accept-for-customer`, {
+              org,
+              body: { versionId, note },
+            });
+            router.push(`/pro/commandes/${r.orderId}`);
+          } catch (err) {
+            setError(err instanceof ApiError ? err.message : 'Action impossible.');
+            setBusy(false);
+          }
+        }}
+      >
+        Enregistrer l’accord et créer la commande
+      </Button>
+    </Card>
   );
 }

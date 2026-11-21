@@ -98,6 +98,7 @@ export const QUOTE_SELECT = {
   quoteRequestId: true,
   status: true,
   changeRequest: true,
+  customerUserId: true,
   organization: { select: { name: true, slug: true } },
   versions: { select: VERSION_SELECT, orderBy: { versionNo: 'desc' } },
 } as const;
@@ -117,6 +118,7 @@ export function toQuoteInfo(q: QuoteRow, includeDraft: boolean): QuoteInfo {
     current: current ? toVersionInfo(current) : null,
     previous: previous.map(toVersionInfo),
     changeRequest: q.changeRequest,
+    customerHasAccount: q.customerUserId !== null,
   };
 }
 

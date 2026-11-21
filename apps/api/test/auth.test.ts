@@ -62,6 +62,14 @@ describe('Authentification par e-mail', () => {
         .expect(400);
     });
 
+    it('deux inscriptions simultanées avec la même adresse : une seule réussit, l’autre reçoit 409', async () => {
+      const [a, b] = await Promise.all([
+        t.agent().post('/api/auth/register', ruth),
+        t.agent().post('/api/auth/register', ruth),
+      ]);
+      expect([a.status, b.status].sort()).toEqual([201, 409]);
+    });
+
     it('refuse une adresse déjà utilisée, quelle que soit la casse', async () => {
       await t.agent().post('/api/auth/register', ruth).expect(201);
       await t

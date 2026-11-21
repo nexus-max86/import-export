@@ -11,7 +11,7 @@ import {
   type MeResponse,
   type RegisterInput,
 } from '@konzia/shared';
-import type { EmailTokenPurpose } from '@konzia/db';
+import { Prisma, type EmailTokenPurpose } from '@konzia/db';
 import { AuditService } from '../audit/audit.service';
 import { ENV } from '../config/config.module';
 import type { Env } from '../config/env';
@@ -43,21 +43,33 @@ export class AuthService {
     const existing = await this.prisma.user.findUnique({ where: { email: input.email } });
     if (existing) throw new ConflictException('Un compte existe déjà avec cette adresse e-mail.');
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: input.email,
-        displayName: input.displayName,
-        passwordHash: await hashPassword(input.password),
-        consents: {
-          create: [
-            { kind: 'terms', version: TERMS_VERSION, granted: true },
-            { kind: 'privacy', version: TERMS_VERSION, granted: true },
-            { kind: 'marketing', version: TERMS_VERSION, granted: input.marketingOptIn },
-          ],
-        },
-      },
-    });
+    // Deux inscriptions simultanées avec la même adresse : la contrainte unique tranche.
+    const user = await this.createUser(input);
     await this.sendVerification(user.id, user.email, user.displayName);
+  }
+
+  private async createUser(input: RegisterInput) {
+    try {
+      return await this.prisma.user.create({
+        data: {
+          email: input.email,
+          displayName: input.displayName,
+          passwordHash: await hashPassword(input.password),
+          consents: {
+            create: [
+              { kind: 'terms', version: TERMS_VERSION, granted: true },
+              { kind: 'privacy', version: TERMS_VERSION, granted: true },
+              { kind: 'marketing', version: TERMS_VERSION, granted: input.marketingOptIn },
+            ],
+          },
+        },
+      });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new ConflictException('Un compte existe déjà avec cette adresse e-mail.');
+      }
+      throw err;
+    }
   }
 
   async resendVerification(userId: string): Promise<void> {

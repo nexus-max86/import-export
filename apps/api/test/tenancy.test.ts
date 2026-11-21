@@ -89,8 +89,15 @@ describe('Isolation entre commissionnaires', () => {
       .post(`/api/org/quotes/${quote.body.id}/send`)
       .set(...asOrg(orgA))
       .expect(201);
-    await buyer.agent
+    const accepted = await buyer.agent
       .post(`/api/quotes/${quote.body.id}/accept`, { versionId: sentQ.body.current.id })
+      .expect(201);
+    await a.agent
+      .post(`/api/org/orders/${accepted.body.orderId}/adjustments`, {
+        amountDelta: 500,
+        reason: 'Hausse du transport',
+      })
+      .set(...asOrg(orgA))
       .expect(201);
     await t.prisma.organization.update({ where: { id: orgA }, data: { status: 'pending' } });
     await a.agent

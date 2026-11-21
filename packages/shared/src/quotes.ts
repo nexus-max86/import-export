@@ -161,4 +161,6 @@ export interface QuoteInfo {
   /** Versions envoyées précédemment, toujours consultables. */
   previous: QuoteVersionInfo[];
   changeRequest: string | null;
+  /** Faux pour un client géré : le commissionnaire enregistre alors son accord. */
+  customerHasAccount: boolean;
 }

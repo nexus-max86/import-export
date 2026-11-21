@@ -66,12 +66,69 @@ export interface OrderSummary {
   createdAt: string;
 }
 
+/** Étapes qu'un commissionnaire peut faire avancer lui-même (le paiement a ses propres écrans). */
+export const ORG_NEXT_STATUSES: Partial<Record<OrderStatus, OrderStatus[]>> = {
+  paid: ['purchasing'],
+  purchasing: ['partially_purchased', 'purchased'],
+  partially_purchased: ['purchased'],
+  purchased: ['in_logistics'],
+  in_logistics: ['in_transit'],
+  in_transit: ['at_distribution_point'],
+  at_distribution_point: ['ready_for_handover'],
+  ready_for_handover: ['completed'],
+};
+
+export const CANCELLABLE_STATUSES: OrderStatus[] = [
+  'awaiting_payment',
+  'payment_to_verify',
+  'paid',
+];
+
+export const UpdateOrderStatusSchema = z.object({
+  status: z.enum(Object.keys(ORDER_STATUS_LABELS) as [OrderStatus, ...OrderStatus[]]),
+  note: z.string().trim().max(500).nullable().optional(),
+});
+export const CancelOrderSchema = z.object({
+  reason: z.string().trim().min(3, 'Indiquez le motif.').max(500),
+});
+export const ProposeAdjustmentSchema = z.object({
+  amountDelta: z
+    .number()
+    .int('Montant en centimes entiers.')
+    .min(-1_000_000_000)
+    .max(1_000_000_000)
+    .refine((v) => v !== 0, 'Le montant ne peut pas être nul.'),
+  reason: z.string().trim().min(3, 'Expliquez la raison de l’ajustement.').max(500),
+});
+export const DecideAdjustmentSchema = z.object({ accepted: z.boolean() });
+export const RecordAdjustmentDecisionSchema = z.object({
+  accepted: z.boolean(),
+  note: z
+    .string()
+    .trim()
+    .min(3, 'Indiquez comment le client a répondu (ex. « accord par WhatsApp le 21/11 »).')
+    .max(500),
+});
+
+export interface AdjustmentInfo {
+  id: string;
+  amountDelta: number;
+  reason: string;
+  status: 'proposed' | 'accepted' | 'rejected' | 'cancelled';
+  createdAt: string;
+  decidedAt: string | null;
+  decisionNote: string | null;
+}
+
 export interface OrderDetail extends OrderSummary {
   agreedTotalAmount: number;
   quoteVersionNo: number;
   quoteId: string;
   quoteRequestId: string;
   cancelledReason: string | null;
+  /** Vrai si le client a un compte Konzia (sinon le commissionnaire enregistre ses réponses). */
+  customerHasAccount: boolean;
+  adjustments: AdjustmentInfo[];
   items: {
     id: string;
     description: string;

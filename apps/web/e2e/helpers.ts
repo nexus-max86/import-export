@@ -7,7 +7,7 @@ const CSRF = { 'x-konzia-csrf': '1' };
 
 /** Crée un compte vérifié par l'API (lien lu dans la boîte d'envoi factice). */
 export async function verifiedAccount(request: APIRequestContext, name: string): Promise<string> {
-  const email = `${name.toLowerCase()}.${Date.now()}@example.test`;
+  const email = `${name.toLowerCase()}.${Date.now()}.${Math.random().toString(36).slice(2, 8)}@example.test`;
   const res = await request.post(`${API}/api/auth/register`, {
     headers: CSRF,
     data: { email, password: PASSWORD, displayName: name, acceptTerms: true },

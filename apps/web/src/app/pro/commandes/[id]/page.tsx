@@ -4,6 +4,7 @@ import type { OrderDetail } from '@konzia/shared';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { OrgOrderActions } from '@/components/order-actions';
 import { OrderView } from '@/components/order-view';
 import { ProNav } from '@/components/pro-nav';
 import { Notice } from '@/components/ui';
@@ -29,7 +30,12 @@ export default function ProOrderPage() {
         ← Toutes les commandes
       </Link>
       {error && <Notice tone="error">{error}</Notice>}
-      {order && <OrderView order={order} />}
+      {order && (
+        <>
+          <OrderView order={order} />
+          <OrgOrderActions org={org} order={order} onChange={setOrder} />
+        </>
+      )}
     </main>
   );
 }

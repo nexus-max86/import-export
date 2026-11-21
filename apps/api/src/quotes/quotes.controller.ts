@@ -11,13 +11,21 @@ import type { AuthContext } from '../auth/auth.types';
 import { Auth } from '../auth/decorators';
 import { ZodBody } from '../common/zod-body.pipe';
 import { ForOrg, Org, type OrgContext } from '../tenancy/org-context';
+import { CustomerQuotesService } from './customer-quotes.service';
 import { QuotesService } from './quotes.service';
 
 const ReasonSchema = z.object({ reason: z.string().trim().min(3, 'Indiquez un motif.').max(500) });
+const ManagedAcceptSchema = z.object({
+  versionId: z.uuid(),
+  note: z.string().trim().min(3, 'Indiquez comment le client a donné son accord.').max(500),
+});
 
 @Controller('org')
 export class QuotesController {
-  constructor(private readonly quotes: QuotesService) {}
+  constructor(
+    private readonly quotes: QuotesService,
+    private readonly customerQuotes: CustomerQuotesService,
+  ) {}
 
   @Get('quote-settings')
   @ForOrg('quote.edit')
@@ -95,5 +103,23 @@ export class QuotesController {
     @Body(new ZodBody(ReasonSchema)) body: { reason: string },
   ): Promise<QuoteInfo> {
     return this.quotes.withdraw(auth.userId, org, id, body.reason);
+  }
+
+  /** Client géré : enregistrer son accord (obtenu par WhatsApp, en boutique…) crée la commande. */
+  @Post('quotes/:id/accept-for-customer')
+  @ForOrg('quote.send')
+  acceptForCustomer(
+    @Auth() auth: AuthContext,
+    @Org() org: OrgContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodBody(ManagedAcceptSchema)) body: { versionId: string; note: string },
+  ): Promise<{ orderId: string; number: string }> {
+    return this.customerQuotes.acceptForManagedCustomer(
+      auth.userId,
+      org,
+      id,
+      body.versionId,
+      body.note,
+    );
   }
 }

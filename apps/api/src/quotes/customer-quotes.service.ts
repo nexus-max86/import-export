@@ -55,7 +55,7 @@ export class CustomerQuotesService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  /** Acceptation d'une version précise : crée la commande, liée à cette version exacte. */
+  /** Acceptation d'une version précise par le client : crée la commande, liée à cette version exacte. */
   async accept(
     userId: string,
     quoteId: string,
@@ -64,116 +64,172 @@ export class CustomerQuotesService implements OnModuleInit, OnModuleDestroy {
     await this.expireDue();
     return this.system.$transaction(async (tx) => {
       const quote = await this.ownQuote(tx, userId, quoteId);
-      if (!['sent', 'changes_requested'].includes(quote.status))
-        throw new ConflictException('Ce devis ne peut plus être accepté.');
-      const version = await tx.quoteVersion.findFirst({
-        where: { id: versionId, quoteId },
+      return this.createOrder(tx, quote, versionId, {
+        actorUserId: userId,
+        actorRole: 'customer',
+        note: null,
+      });
+    });
+  }
+
+  /**
+   * Client géré (sans compte) : le commissionnaire enregistre l'accord obtenu hors application
+   * (WhatsApp, boutique…). La note est conservée dans l'historique et l'audit.
+   */
+  async acceptForManagedCustomer(
+    userId: string,
+    org: { organizationId: string; role: string },
+    quoteId: string,
+    versionId: string,
+    note: string,
+  ): Promise<{ orderId: string; number: string }> {
+    await this.expireDue();
+    return this.system.$transaction(async (tx) => {
+      const quote = await tx.quote.findFirst({
+        where: { id: quoteId, organizationId: org.organizationId },
         select: {
           id: true,
-          versionNo: true,
           status: true,
-          currency: true,
-          totalAmount: true,
-          validUntil: true,
-          lines: {
-            where: { kind: 'product' },
-            select: {
-              id: true,
-              quoteRequestItemId: true,
-              description: true,
-              quantity: true,
-              unitAmount: true,
-              amount: true,
-            },
-            orderBy: { position: 'asc' },
-          },
+          organizationId: true,
+          orgCustomerId: true,
+          quoteRequestId: true,
+          customerUserId: true,
         },
       });
-      if (!version) throw new NotFoundException('Version de devis introuvable.');
-      if (version.status === 'superseded')
+      if (!quote) throw new NotFoundException('Devis introuvable.');
+      if (quote.customerUserId)
         throw new ConflictException(
-          'Une version plus récente de ce devis existe : acceptez la dernière version.',
+          'Ce client a un compte : c’est à lui d’accepter le devis dans Konzia.',
         );
-      if (version.status !== 'sent' || version.validUntil <= new Date()) {
-        throw new ConflictException(
-          'Ce devis a expiré. Demandez au commissionnaire de le réactiver.',
-        );
-      }
-      const request = await tx.quoteRequest.findUniqueOrThrow({
-        where: { id: quote.quoteRequestId },
-        select: { status: true },
+      return this.createOrder(tx, quote, versionId, {
+        actorUserId: userId,
+        actorRole: org.role,
+        note,
       });
-      if (!['sent', 'partially_quoted', 'quoted', 'converted'].includes(request.status)) {
-        throw new ConflictException('Cette demande est close.');
-      }
-
-      const number = await nextOrderNumber(tx);
-      const order = await tx.order.create({
-        data: {
-          number,
-          organizationId: quote.organizationId,
-          orgCustomerId: quote.orgCustomerId,
-          customerUserId: userId,
-          quoteId,
-          quoteVersionId: version.id,
-          currency: version.currency,
-          agreedTotalAmount: version.totalAmount,
-          finalAmount: version.totalAmount,
-          items: {
-            create: version.lines.map((l) => ({
-              organizationId: quote.organizationId,
-              customerUserId: userId,
-              quoteLineId: l.id,
-              quoteRequestItemId: l.quoteRequestItemId,
-              description: l.description,
-              quantity: l.quantity,
-              unitAmount: l.unitAmount,
-              amount: l.amount,
-            })),
-          },
-          events: {
-            create: {
-              organizationId: quote.organizationId,
-              type: 'created',
-              toStatus: 'awaiting_payment',
-              actorUserId: userId,
-              note: `Devis version ${version.versionNo} accepté`,
-            },
-          },
-        },
-        select: { id: true },
-      });
-      await tx.quoteVersion.update({ where: { id: version.id }, data: { status: 'accepted' } });
-      await tx.quote.update({ where: { id: quoteId }, data: { status: 'accepted' } });
-      await tx.quoteRequest.update({
-        where: { id: quote.quoteRequestId },
-        data: { status: 'converted' },
-      });
-      for (const [orgId, role] of [
-        [quote.organizationId, 'customer'],
-        [null, 'self'],
-      ] as const) {
-        await this.audit.recordSystem(
-          {
-            actorUserId: userId,
-            actorRole: role,
-            organizationId: orgId,
-            action: 'quote.accepted',
-            entityType: 'order',
-            entityId: order.id,
-            after: {
-              number,
-              quoteId,
-              versionNo: version.versionNo,
-              total: Number(version.totalAmount),
-              currency: version.currency,
-            },
-          },
-          tx,
-        );
-      }
-      return { orderId: order.id, number };
     });
+  }
+
+  private async createOrder(
+    tx: Prisma.TransactionClient,
+    quote: {
+      id: string;
+      status: string;
+      organizationId: string;
+      orgCustomerId: string;
+      quoteRequestId: string;
+    },
+    versionId: string,
+    actor: { actorUserId: string; actorRole: string; note: string | null },
+  ): Promise<{ orderId: string; number: string }> {
+    const quoteId = quote.id;
+    if (!['sent', 'changes_requested'].includes(quote.status))
+      throw new ConflictException('Ce devis ne peut plus être accepté.');
+    const version = await tx.quoteVersion.findFirst({
+      where: { id: versionId, quoteId },
+      select: {
+        id: true,
+        versionNo: true,
+        status: true,
+        currency: true,
+        totalAmount: true,
+        validUntil: true,
+        lines: {
+          where: { kind: 'product' },
+          select: {
+            id: true,
+            quoteRequestItemId: true,
+            description: true,
+            quantity: true,
+            unitAmount: true,
+            amount: true,
+          },
+          orderBy: { position: 'asc' },
+        },
+      },
+    });
+    if (!version) throw new NotFoundException('Version de devis introuvable.');
+    if (version.status === 'superseded')
+      throw new ConflictException(
+        'Une version plus récente de ce devis existe : acceptez la dernière version.',
+      );
+    if (version.status !== 'sent' || version.validUntil <= new Date()) {
+      throw new ConflictException(
+        'Ce devis a expiré. Demandez au commissionnaire de le réactiver.',
+      );
+    }
+    const request = await tx.quoteRequest.findUniqueOrThrow({
+      where: { id: quote.quoteRequestId },
+      select: { status: true, customerUserId: true },
+    });
+    if (!['sent', 'partially_quoted', 'quoted', 'converted'].includes(request.status))
+      throw new ConflictException('Cette demande est close.');
+    const customerUserId = request.customerUserId;
+
+    const number = await nextOrderNumber(tx);
+    const note = actor.note
+      ? `Devis version ${version.versionNo} accepté · ${actor.note}`
+      : `Devis version ${version.versionNo} accepté`;
+    const order = await tx.order.create({
+      data: {
+        number,
+        organizationId: quote.organizationId,
+        orgCustomerId: quote.orgCustomerId,
+        customerUserId,
+        quoteId,
+        quoteVersionId: version.id,
+        currency: version.currency,
+        agreedTotalAmount: version.totalAmount,
+        finalAmount: version.totalAmount,
+        items: {
+          create: version.lines.map((l) => ({
+            organizationId: quote.organizationId,
+            customerUserId,
+            quoteLineId: l.id,
+            quoteRequestItemId: l.quoteRequestItemId,
+            description: l.description,
+            quantity: l.quantity,
+            unitAmount: l.unitAmount,
+            amount: l.amount,
+          })),
+        },
+        events: {
+          create: {
+            organizationId: quote.organizationId,
+            type: 'created',
+            toStatus: 'awaiting_payment',
+            actorUserId: actor.actorUserId,
+            note,
+          },
+        },
+      },
+      select: { id: true },
+    });
+    await tx.quoteVersion.update({ where: { id: version.id }, data: { status: 'accepted' } });
+    await tx.quote.update({ where: { id: quoteId }, data: { status: 'accepted' } });
+    await tx.quoteRequest.update({
+      where: { id: quote.quoteRequestId },
+      data: { status: 'converted' },
+    });
+    await this.audit.recordSystem(
+      {
+        actorUserId: actor.actorUserId,
+        actorRole: actor.actorRole,
+        organizationId: quote.organizationId,
+        action: 'quote.accepted',
+        entityType: 'order',
+        entityId: order.id,
+        after: {
+          number,
+          quoteId,
+          versionNo: version.versionNo,
+          total: Number(version.totalAmount),
+          currency: version.currency,
+        },
+        reason: actor.note,
+      },
+      tx,
+    );
+    return { orderId: order.id, number };
   }
 
   async reject(userId: string, quoteId: string, reason: string | null): Promise<void> {

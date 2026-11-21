@@ -5,6 +5,8 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   browser,
   playwright,
 }) => {
+  // Parcours long : demande → devis → commande → ajustement → client géré.
+  test.setTimeout(120_000);
   const suffix = Date.now();
   const orgName = `Kaseba Import ${suffix}`;
   const setup = await playwright.request.newContext();
@@ -88,7 +90,22 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await expect(client.getByText(/· Devis version 1 accepté$/)).toBeVisible();
 
   await pro.getByRole('link', { name: 'Commandes', exact: true }).click();
-  await expect(pro.getByText(/KZ-\d{4}-\d{6}/)).toBeVisible();
+  await pro.getByText(/KZ-\d{4}-\d{6}/).click();
+
+  // --- Ajustement de prix : sans effet avant l'accord du client ---
+  await pro.getByRole('button', { name: 'Proposer un ajustement de prix' }).click();
+  await pro.getByLabel('Montant (USD)').fill('5,00');
+  await pro.getByLabel('Raison (visible du client)').fill('Douane plus élevée que prévu');
+  await pro.getByRole('button', { name: 'Envoyer la proposition' }).click();
+  await expect(pro.getByText('En attente de la réponse du client.')).toBeVisible();
+
+  await client.reload();
+  await expect(
+    client.getByText('Nouveau montant si vous acceptez : 91,28 USD.', { exact: false }),
+  ).toBeVisible();
+  await client.getByRole('button', { name: 'Accepter l’ajustement' }).click();
+  await expect(client.getByText('ajustements acceptés', { exact: false })).toBeVisible();
+  await expect(client.getByText('91,28 USD')).toBeVisible();
 
   // --- Demande saisie pour un client géré (reçue par WhatsApp) ---
   await pro.getByRole('link', { name: 'Clients' }).click();
@@ -105,4 +122,17 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await pro.getByRole('button', { name: 'Créer la demande' }).click();
   await expect(pro.getByRole('heading', { name: 'Patrick Mbuyi' })).toBeVisible();
   await expect(pro.getByText('En cours d’évaluation')).toBeVisible();
+
+  // Devis puis accord du client géré (reçu par WhatsApp) : la commande est créée.
+  await pro.getByRole('button', { name: 'Préparer le devis' }).click();
+  await pro.getByLabel('Prix unitaire (USD)').first().fill('25,00');
+  await pro.getByRole('button', { name: 'Envoyer le devis au client' }).click();
+  await pro.getByRole('button', { name: /Confirmer l’envoi de/ }).click();
+  await expect(pro.getByRole('heading', { name: 'Le client a donné son accord ?' })).toBeVisible();
+  await pro.getByLabel('Comment le client a accepté').fill('Accord par WhatsApp');
+  await pro.getByRole('button', { name: 'Enregistrer l’accord et créer la commande' }).click();
+  await expect(pro.getByRole('heading', { name: /^KZ-\d{4}-\d{6}$/ })).toBeVisible();
+  await expect(
+    pro.getByText('Devis version 1 accepté · Accord par WhatsApp', { exact: false }),
+  ).toBeVisible();
 });

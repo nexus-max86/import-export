@@ -44,13 +44,19 @@ export function OrderView({ order }: { order: OrderDetail }) {
               </tr>
             ))}
             <tr>
-              <td className="pt-2 font-bold">Montant convenu (frais compris)</td>
+              <td className="pt-2 font-bold">Montant à payer (frais compris)</td>
               <td className="pt-2 text-right font-display text-lg font-bold tabular-nums whitespace-nowrap">
                 {fmtAmount(order.finalAmount, order.currency)}
               </td>
             </tr>
           </tbody>
         </table>
+        {order.finalAmount !== order.agreedTotalAmount && (
+          <p className="text-sm text-muted">
+            Montant du devis : {fmtAmount(order.agreedTotalAmount, order.currency)} ; ajustements
+            acceptés : {fmtAmount(order.finalAmount - order.agreedTotalAmount, order.currency)}.
+          </p>
+        )}
         {order.cancelledReason && (
           <p className="text-sm">Motif d’annulation : {order.cancelledReason}</p>
         )}

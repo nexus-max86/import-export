@@ -768,8 +768,9 @@ model Order {
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  items  OrderItem[]
-  events OrderEvent[]
+  items       OrderItem[]
+  events      OrderEvent[]
+  adjustments OrderAdjustment[]
 
   @@index([organizationId, status])
   @@index([customerUserId])
@@ -814,4 +815,34 @@ model OrderEvent {
 
   @@index([orderId, at])
   @@map("order_events")
+}
+
+enum AdjustmentStatus {
+  proposed
+  accepted
+  rejected
+  cancelled
+}
+
+/// Modification du prix après acceptation : n'a d'effet qu'une fois acceptée par le client (§7.12).
+model OrderAdjustment {
+  id             String           @id @default(uuid(7)) @db.Uuid
+  orderId        String           @map("order_id") @db.Uuid
+  organizationId String           @map("organization_id") @db.Uuid
+  customerUserId String?          @map("customer_user_id") @db.Uuid
+  /// Variation en unité mineure : positive (supplément) ou négative (remise).
+  amountDelta    BigInt           @map("amount_delta")
+  reason         String
+  status         AdjustmentStatus @default(proposed)
+  proposedBy     String           @map("proposed_by") @db.Uuid
+  decidedBy      String?          @map("decided_by") @db.Uuid
+  decidedAt      DateTime?        @map("decided_at") @db.Timestamptz(3)
+  /// Pour un client géré : comment l'accord a été obtenu (« accord reçu par WhatsApp le … »).
+  decisionNote   String?          @map("decision_note")
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+  @@map("order_adjustments")
 }

@@ -1,6 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@konzia/db';
-import type { OrderDetail, OrderSummary } from '@konzia/shared';
+import {
+  CANCELLABLE_STATUSES,
+  ORG_NEXT_STATUSES,
+  ORDER_STATUS_LABELS,
+  type OrderDetail,
+  type OrderStatus,
+  type OrderSummary,
+} from '@konzia/shared';
+import { AuditService } from '../audit/audit.service';
+import { PrismaService } from '../prisma/prisma.service';
 import type { OrgContext } from '../tenancy/org-context';
 import { TenantDb, type TenantTx } from '../tenancy/tenant-db.service';
 
@@ -24,7 +38,281 @@ export async function nextOrderNumber(tx: Prisma.TransactionClient): Promise<str
 
 @Injectable()
 export class OrdersService {
-  constructor(private readonly db: TenantDb) {}
+  constructor(
+    private readonly db: TenantDb,
+    private readonly system: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
+
+  // --- Commissionnaire : faire avancer, annuler, proposer un ajustement -----------------
+
+  async updateStatus(
+    userId: string,
+    org: OrgContext,
+    orderId: string,
+    to: OrderStatus,
+    note: string | null,
+  ): Promise<OrderDetail> {
+    return this.db.run(userId, async (tx) => {
+      const order = await this.orgOrder(tx, org, orderId);
+      if (!ORG_NEXT_STATUSES[order.status]?.includes(to)) {
+        throw new BadRequestException(
+          `Passage impossible de « ${ORDER_STATUS_LABELS[order.status]} » à « ${ORDER_STATUS_LABELS[to]} ».`,
+        );
+      }
+      await tx.order.update({ where: { id: orderId }, data: { status: to }, select: { id: true } });
+      await tx.orderEvent.create({
+        data: {
+          orderId,
+          organizationId: org.organizationId,
+          type: 'status_changed',
+          fromStatus: order.status,
+          toStatus: to,
+          actorUserId: userId,
+          note,
+        },
+        select: { id: true },
+      });
+      return this.detail(tx, { id: orderId });
+    });
+  }
+
+  async cancelByOrg(
+    userId: string,
+    org: OrgContext,
+    orderId: string,
+    reason: string,
+  ): Promise<OrderDetail> {
+    return this.db.run(userId, async (tx) => {
+      const order = await this.orgOrder(tx, org, orderId);
+      if (!CANCELLABLE_STATUSES.includes(order.status))
+        throw new ConflictException(
+          'Cette commande ne peut plus être annulée ici : ouvrez un litige.',
+        );
+      await tx.order.update({
+        where: { id: orderId },
+        data: { status: 'cancelled', cancelledReason: reason },
+        select: { id: true },
+      });
+      await tx.orderEvent.create({
+        data: {
+          orderId,
+          organizationId: org.organizationId,
+          type: 'cancelled',
+          fromStatus: order.status,
+          toStatus: 'cancelled',
+          actorUserId: userId,
+          note: reason,
+        },
+        select: { id: true },
+      });
+      await this.audit.record(tx, {
+        actorUserId: userId,
+        actorRole: org.role,
+        organizationId: org.organizationId,
+        action: 'order.cancelled',
+        entityType: 'order',
+        entityId: orderId,
+        before: { status: order.status },
+        after: { status: 'cancelled' },
+        reason,
+      });
+      return this.detail(tx, { id: orderId });
+    });
+  }
+
+  async proposeAdjustment(
+    userId: string,
+    org: OrgContext,
+    orderId: string,
+    amountDelta: number,
+    reason: string,
+  ): Promise<OrderDetail> {
+    return this.db.run(userId, async (tx) => {
+      const order = await this.orgOrder(tx, org, orderId);
+      if (order.status === 'completed' || order.status === 'cancelled')
+        throw new ConflictException('Commande close.');
+      if (order.finalAmount + BigInt(amountDelta) < 0n)
+        throw new BadRequestException('La remise dépasse le montant de la commande.');
+      const open = await tx.orderAdjustment.findFirst({
+        where: { orderId, status: 'proposed' },
+        select: { id: true },
+      });
+      if (open) throw new ConflictException('Un ajustement attend déjà la réponse du client.');
+      await tx.orderAdjustment.create({
+        data: {
+          orderId,
+          organizationId: org.organizationId,
+          customerUserId: order.customerUserId,
+          amountDelta: BigInt(amountDelta),
+          reason,
+          proposedBy: userId,
+        },
+        select: { id: true },
+      });
+      await tx.orderEvent.create({
+        data: {
+          orderId,
+          organizationId: org.organizationId,
+          type: 'adjustment_proposed',
+          actorUserId: userId,
+          note: reason,
+        },
+        select: { id: true },
+      });
+      return this.detail(tx, { id: orderId });
+    });
+  }
+
+  /** Client géré (sans compte) : le commissionnaire enregistre la réponse obtenue hors application. */
+  async recordAdjustmentDecision(
+    userId: string,
+    org: OrgContext,
+    orderId: string,
+    adjustmentId: string,
+    accepted: boolean,
+    note: string,
+  ): Promise<OrderDetail> {
+    const order = await this.db.run(userId, (tx) => this.orgOrder(tx, org, orderId));
+    if (order.customerUserId)
+      throw new ConflictException('Ce client a un compte : c’est à lui de répondre dans Konzia.');
+    await this.applyDecision(orderId, adjustmentId, accepted, userId, org.role, note, null);
+    return this.getForOrg(userId, org, orderId);
+  }
+
+  // --- Client --------------------------------------------------------------------------
+
+  async decideAdjustment(
+    userId: string,
+    orderId: string,
+    adjustmentId: string,
+    accepted: boolean,
+  ): Promise<OrderDetail> {
+    await this.applyDecision(orderId, adjustmentId, accepted, userId, 'customer', null, userId);
+    return this.getForCustomer(userId, orderId);
+  }
+
+  /** Le client peut annuler tant que rien n'a été payé. */
+  async cancelByCustomer(userId: string, orderId: string, reason: string): Promise<OrderDetail> {
+    await this.system.$transaction(async (tx) => {
+      const order = await tx.order.findFirst({
+        where: { id: orderId, customerUserId: userId },
+        select: { status: true, organizationId: true },
+      });
+      if (!order) throw new NotFoundException('Commande introuvable.');
+      if (order.status !== 'awaiting_payment') {
+        throw new ConflictException(
+          'Un paiement a déjà été déclaré : contactez le commissionnaire ou ouvrez un litige.',
+        );
+      }
+      await tx.order.update({
+        where: { id: orderId },
+        data: { status: 'cancelled', cancelledReason: reason },
+      });
+      await tx.orderEvent.create({
+        data: {
+          orderId,
+          organizationId: order.organizationId,
+          type: 'cancelled',
+          fromStatus: order.status,
+          toStatus: 'cancelled',
+          actorUserId: userId,
+          note: reason,
+        },
+      });
+      await this.audit.recordSystem(
+        {
+          actorUserId: userId,
+          actorRole: 'customer',
+          organizationId: order.organizationId,
+          action: 'order.cancelled',
+          entityType: 'order',
+          entityId: orderId,
+          reason,
+        },
+        tx,
+      );
+    });
+    return this.getForCustomer(userId, orderId);
+  }
+
+  /** Accepter applique la variation au montant final ; refuser la laisse sans effet. Chemin système audité. */
+  private async applyDecision(
+    orderId: string,
+    adjustmentId: string,
+    accepted: boolean,
+    actorId: string,
+    actorRole: string,
+    note: string | null,
+    customerUserId: string | null,
+  ) {
+    await this.system.$transaction(async (tx) => {
+      const adj = await tx.orderAdjustment.findFirst({
+        where: {
+          id: adjustmentId,
+          orderId,
+          status: 'proposed',
+          ...(customerUserId ? { customerUserId } : {}),
+        },
+        select: { id: true, amountDelta: true, organizationId: true, reason: true },
+      });
+      if (!adj) throw new NotFoundException('Ajustement introuvable ou déjà traité.');
+      const order = await tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        select: { finalAmount: true, status: true },
+      });
+      if (order.status === 'cancelled' || order.status === 'completed')
+        throw new ConflictException('Commande close.');
+      await tx.orderAdjustment.update({
+        where: { id: adj.id },
+        data: {
+          status: accepted ? 'accepted' : 'rejected',
+          decidedBy: actorId,
+          decidedAt: new Date(),
+          decisionNote: note,
+        },
+      });
+      if (accepted)
+        await tx.order.update({
+          where: { id: orderId },
+          data: { finalAmount: order.finalAmount + adj.amountDelta },
+        });
+      await tx.orderEvent.create({
+        data: {
+          orderId,
+          organizationId: adj.organizationId,
+          type: accepted ? 'adjustment_accepted' : 'adjustment_rejected',
+          actorUserId: actorId,
+          note: note ?? adj.reason,
+        },
+      });
+      await this.audit.recordSystem(
+        {
+          actorUserId: actorId,
+          actorRole,
+          organizationId: adj.organizationId,
+          action: accepted ? 'order.adjustment_accepted' : 'order.adjustment_rejected',
+          entityType: 'order',
+          entityId: orderId,
+          before: { finalAmount: Number(order.finalAmount) },
+          after: {
+            finalAmount: Number(accepted ? order.finalAmount + adj.amountDelta : order.finalAmount),
+          },
+          reason: note,
+        },
+        tx,
+      );
+    });
+  }
+
+  private async orgOrder(tx: TenantTx, org: OrgContext, orderId: string) {
+    const o = await tx.order.findFirst({
+      where: { id: orderId, organizationId: org.organizationId },
+      select: { status: true, finalAmount: true, customerUserId: true },
+    });
+    if (!o) throw new NotFoundException('Commande introuvable.');
+    return o;
+  }
 
   listForCustomer(userId: string): Promise<OrderSummary[]> {
     return this.db.run(userId, async (tx) => {
@@ -113,6 +401,19 @@ export class OrdersService {
           select: { type: true, fromStatus: true, toStatus: true, note: true, at: true },
           orderBy: { at: 'asc' },
         },
+        customerUserId: true,
+        adjustments: {
+          select: {
+            id: true,
+            amountDelta: true,
+            reason: true,
+            status: true,
+            createdAt: true,
+            decidedAt: true,
+            decisionNote: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
       },
     });
     if (!o) throw new NotFoundException('Commande introuvable.');
@@ -132,6 +433,13 @@ export class OrdersService {
       quoteId: o.quoteId,
       quoteRequestId: quote?.quoteRequestId ?? '',
       cancelledReason: o.cancelledReason,
+      customerHasAccount: o.customerUserId !== null,
+      adjustments: o.adjustments.map((a) => ({
+        ...a,
+        amountDelta: Number(a.amountDelta),
+        createdAt: a.createdAt.toISOString(),
+        decidedAt: a.decidedAt?.toISOString() ?? null,
+      })),
       items: o.items.map((i) => ({
         ...i,
         unitAmount: Number(i.unitAmount),

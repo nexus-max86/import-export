@@ -151,6 +151,7 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 | Sites reconnus (liste blanche) | Constante versionnée `MARKETPLACE_DOMAINS` (packages/shared), pas de table | Toute modification est relue et testée ; un écran d'administration pourra venir après le pilote |
 | Lecture des pages produits | Directement dans l'API (5 s, 2 Mo), sans file d'attente ; aucune donnée conservée avant l'ajout à une demande | Simplicité ; un échec de lecture est un cas normal (saisie manuelle) |
 | Expiration des devis | Contrôle à chaque lecture et acceptation + passage périodique toutes les 10 min dans l'API | Aucune file d'attente encore ; un devis expiré n'est jamais acceptable |
+| Accord d'un client géré | Le commissionnaire enregistre l'accord (devis, ajustement) avec une note « comment le client a accepté », tracée | Les clients des pilotes passent par WhatsApp (retour terrain) ; sans cela, aucune commande possible pour eux |
 | Import Excel | Traité directement par l'API (2 000 lignes, 2 Mo max), aperçu puis confirmation ; pas de file d'attente | Volume des pilotes (10–30 commandes/mois) : 500 lignes en moins d'une seconde ; une file d'attente n'apporterait que de la complexité |
 | Lien de suivi sans compte | **Reporté après le MVP** | Décision du 21/11 ; le client géré est suivi par le commissionnaire via WhatsApp |
 | Audit | Appels explicites dans la transaction du changement (pas d'intercepteur) | Avant/après précis et atomicité garantie ; journal immuable par déclencheur |
@@ -178,7 +179,7 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 | 1 — Socle et isolation | **Terminée** (#1–#4) le 20/11/2026 — 58 tests API, 7 tests partagés, 2 parcours Playwright |
 | 2 — Profils et vérification | **Terminée** (#5, #6, #7, #10, #11, #12) le 21/11/2026 — 120 tests API, 20 tests partagés, 3 parcours Playwright |
 | 3 — Import et demande | **Terminée** (#9, #13, #14) le 21/11/2026 — 171 tests API, 47 tests partagés, 4 parcours Playwright |
-| 4 — Devis et commande | En cours (#8, #15, #16 faits ; base des commandes livrée ; #17 : statuts, annulation, ajustements) |
+| 4 — Devis et commande | **Terminée** (#8, #15, #16, #17) le 21/11/2026 — 211 tests API, 55 tests partagés, 4 parcours Playwright |
 | 5 — Paiements directs | À faire |
 | 6 — Achats et colis | À faire |
 | 7 — Notifications | À faire |
