@@ -27,7 +27,9 @@ Source : questionnaire Konzia (`docs/questionnaire/`). Réponses reçues : **1 s
 - **Le modèle d'abonnement est crédible** : 10 à 25 $/mois pour un volume de 10 à 30 commandes.
 - **Les itinéraires varient** (avion, bateau, transitaire) : les étapes configurables par itinéraire (ticket #21) sont justifiées.
 
-## Ce que cela change (proposé, à valider)
+## Ce que cela change
+
+Décisions du propriétaire le 21/11/2026 : R1 **reporté après le MVP** ; R2, R3, R5 (RCCM + pièce d'identité) **validés** ; R4 sans préférence → version recommandée retenue (réversible) ; R6 conservé pour le ticket #25.
 
 | # | Constat | Proposition | Ticket concerné |
 |---|---|---|---|

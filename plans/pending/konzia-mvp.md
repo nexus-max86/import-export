@@ -145,6 +145,10 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 | E-mail transactionnel | Brevo via SMTP | Offre gratuite suffisante pour le pilote, SMTP standard donc remplaçable |
 | Versions des dépendances | Next 15.5, NestJS 11, Prisma 6, TS 5.9 (D6) | Lignes stables maîtrisées ; montée de version après le pilote |
 | Deux connexions PostgreSQL | Propriétaire (auth, amorçage, admin audité) + `konzia_app` sous RLS (tout le métier) | Les opérations sans utilisateur (session par jeton, invitation) ne peuvent pas passer par la RLS |
+| Vérification des commissionnaires | RCCM **et** pièce d'identité du responsable | Retour terrain (R5), décision du 21/11 |
+| Paiements | Acomptes, paiements partiels, soldes « qui doit combien » ; règle d'achat par commande (tout payé / acompte / fonds propres), tracée | Retour terrain (R2, R3), décision du 21/11 |
+| Assistant de devis | Commission en % et transport au kilo pré-remplis depuis les réglages du commissionnaire, montants modifiables | Retour terrain (R4) ; propriétaire sans préférence, version recommandée retenue |
+| Lien de suivi sans compte | **Reporté après le MVP** | Décision du 21/11 ; le client géré est suivi par le commissionnaire via WhatsApp |
 | Audit | Appels explicites dans la transaction du changement (pas d'intercepteur) | Avant/après précis et atomicité garantie ; journal immuable par déclencheur |
 
 ## Non encore spécifié
@@ -154,6 +158,7 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 - Phase 6 : étapes logistiques réellement utilisées par les 2 pilotes (itinéraire Chine → Lubumbashi ? via Kasumbalesa ?) — à recueillir pendant la phase 0.
 - Phase 8 : délais de litige — à fixer avant la phase 8.
 - Phase 9 : nom de domaine. Nom retenu le 20/11/2026 : **Konzia** (remplace CargoLink, trop proche d'un annuaire IATA et de transitaires existants). Vérifié le 20/11/2026 : `konzia.com` pris ; `konzia.app`, `konzia.co`, `konzia.net`, `konzia.io`, `konziardc.com`, `getkonzia.com` libres ; `.cd` non vérifiable par l'outil. Achat à faire par le propriétaire.
+- Après le MVP : lien de suivi sans compte pour les clients WhatsApp (R1, `docs/08-retours-terrain.md`).
 - Recherche multi-marketplaces, connecteurs API, paiements intégrés, abonnements : brouillard, étudiés après le pilote.
 
 ## Toujours / Jamais
