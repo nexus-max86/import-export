@@ -1,0 +1,124 @@
+name: Déploiement
+
+# Staging : à chaque push sur main (après la CI), images construites puis déployées.
+# Production : lancement manuel (« Run workflow »), avec le tag d'une image DÉJÀ testée en staging.
+# L'environnement GitHub « production » doit exiger une approbation (Settings → Environments).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environnement
+        type: choice
+        options: [staging, production]
+        default: staging
+      tag:
+        description: Tag d'image à déployer (SHA d'un commit de main déjà déployé en staging)
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: deploy-${{ inputs.environment || 'staging' }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io/${{ github.repository_owner }}
+
+jobs:
+  images:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        target: [api, web, migrate]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/deploy/Dockerfile
+          target: ${{ matrix.target }}
+          push: true
+          tags: ${{ env.REGISTRY }}/konzia-${{ matrix.target }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.target }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.target }}
+
+  backup-image:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: infra/deploy/backup
+          push: true
+          tags: ${{ env.REGISTRY }}/konzia-backup:${{ github.sha }}
+
+  deploy:
+    needs: [images, backup-image]
+    if: always() && (github.event_name == 'workflow_dispatch' || (needs.images.result == 'success' && needs['backup-image'].result == 'success'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment:
+      name: ${{ inputs.environment || 'staging' }}
+      url: https://${{ (inputs.environment || 'staging') == 'production' && 'app' || 'staging' }}.${{ vars.KONZIA_DOMAIN }}
+    env:
+      TARGET: ${{ inputs.environment || 'staging' }}
+      TAG: ${{ inputs.tag || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Clé SSH du serveur
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Fichiers de déploiement
+        env:
+          SERVER: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+        run: >
+          scp -i ~/.ssh/id_deploy -r infra/deploy/compose.yml infra/deploy/deploy.sh
+          infra/deploy/restore-test.sh infra/deploy/edge "$SERVER:/opt/konzia/"
+      - name: Déploiement
+        env:
+          SERVER: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_USER: ${{ github.actor }}
+        run: |
+          ssh_run() { ssh -i ~/.ssh/id_deploy "$SERVER" "$@"; }
+          # Jeton de lecture éphémère (durée du job) : aucun jeton permanent sur le serveur.
+          printf '%s' "$REGISTRY_TOKEN" | ssh_run docker login ghcr.io -u "$REGISTRY_USER" --password-stdin
+          set +e
+          ssh_run "/opt/konzia/deploy.sh '$TARGET' '$TAG'"
+          status=$?
+          ssh_run docker logout ghcr.io
+          exit $status
+      - name: Contrôle de santé (HTTPS)
+        run: |
+          host="$([ "$TARGET" = production ] && echo app || echo staging).${{ vars.KONZIA_DOMAIN }}"
+          for i in $(seq 1 20); do
+            curl -fsS "https://${host}/api/health" && exit 0
+            sleep 6
+          done
+          echo "L'API ne répond pas sur https://${host}/api/health"; exit 1

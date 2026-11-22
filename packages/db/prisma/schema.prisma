@@ -1232,7 +1232,8 @@ model NotificationPreference {
 model OutboundMessage {
   id              String    @id @default(uuid(7)) @db.Uuid
   notificationId  String?   @map("notification_id") @db.Uuid
-  recipientUserId String    @map("recipient_user_id") @db.Uuid
+  /// Nul pour un destinataire sans compte (invitation).
+  recipientUserId String?   @map("recipient_user_id") @db.Uuid
   channel         String
   toAddress       String    @map("to_address")
   subject         String

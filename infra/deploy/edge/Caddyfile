@@ -1,0 +1,42 @@
+{
+	email {$ACME_EMAIL}
+}
+
+(konzia) {
+	encode zstd gzip
+	request_body {
+		max_size 8MB
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(self), geolocation=(), microphone=()"
+		X-Frame-Options DENY
+		-Server
+	}
+}
+
+# Production
+app.{$KONZIA_DOMAIN} {
+	import konzia
+	reverse_proxy /api/* production-api:3001
+	reverse_proxy production-web:3000
+}
+
+# Le domaine nu renvoie vers l'application.
+{$KONZIA_DOMAIN} {
+	redir https://app.{$KONZIA_DOMAIN}{uri} permanent
+}
+
+# Staging : protégé par mot de passe (sauf la sonde de santé), jamais indexé.
+staging.{$KONZIA_DOMAIN} {
+	import konzia
+	header X-Robots-Tag "noindex, nofollow"
+	@protected not path /api/health
+	basic_auth @protected {
+		{$STAGING_USER} {$STAGING_PASSWORD_HASH}
+	}
+	reverse_proxy /api/* staging-api:3001
+	reverse_proxy staging-web:3000
+}

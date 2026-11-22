@@ -20,7 +20,7 @@ import { AuditService } from '../audit/audit.service';
 import { ENV } from '../config/config.module';
 import type { Env } from '../config/env';
 import { randomToken, sha256 } from '../common/crypto';
-import { EMAIL_SENDER, type EmailSender } from '../email/email-sender';
+import { EmailQueue } from '../notifications/email-queue';
 import { invitationMessage } from '../email/templates';
 import { PrismaService } from '../prisma/prisma.service';
 import type { OrgContext } from '../tenancy/org-context';
@@ -45,7 +45,7 @@ export class OrganizationsService {
     /** Rôle système : uniquement pour créer une organisation et accepter une invitation. */
     private readonly system: PrismaService,
     private readonly db: TenantDb,
-    @Inject(EMAIL_SENDER) private readonly email: EmailSender,
+    private readonly outbox: EmailQueue,
     @Inject(ENV) private readonly env: Env,
     private readonly audit: AuditService,
   ) {}
@@ -217,13 +217,14 @@ export class OrganizationsService {
       });
       return o.name;
     });
-    await this.email.send(
+    await this.outbox.sendOrQueue(
       invitationMessage(
         input.email,
         orgName,
         ORG_ROLE_LABELS[input.role],
         `${this.env.APP_URL}/invitation?jeton=${token}`,
       ),
+      null,
     );
   }
 

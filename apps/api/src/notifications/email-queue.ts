@@ -3,7 +3,7 @@ import { Queue, Worker, type Job } from 'bullmq';
 import Redis from 'ioredis';
 import { ENV } from '../config/config.module';
 import type { Env } from '../config/env';
-import { EMAIL_SENDER, type EmailSender } from '../email/email-sender';
+import { EMAIL_SENDER, type EmailSender, type OutgoingEmail } from '../email/email-sender';
 import { PrismaService } from '../prisma/prisma.service';
 
 const QUEUE = 'konzia-email';
@@ -63,6 +63,32 @@ export class EmailQueue implements OnModuleInit, OnModuleDestroy {
         },
       })),
     );
+  }
+
+  /**
+   * E-mail de compte (vérification, mot de passe, invitation) : envoi immédiat ; si le serveur
+   * d'envoi ne répond pas, le message part en file avec nouvelles tentatives au lieu de faire
+   * échouer l'inscription ou la demande de l'utilisateur.
+   */
+  async sendOrQueue(email: OutgoingEmail, recipientUserId: string | null): Promise<void> {
+    try {
+      await this.sender.send(email);
+    } catch (err) {
+      this.logger.warn(`envoi direct impossible (${errorCode(err)}) : message mis en file`);
+      const row = await this.system.outboundMessage.create({
+        data: {
+          recipientUserId,
+          channel: 'email',
+          toAddress: email.to,
+          subject: email.subject,
+          bodyText: email.text,
+          attempts: 1,
+          lastError: errorCode(err),
+        },
+        select: { id: true },
+      });
+      await this.enqueue([row.id]);
+    }
   }
 
   /** Envoie un message ; idempotent (un message déjà envoyé n'est jamais renvoyé). */

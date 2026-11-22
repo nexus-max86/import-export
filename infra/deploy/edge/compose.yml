@@ -1,0 +1,29 @@
+# Frontal HTTPS partagé par production et staging (certificats Let's Encrypt automatiques).
+#   docker network create konzia-edge   (une fois)
+#   docker compose -f edge/compose.yml --env-file /opt/konzia/edge.env up -d
+name: konzia-edge
+
+services:
+  caddy:
+    image: caddy:2.10.2
+    restart: unless-stopped
+    ports: ['80:80', '443:443', '443:443/udp']
+    environment:
+      KONZIA_DOMAIN: ${KONZIA_DOMAIN:?KONZIA_DOMAIN requis, ex. konzia.app}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL requis}
+      STAGING_USER: ${STAGING_USER:-pilote}
+      STAGING_PASSWORD_HASH: ${STAGING_PASSWORD_HASH:?STAGING_PASSWORD_HASH requis (caddy hash-password)}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [edge]
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  edge:
+    name: konzia-edge
+    external: true

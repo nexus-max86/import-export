@@ -1,0 +1,118 @@
+# Un environnement Konzia (production ou staging) sur le VPS.
+#   docker compose -p konzia-production --env-file /opt/konzia/production.env -f compose.yml up -d
+# Caddy (edge/compose.yml) est partagé et joint api/web par le réseau « konzia-edge ».
+name: konzia-${KONZIA_ENV:?KONZIA_ENV requis (production ou staging)}
+
+services:
+  postgres:
+    image: postgres:16.10-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: konzia
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD requis}
+      POSTGRES_DB: konzia
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U konzia -d konzia']
+      interval: 10s
+      retries: 10
+    shm_size: 256mb
+
+  redis:
+    image: redis:7.4-bookworm
+    restart: unless-stopped
+    # File d'envoi des e-mails : persistance AOF pour ne pas perdre un envoi au redémarrage.
+    command:
+      [
+        'redis-server',
+        '--appendonly',
+        'yes',
+        '--maxmemory',
+        '256mb',
+        '--maxmemory-policy',
+        'noeviction',
+      ]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      retries: 10
+
+  # Tâche ponctuelle : migrations + mot de passe du rôle applicatif. Lancée par deploy.sh.
+  migrate:
+    image: ghcr.io/${GHCR_OWNER:?GHCR_OWNER requis}/konzia-migrate:${IMAGE_TAG:?IMAGE_TAG requis}
+    profiles: ['tools']
+    environment:
+      DATABASE_URL: postgresql://konzia:${POSTGRES_PASSWORD}@postgres:5432/konzia
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD requis}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    image: ghcr.io/${GHCR_OWNER}/konzia-api:${IMAGE_TAG}
+    restart: unless-stopped
+    env_file: ${KONZIA_ENV_FILE:?KONZIA_ENV_FILE requis}
+    environment:
+      NODE_ENV: production
+      API_PORT: '3001'
+      DATABASE_URL: postgresql://konzia:${POSTGRES_PASSWORD}@postgres:5432/konzia
+      APP_DATABASE_URL: postgresql://konzia_app:${APP_DB_PASSWORD}@postgres:5432/konzia
+      REDIS_URL: redis://redis:6379/0
+      TRUST_PROXY_HOPS: '1'
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      default: {}
+      edge:
+        aliases: ['${KONZIA_ENV}-api']
+    mem_limit: ${API_MEM_LIMIT:-768m}
+
+  web:
+    image: ghcr.io/${GHCR_OWNER}/konzia-web:${IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+    networks:
+      edge:
+        aliases: ['${KONZIA_ENV}-web']
+    mem_limit: ${WEB_MEM_LIMIT:-512m}
+
+  # Sauvegarde quotidienne chiffrée vers R2 (ticket #30).
+  backup:
+    image: ghcr.io/${GHCR_OWNER}/konzia-backup:${IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      KONZIA_ENV: ${KONZIA_ENV}
+      PGHOST: postgres
+      PGUSER: konzia
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: konzia
+      BACKUP_AGE_RECIPIENT: ${BACKUP_AGE_RECIPIENT:?BACKUP_AGE_RECIPIENT requis (clé publique age)}
+      BACKUP_REMOTE: ${BACKUP_REMOTE:?BACKUP_REMOTE requis}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      BACKUP_TIME: ${BACKUP_TIME:-0015}
+      RCLONE_CONFIG_R2_TYPE: s3
+      RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+      RCLONE_CONFIG_R2_ENDPOINT: ${S3_ENDPOINT:-}
+      RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY_ID:-}
+      RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_ACCESS_KEY:-}
+      RCLONE_CONFIG_R2_NO_CHECK_BUCKET: 'true'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  edge:
+    name: konzia-edge
+    external: true

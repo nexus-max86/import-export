@@ -115,6 +115,36 @@ describe('E-mails de notification', () => {
     expect(msg!.lastError).not.toMatch(/ruth|@/);
   });
 
+  it('inscription pendant une panne du serveur d’envoi : compte créé, e-mail parti plus tard', async () => {
+    const outage = Object.assign(new Error('Connexion refusée'), { code: 'ECONNREFUSED' });
+    vi.spyOn(t.outbox, 'send').mockRejectedValueOnce(outage);
+    await t
+      .agent()
+      .post('/api/auth/register', {
+        email: 'patrick@example.test',
+        password: 'motdepasse-solide-42',
+        displayName: 'Patrick',
+        acceptTerms: true,
+      })
+      .expect(201);
+    const until = Date.now() + 8000;
+    let row = await t.prisma.outboundMessage.findFirst({
+      where: { toAddress: 'patrick@example.test' },
+    });
+    while (row?.status !== 'sent' && Date.now() < until) {
+      await new Promise((r) => setTimeout(r, 50));
+      row = await t.prisma.outboundMessage.findFirst({
+        where: { toAddress: 'patrick@example.test' },
+      });
+    }
+    expect(row).toMatchObject({
+      status: 'sent',
+      attempts: 2,
+      subject: expect.stringMatching(/Confirmez/),
+    });
+    expect(t.outbox.lastTo('patrick@example.test')?.text).toMatch(/verifier-email\?jeton=/);
+  });
+
   it('l’adaptateur SMTP (Brevo) remet le message à un serveur SMTP réel', async () => {
     const received: string[] = [];
     const server = new SMTPServer({

@@ -1,9 +1,12 @@
+import path from 'node:path';
 import type { NextConfig } from 'next';
 
 const apiOrigin = process.env.API_ORIGIN ?? 'http://localhost:3001';
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // Monorepo : la sortie autonome inclut les paquets partagés (packages/shared).
+  outputFileTracingRoot: path.join(__dirname, '../../'),
   poweredByHeader: false,
   // Le lint est fait une seule fois à la racine (`pnpm lint`).
   eslint: { ignoreDuringBuilds: true },

@@ -16,7 +16,7 @@ import { AuditService } from '../audit/audit.service';
 import { ENV } from '../config/config.module';
 import type { Env } from '../config/env';
 import { randomToken, sha256 } from '../common/crypto';
-import { EMAIL_SENDER, type EmailSender } from '../email/email-sender';
+import { EmailQueue } from '../notifications/email-queue';
 import { resetPasswordMessage, verifyEmailMessage } from '../email/templates';
 import { PrismaService } from '../prisma/prisma.service';
 import { burnPasswordCheck, hashPassword, verifyPassword } from './password';
@@ -34,7 +34,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly sessions: SessionService,
-    @Inject(EMAIL_SENDER) private readonly email: EmailSender,
+    private readonly outbox: EmailQueue,
     @Inject(ENV) private readonly env: Env,
     private readonly audit: AuditService,
   ) {}
@@ -107,12 +107,13 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user || user.status !== 'active') return;
     const token = await this.issueToken(user.id, 'reset_password');
-    await this.email.send(
+    await this.outbox.sendOrQueue(
       resetPasswordMessage(
         user.email,
         user.displayName,
         `${this.env.APP_URL}/reinitialiser?jeton=${token}`,
       ),
+      user.id,
     );
   }
 
@@ -149,8 +150,9 @@ export class AuthService {
 
   private async sendVerification(userId: string, email: string, name: string): Promise<void> {
     const token = await this.issueToken(userId, 'verify_email');
-    await this.email.send(
+    await this.outbox.sendOrQueue(
       verifyEmailMessage(email, name, `${this.env.APP_URL}/verifier-email?jeton=${token}`),
+      userId,
     );
   }
 

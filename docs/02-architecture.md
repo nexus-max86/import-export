@@ -144,10 +144,10 @@ Tests obligatoires (étape 1.3, puis à chaque nouvelle table) : pour chaque tab
 | Élément | Choix |
 |---|---|
 | Système | Ubuntu 24.04 LTS, mises à jour de sécurité automatiques, pare-feu (ports 22, 80, 443), connexion SSH par clé uniquement |
-| Conteneurs | Docker Compose : `caddy`, `web`, `api`, `worker`, `postgres`, `redis` |
+| Conteneurs | Docker Compose : `caddy` (partagé), puis par environnement `web`, `api`, `postgres`, `redis`, `backup` et la tâche `migrate`. Au MVP, la file d'envoi (BullMQ) et les tâches planifiées tournent dans le processus de l'API ; un conteneur `worker` séparé viendra si le volume l'exige. Fichiers : `infra/deploy/` |
 | Environnements | `production` et `staging` sur le même VPS (deux projets Compose, deux bases, sous-domaines `app.` et `staging.`). Le développement se fait en local. |
 | Livraison | GitHub Actions construit les images → GitHub Container Registry → `docker compose pull && up -d` par SSH ; migrations Prisma exécutées avant le redémarrage de l'API |
-| Sauvegardes | `pg_dump` chiffré chaque nuit vers R2 (rétention 30 jours) + instantané hebdomadaire Hostinger ; test de restauration avant le pilote puis chaque mois |
+| Sauvegardes | `pg_dump` chiffré par `age` (clé publique sur le serveur, clé privée hors ligne) chaque nuit vers R2 (rétention 30 jours) + instantané hebdomadaire Hostinger ; `infra/deploy/restore-test.sh` avant le pilote puis chaque mois |
 | Surveillance | Logs JSON (Pino) sans données personnelles ; Sentry (offre gratuite) pour les erreurs ; sonde de disponibilité externe (UptimeRobot gratuit) |
 | Ressources estimées | ~2,5 Go RAM pour la production, ~1,5 Go pour staging : marge confortable sur 8 Go |
 

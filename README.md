@@ -46,5 +46,5 @@ apps/web        Next.js (application installable) : espaces client, commissionna
 apps/api        NestJS (monolithe modulaire), préfixe /api
 packages/shared Types, schémas et utilitaires communs (montants, rôles)
 packages/db     Schéma Prisma, migrations et politiques RLS
-infra/          Docker Compose local ; déploiement Hostinger (à venir, ticket #29)
+infra/          Docker Compose local ; déploiement Hostinger dans infra/deploy (guide : docs/guides/deploiement.md)
 ```
