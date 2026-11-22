@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { PlaceSelect } from '@/components/place-select';
-import { Button, Card, Field, Notice } from '@/components/ui';
+import { Button, Card, Field, Notice, PageLoading } from '@/components/ui';
 import { api, ApiError, fieldErrors } from '@/lib/api';
 
 type Notice = { tone: 'ok' | 'error'; text: string };
@@ -45,7 +45,7 @@ export default function ProfilePage() {
   }, [load]);
 
   if (!profile) {
-    return <main className="mx-auto max-w-md px-4 py-10 text-muted">Chargement…</main>;
+    return <PageLoading width="max-w-md" />;
   }
 
   return (

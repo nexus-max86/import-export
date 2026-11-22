@@ -3,7 +3,7 @@
 import { CreateOrganizationSchema, ORG_ROLE_LABELS, type MembershipSummary } from '@konzia/shared';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Button, Card, Field, Logo, Notice } from '@/components/ui';
+import { Button, Card, Field, Logo, Notice, Loading } from '@/components/ui';
 import { setActiveOrg } from '@/lib/active-org';
 import { api, ApiError, fieldErrors } from '@/lib/api';
 
@@ -66,7 +66,7 @@ export default function ProHomePage() {
     <main className="mx-auto flex max-w-md flex-col gap-5 px-4 py-10">
       <Logo />
       <h1 className="font-display text-2xl font-bold">Espace professionnel</h1>
-      {!orgs && <p className="text-muted">Chargement…</p>}
+      {!orgs && <Loading />}
       {orgs && orgs.length > 0 && (
         <ul className="flex flex-col gap-3">
           {orgs.map((o) => (

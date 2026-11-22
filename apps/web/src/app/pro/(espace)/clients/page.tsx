@@ -12,7 +12,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { CustomerImport } from '@/components/customer-import';
 import { PlaceSelect } from '@/components/place-select';
 import { ProNav } from '@/components/pro-nav';
-import { Button, Card, Field, Notice } from '@/components/ui';
+import { Button, Card, Field, Notice, buttonClass, Loading, EmptyState } from '@/components/ui';
 import { getActiveOrg } from '@/lib/active-org';
 import { api, ApiError, fieldErrors } from '@/lib/api';
 
@@ -119,15 +119,17 @@ export default function CustomersPage() {
           Rechercher
         </Button>
       </form>
-      {!page && <p className="text-muted">Chargement…</p>}
+      {!page && <Loading />}
       {page && page.items.length === 0 && (
-        <Card>
-          <p>
-            {query
-              ? `Aucun client ne correspond à « ${query} ».`
-              : 'Aucun client pour l’instant. Ajoutez vos clients habituels, même s’ils n’ont pas de compte Konzia : vous pourrez gérer leurs commandes pour eux.'}
-          </p>
-        </Card>
+        <EmptyState
+          title={
+            query ? `Aucun client ne correspond à « ${query} »` : 'Aucun client pour l’instant'
+          }
+        >
+          {query
+            ? 'Vérifiez l’orthographe, ou cherchez par numéro WhatsApp.'
+            : 'Ajoutez vos clients habituels, même s’ils n’ont pas de compte Konzia : vous pourrez gérer leurs commandes pour eux.'}
+        </EmptyState>
       )}
       <ul className="flex flex-col gap-3">
         {page?.items.map((c) => (
@@ -204,12 +206,7 @@ function CustomerRow({ org, customer }: { org: string; customer: OrgCustomerInfo
               {copied ? 'Lien copié' : 'Copier le lien'}
             </Button>
             {claim.whatsapp && (
-              <a
-                href={claim.whatsapp}
-                target="_blank"
-                rel="noreferrer"
-                className="flex min-h-11 items-center rounded-lg bg-copper px-4 font-semibold text-white"
-              >
+              <a href={claim.whatsapp} target="_blank" rel="noreferrer" className={buttonClass()}>
                 Envoyer sur WhatsApp
               </a>
             )}

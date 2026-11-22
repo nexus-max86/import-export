@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { RequestItems } from '@/components/request-items';
-import { Button, Card, Field, Notice } from '@/components/ui';
+import { Button, Card, Field, Notice, Loading, PageLoading } from '@/components/ui';
 import { api, ApiError, apiUpload, fieldErrors } from '@/lib/api';
 import { fmtAmount, fmtDate } from '@/lib/format';
 
@@ -37,8 +37,7 @@ export default function NewRequestPage() {
     void load();
   }, [load]);
 
-  if (draft === undefined)
-    return <main className="mx-auto max-w-md px-4 py-10 text-muted">Chargement…</main>;
+  if (draft === undefined) return <PageLoading width="max-w-md" />;
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-5 px-4 py-10">
@@ -345,7 +344,7 @@ function SendForm({ draft, onSent }: { draft: RequestDetail; onSent: (id: string
     <Card>
       <h2 className="font-display text-lg font-bold">À qui envoyer la demande ?</h2>
       <form onSubmit={send} className="flex flex-col gap-3">
-        {!commissioners && <p className="text-muted">Chargement…</p>}
+        {!commissioners && <Loading />}
         {commissioners?.length === 0 && (
           <Notice>Aucun commissionnaire vérifié pour l’instant.</Notice>
         )}

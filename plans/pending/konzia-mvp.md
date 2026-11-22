@@ -185,3 +185,4 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 | 7 — Notifications | Terminée (#23 centre, #24 e-mails en file, #25 WhatsApp prérempli ; envoi WhatsApp automatique désactivé jusqu'à validation Meta) |
 | 8 — Administration | Terminée (#26 console, #27 MFA et décisions, #28 litiges) |
 | 9 — Production et pilote | En cours : #29 (déploiement, vérifié en local), #30 (sauvegardes, restauration vérifiée), guides de #31 faits. Reste au propriétaire : domaine, VPS, R2, Brevo, secrets GitHub, puis comptes des pilotes et premier devis réel |
+| Finition de l'interface | Faite le 22/11/2026 : système de design « Bordereau » (`DESIGN.md`, `PRODUCT.md`), barre latérale pro et admin sur ordinateur, animations, contrastes du thème sombre corrigés ; 5 parcours et 15 écrans contrôlés à 390, 768 et 1440 px |

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { ProNav } from '@/components/pro-nav';
 import { StatusPill } from '@/components/status-pill';
-import { Button, Card, Field, Notice } from '@/components/ui';
+import { Button, Card, Field, Notice, Loading, EmptyState } from '@/components/ui';
 import { api, ApiError, fieldErrors } from '@/lib/api';
 import { fmtDate } from '@/lib/format';
 import { RECIPIENT_STATUS_LABELS, recipientTone } from '@/lib/request-status';
@@ -55,14 +55,12 @@ export default function ProRequestsPage() {
           onCreated={(id) => router.push(`/pro/demandes/${id}`)}
         />
       )}
-      {!list && <p className="text-muted">Chargement…</p>}
+      {!list && <Loading />}
       {list?.length === 0 && (
-        <Card>
-          <p>
-            Aucune demande pour l’instant. Les demandes de vos clients Konzia arrivent ici ; vous
-            pouvez aussi saisir celles reçues par WhatsApp.
-          </p>
-        </Card>
+        <EmptyState title="Aucune demande pour l’instant">
+          Les demandes de vos clients Konzia arrivent ici ; vous pouvez aussi saisir celles reçues
+          par WhatsApp.
+        </EmptyState>
       )}
       {todo.length > 0 && <RequestList title={`À traiter (${todo.length})`} items={todo} />}
       {done.length > 0 && <RequestList title="Traitées" items={done} />}

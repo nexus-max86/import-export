@@ -7,7 +7,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { ProNav } from '@/components/pro-nav';
 import { RequestItems } from '@/components/request-items';
 import { StatusPill } from '@/components/status-pill';
-import { Button, Card, Field, Notice } from '@/components/ui';
+import { Button, Card, Field, Notice, Loading } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { fmtDate } from '@/lib/format';
 import { RECIPIENT_STATUS_LABELS, recipientTone } from '@/lib/request-status';
@@ -51,7 +51,7 @@ export default function ProRequestPage() {
         ← Toutes les demandes
       </Link>
       {error && <Notice tone="error">{error}</Notice>}
-      {!r && !error && <p className="text-muted">Chargement…</p>}
+      {!r && !error && <Loading />}
       {r && mine && r.customer && (
         <>
           <div className="flex flex-wrap items-center justify-between gap-2">

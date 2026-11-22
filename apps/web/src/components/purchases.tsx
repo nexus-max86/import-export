@@ -15,7 +15,7 @@ import {
 import Link from 'next/link';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { StatusPill } from '@/components/status-pill';
-import { Button, Card, Field, Notice } from '@/components/ui';
+import { Button, Card, Field, Notice, Loading } from '@/components/ui';
 import { api, ApiError, apiUpload } from '@/lib/api';
 import { fmtAmount, fmtDate } from '@/lib/format';
 import { inputToMinor } from '@/lib/money-input';
@@ -457,7 +457,7 @@ export function PurchasesBoard({ org }: { org: string }) {
   }
 
   if (error) return <Notice tone="error">{error}</Notice>;
-  if (!items || !list) return <p className="text-sm text-muted">Chargement…</p>;
+  if (!items || !list) return <Loading lines={2} />;
   return (
     <>
       <Card>

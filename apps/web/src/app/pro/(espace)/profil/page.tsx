@@ -21,7 +21,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { ProNav } from '@/components/pro-nav';
-import { Button, Card, Notice } from '@/components/ui';
+import { Button, Card, Notice, PageLoading } from '@/components/ui';
 import { getActiveOrg } from '@/lib/active-org';
 import { api, ApiError, apiUpload } from '@/lib/api';
 import { inputToMinor, minorToInput } from '@/lib/money-input';
@@ -80,8 +80,7 @@ export default function ProProfilePage() {
     void load(id);
   }, [load, router]);
 
-  if (!org || !profile)
-    return <main className="mx-auto max-w-2xl px-4 py-10 text-muted">Chargement…</main>;
+  if (!org || !profile) return <PageLoading />;
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 py-10">

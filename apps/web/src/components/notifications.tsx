@@ -4,7 +4,7 @@ import type { NotificationInfo, NotificationPreferenceInfo } from '@konzia/share
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Button, Card, Logo, Notice } from '@/components/ui';
+import { Button, Card, Logo, Notice, Loading } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { fmtDate } from '@/lib/format';
 
@@ -22,11 +22,24 @@ export function NotificationBell() {
     <Link
       href="/notifications"
       aria-label={count > 0 ? `Notifications, ${count} non lue(s)` : 'Notifications'}
-      className="relative inline-flex min-h-10 items-center rounded-full border border-line px-3 text-sm font-semibold"
+      className="relative inline-flex min-h-10 min-w-10 items-center justify-center gap-2 rounded-full border border-line bg-surface px-2.5 text-sm font-semibold outline-none transition-[border-color,background-color] duration-150 ease-out-quint hover:border-muted focus-visible:ring-2 focus-visible:ring-copper sm:px-3"
     >
-      Notifications
+      <svg
+        aria-hidden
+        viewBox="0 0 24 24"
+        className="size-[18px] fill-none stroke-current stroke-[1.8]"
+      >
+        <path d="M6 9a6 6 0 1 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9Z" strokeLinejoin="round" />
+        <path d="M10 19a2 2 0 0 0 4 0" strokeLinecap="round" />
+      </svg>
+      <span className="hidden sm:inline">Notifications</span>
       {count > 0 && (
-        <span className="ml-2 rounded-full bg-copper px-2 text-xs text-white">{count}</span>
+        <span
+          key={count}
+          className="animate-enter rounded-full bg-copper px-1.5 text-xs leading-5 text-on-copper tabular"
+        >
+          {count}
+        </span>
       )}
     </Link>
   );
@@ -93,7 +106,7 @@ export function NotificationCenter() {
   }
 
   if (error) return <Notice tone="error">{error}</Notice>;
-  if (!list || !prefs) return <p className="text-sm text-muted">Chargement…</p>;
+  if (!list || !prefs) return <Loading lines={2} />;
   return (
     <>
       <Card>
@@ -114,15 +127,24 @@ export function NotificationCenter() {
                 <button
                   type="button"
                   onClick={() => void open(n)}
-                  className={`flex w-full flex-col gap-1 rounded-lg border p-3 text-left text-sm ${
-                    n.read ? 'border-line' : 'border-copper bg-copper-soft'
+                  className={`relative flex w-full flex-col gap-1 rounded-lg border border-line py-3 pr-3 pl-4 text-left text-sm outline-none transition-[background-color,border-color] duration-150 ease-out-quint hover:bg-sunken focus-visible:ring-2 focus-visible:ring-copper ${
+                    n.read
+                      ? 'text-muted'
+                      : 'bg-surface before:absolute before:inset-y-3 before:left-0 before:w-[3px] before:rounded-full before:bg-copper'
                   }`}
                 >
-                  <span className="font-semibold">
-                    {!n.read && <span className="sr-only">Non lue : </span>}
+                  <span
+                    className={`flex items-center gap-2 font-semibold ${n.read ? '' : 'text-ink'}`}
+                  >
+                    {!n.read && (
+                      <>
+                        <span aria-hidden className="size-2 shrink-0 rounded-full bg-copper" />
+                        <span className="sr-only">Non lue : </span>
+                      </>
+                    )}
                     {n.title}
                   </span>
-                  <span>{n.body}</span>
+                  <span className={n.read ? '' : 'text-ink'}>{n.body}</span>
                   <span className="text-xs text-muted">{fmtDate(n.createdAt)}</span>
                 </button>
               </li>

@@ -1,49 +1,71 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { ScrollNav, SideNav, type NavGroup } from '@/components/nav';
 import { NotificationBell } from '@/components/notifications';
 import { Logo } from '@/components/ui';
 
-const LINKS = [
-  { href: '/pro/demandes', label: 'Demandes' },
-  { href: '/pro/commandes', label: 'Commandes' },
-  { href: '/pro/achats', label: 'Achats' },
-  { href: '/pro/colis', label: 'Colis' },
-  { href: '/pro/expeditions', label: 'Expéditions' },
-  { href: '/pro/paiements', label: 'Paiements' },
-  { href: '/pro/litiges', label: 'Litiges' },
-  { href: '/pro/clients', label: 'Clients' },
-  { href: '/pro/equipe', label: 'Équipe' },
-  { href: '/pro/profil', label: 'Profil et vérification' },
+const GROUPS: NavGroup[] = [
+  {
+    title: 'Activité',
+    links: [
+      { href: '/pro/demandes', label: 'Demandes' },
+      { href: '/pro/commandes', label: 'Commandes' },
+      { href: '/pro/achats', label: 'Achats' },
+      { href: '/pro/colis', label: 'Colis' },
+      { href: '/pro/expeditions', label: 'Expéditions' },
+    ],
+  },
+  {
+    title: 'Argent et suivi',
+    links: [
+      { href: '/pro/paiements', label: 'Paiements' },
+      { href: '/pro/litiges', label: 'Litiges' },
+    ],
+  },
+  {
+    title: 'Mon activité',
+    links: [
+      { href: '/pro/clients', label: 'Clients' },
+      { href: '/pro/equipe', label: 'Équipe' },
+      { href: '/pro/profil', label: 'Profil et vérification' },
+    ],
+  },
 ];
 
-/** En-tête de l'espace professionnel. */
+const switchLink = (
+  <Link
+    href="/pro"
+    className="rounded-md text-sm font-semibold text-copper underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-copper"
+  >
+    Changer d’activité
+  </Link>
+);
+
+/** En-tête de l'espace professionnel sur téléphone et tablette (barre latérale au-delà). */
 export function ProNav() {
-  const path = usePathname();
   return (
-    <header className="flex flex-col gap-3">
+    <header className="flex flex-col gap-3 lg:hidden">
       <div className="flex items-center justify-between gap-3">
         <Logo />
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 whitespace-nowrap">
           <NotificationBell />
-          <Link href="/pro" className="text-sm font-semibold text-copper underline">
-            Changer d’activité
-          </Link>
+          {switchLink}
         </div>
       </div>
-      <nav aria-label="Espace professionnel" className="flex gap-2 overflow-x-auto">
-        {LINKS.map((l) => (
-          <Link
-            key={l.href}
-            href={l.href}
-            aria-current={path === l.href || path.startsWith(`${l.href}/`) ? 'page' : undefined}
-            className="min-h-10 shrink-0 rounded-full border border-line px-4 py-2 text-sm font-semibold aria-[current=page]:border-copper aria-[current=page]:bg-copper-soft"
-          >
-            {l.label}
-          </Link>
-        ))}
-      </nav>
+      <ScrollNav label="Espace professionnel" groups={GROUPS} />
     </header>
+  );
+}
+
+/** Barre latérale de l'espace professionnel (ordinateur). */
+export function ProSidebar() {
+  return (
+    <SideNav
+      label="Espace professionnel"
+      groups={GROUPS}
+      top={<NotificationBell />}
+      bottom={switchLink}
+    />
   );
 }

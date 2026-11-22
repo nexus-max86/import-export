@@ -3,7 +3,7 @@
 import type { CityInfo } from '@konzia/shared';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Button, Card, Field, Logo, Notice } from '@/components/ui';
+import { Button, Card, Field, Logo, Notice, Loading } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 
 export default function AdminCitiesPage() {
@@ -81,7 +81,7 @@ export default function AdminCitiesPage() {
         zones et ses commissionnaires sont prêts.
       </p>
       {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
-      {!cities && <p className="text-muted">Chargement…</p>}
+      {!cities && <Loading />}
       {cities?.map((city) => (
         <Card key={city.id}>
           <div className="flex flex-wrap items-center justify-between gap-3">

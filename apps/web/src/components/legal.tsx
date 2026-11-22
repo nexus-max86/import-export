@@ -19,7 +19,7 @@ export function LegalPage({
         <h1 className="font-display text-3xl font-bold">{title}</h1>
         <p className="text-sm text-muted">Version du {updated}</p>
       </div>
-      <p className="rounded-lg bg-copper-soft px-3 py-2 text-sm">
+      <p className="rounded-lg bg-warn-soft px-3 py-2 text-sm text-warn">
         Version de travail du pilote de Lubumbashi, à faire valider par un juriste avant l’ouverture
         au public. Les éléments entre crochets sont à compléter.
       </p>

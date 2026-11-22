@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Badges, Summary, ZonesList } from '@/components/commissioner-bits';
-import { Card, Logo, Notice } from '@/components/ui';
+import { Card, Logo, Notice, buttonClass, Loading } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 
 export default function CommissionerPage() {
@@ -27,7 +27,7 @@ export default function CommissionerPage() {
         ← Tous les commissionnaires
       </Link>
       {error && <Notice tone="error">{error}</Notice>}
-      {!c && !error && <p className="text-muted">Chargement…</p>}
+      {!c && !error && <Loading />}
       {c && (
         <>
           <div className="flex flex-col gap-2">
@@ -63,7 +63,7 @@ export default function CommissionerPage() {
                 )}
                 target="_blank"
                 rel="noreferrer"
-                className="flex min-h-11 items-center justify-center rounded-lg bg-copper px-4 font-semibold text-white"
+                className={buttonClass()}
               >
                 Écrire sur WhatsApp
               </a>

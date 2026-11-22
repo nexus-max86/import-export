@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Logo } from '@/components/ui';
+import { Logo, buttonClass } from '@/components/ui';
 
 export default function HomePage() {
   return (
@@ -13,10 +13,7 @@ export default function HomePage() {
         Lubumbashi vous envoient leur prix détaillé.
       </p>
       <div className="flex flex-col gap-2">
-        <Link
-          href="/inscription"
-          className="flex min-h-11 items-center justify-center rounded-lg bg-copper px-4 font-semibold text-white"
-        >
+        <Link href="/inscription" className={buttonClass()}>
           Créer un compte
         </Link>
         <Link

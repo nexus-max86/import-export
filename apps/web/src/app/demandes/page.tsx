@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { StatusPill } from '@/components/status-pill';
-import { Card } from '@/components/ui';
+import { buttonClass, Loading, EmptyState } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { fmtDate } from '@/lib/format';
 import { REQUEST_STATUS_LABELS, requestTone } from '@/lib/request-status';
@@ -27,18 +27,15 @@ export default function MyRequestsPage() {
       <ClientHeader />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-2xl font-bold">Mes demandes</h1>
-        <Link
-          href="/demande"
-          className="flex min-h-11 items-center rounded-lg bg-copper px-4 font-semibold text-white"
-        >
+        <Link href="/demande" className={buttonClass()}>
           Nouvelle demande
         </Link>
       </div>
-      {!list && <p className="text-muted">Chargement…</p>}
+      {!list && <Loading />}
       {list?.length === 0 && (
-        <Card>
-          <p>Vous n’avez pas encore de demande. Collez le lien d’un article pour commencer.</p>
-        </Card>
+        <EmptyState title="Aucune demande pour l’instant">
+          Collez le lien d’un article pour commencer.
+        </EmptyState>
       )}
       <ul className="flex flex-col gap-3">
         {list?.map((r) => (

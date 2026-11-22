@@ -5,7 +5,7 @@ import type { MeResponse, SessionInfo } from '@konzia/shared';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { Button, Card, Notice } from '@/components/ui';
+import { Button, Card, Notice, buttonClass } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 
 function deviceLabel(ua: string | null): string {
@@ -97,10 +97,7 @@ export default function AccountPage() {
         </Card>
       )}
       <div className="grid grid-cols-2 gap-3">
-        <Link
-          href="/demande"
-          className="flex min-h-11 items-center justify-center rounded-lg bg-copper px-4 text-center font-semibold text-white"
-        >
+        <Link href="/demande" className={buttonClass()}>
           Nouvelle demande
         </Link>
         <Link

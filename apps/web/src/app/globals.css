@@ -1,40 +1,213 @@
 @import 'tailwindcss';
 
-/* Jetons Konzia (repris des maquettes). Le mode sombre redéfinit les mêmes jetons. */
+/*
+ * Système Konzia — direction « Bordereau » (voir DESIGN.md).
+ * Encre et papier pour la structure, cuivre réservé à l'action principale, filets fins plutôt
+ * qu'ombres. Le mode sombre redéfinit exactement les mêmes jetons.
+ */
 @theme {
+  /* Marque */
   --color-copper: #b05a2a;
+  --color-copper-strong: #934819;
   --color-copper-soft: #f6e7dd;
+  /* Texte posé sur le cuivre plein (blanc en clair, encre en sombre : contraste ≥ 4,5). */
+  --color-on-copper: #ffffff;
   --color-ink: #16212b;
+  /* Texte secondaire et surfaces */
   --color-muted: #5b6b78;
   --color-line: #dbe1e5;
+  --color-line-strong: #c3ccd3;
   --color-surface: #ffffff;
+  --color-sunken: #f5f7f8;
   --color-canvas: #eef1f3;
+  /* États */
   --color-ok: #1f7a4d;
   --color-ok-soft: #e0f1e8;
+  --color-warn: #7a5000;
+  --color-warn-soft: #f8ecd2;
   --color-danger: #b3261e;
   --color-danger-soft: #f9e0de;
-  --font-sans: 'Inter Variable', system-ui, sans-serif;
-  --font-display: 'Archivo', system-ui, sans-serif;
+  --color-info: #285e80;
+  --color-info-soft: #e0edf5;
+
+  /* Une seule famille (variable) : titres en 750–800, texte en 400–600. */
+  --font-sans: 'Archivo Variable', system-ui, sans-serif;
+  --font-display: 'Archivo Variable', system-ui, sans-serif;
+
+  /* Mouvement : courbes de sortie franches, durées courtes (interface métier). */
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-quad: cubic-bezier(0.45, 0, 0.55, 1);
+  --animate-enter: kz-enter 220ms var(--ease-out-quint) backwards;
+  --animate-page: kz-page 200ms var(--ease-out-quint) backwards;
+  --animate-shimmer: kz-shimmer 1.4s var(--ease-in-out-quad) infinite;
+  --animate-spin-fast: spin 0.7s linear infinite;
+
+  @keyframes kz-enter {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+  @keyframes kz-page {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  @keyframes kz-shimmer {
+    0%,
+    100% {
+      opacity: 0.55;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --color-copper: #de8a57;
+    --color-copper-strong: #ec9f70;
     --color-copper-soft: #3a271c;
+    --color-on-copper: #0f1519;
     --color-ink: #e7edf1;
     --color-muted: #9aabb8;
     --color-line: #2a3741;
+    --color-line-strong: #3a4954;
     --color-surface: #172027;
+    --color-sunken: #131b21;
     --color-canvas: #0f1519;
     --color-ok: #5ec48f;
     --color-ok-soft: #173326;
+    --color-warn: #e6b866;
+    --color-warn-soft: #352a12;
     --color-danger: #f08a82;
     --color-danger-soft: #3d1c1a;
+    --color-info: #7fb8dc;
+    --color-info-soft: #16293a;
     color-scheme: dark;
   }
 }
 
-body {
-  background: var(--color-canvas);
-  color: var(--color-ink);
+@layer base {
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-feature-settings: 'ss01' off;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Transition de page : chaque page monte un nouveau <main> ; la navigation latérale ne bouge pas. */
+  main {
+    animation: var(--animate-page);
+  }
+
+  /* Titres : la même famille, plus dense et plus serrée. */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  h1 {
+    letter-spacing: -0.015em;
+  }
+
+  /* Montants et références : chiffres alignés. */
+  table,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /*
+   * Contrôles natifs (27 listes, 5 zones de texte, saisies) : un seul rendu, quelle que soit
+   * la page. Les classes utilitaires posées sur chaque champ restent prioritaires.
+   */
+  input:where(:not([type='checkbox'], [type='radio'], [type='file'], [type='range'])),
+  select,
+  textarea {
+    background-color: var(--color-surface);
+    border-color: var(--color-line-strong);
+    border-radius: 0.5rem;
+    transition:
+      border-color 150ms var(--ease-out-quint),
+      box-shadow 150ms var(--ease-out-quint);
+  }
+  input:where(:not([type='checkbox'], [type='radio'], [type='file'], [type='range'])):hover,
+  select:hover,
+  textarea:hover {
+    border-color: var(--color-muted);
+  }
+  input:where(:not([type='checkbox'], [type='radio'], [type='file'], [type='range'])):focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+    border-color: var(--color-copper);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-copper) 28%, transparent);
+  }
+  textarea {
+    padding-block: 0.625rem;
+    line-height: 1.5;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: color-mix(in oklab, var(--color-muted) 80%, transparent);
+  }
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: var(--color-copper);
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+  /* Sélecteur de fichier : bouton cohérent avec les boutons secondaires. */
+  input[type='file'] {
+    font-size: 0.875rem;
+    color: var(--color-muted);
+  }
+  input[type='file']::file-selector-button {
+    margin-inline-end: 0.75rem;
+    min-height: 2.5rem;
+    padding-inline: 0.875rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 0.5rem;
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 150ms var(--ease-out-quint);
+  }
+  input[type='file']::file-selector-button:hover {
+    border-color: var(--color-muted);
+  }
+
+  /* Tableaux : en-têtes discrets, lignes séparées par un filet. */
+  th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  :focus-visible {
+    outline-color: var(--color-copper);
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-copper) 25%, transparent);
+  }
+}
+
+/* Mouvement réduit : les changements restent, les déplacements disparaissent. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

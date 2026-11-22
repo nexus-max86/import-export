@@ -19,7 +19,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { ProNav } from '@/components/pro-nav';
 import { StatusPill } from '@/components/status-pill';
-import { Button, Card, Field, Notice } from '@/components/ui';
+import { Button, Card, Field, Notice, Loading } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { fmtAmount, fmtDate } from '@/lib/format';
 import { inputToMinor, minorToInput } from '@/lib/money-input';
@@ -88,7 +88,7 @@ export default function QuoteEditorPage() {
         </Link>
       )}
       {error && <Notice tone="error">{error}</Notice>}
-      {!quote && !error && <p className="text-muted">Chargement…</p>}
+      {!quote && !error && <Loading />}
       {quote && settings && (
         <>
           <div className="flex flex-wrap items-center justify-between gap-2">

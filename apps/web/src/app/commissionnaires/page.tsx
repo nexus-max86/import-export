@@ -9,7 +9,7 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Badges, Summary } from '@/components/commissioner-bits';
-import { Logo, Notice } from '@/components/ui';
+import { Logo, Notice, Loading } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 
 export default function DirectoryPage() {
@@ -82,7 +82,7 @@ export default function DirectoryPage() {
         </fieldset>
       </div>
       {error && <Notice tone="error">{error}</Notice>}
-      {!list && !error && <p className="text-muted">Chargement…</p>}
+      {!list && !error && <Loading />}
       {list?.length === 0 && (
         <Notice>
           Aucun commissionnaire vérifié ne correspond pour l’instant.{' '}

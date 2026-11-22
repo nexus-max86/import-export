@@ -3,7 +3,7 @@
 import { ORG_ROLE_LABELS, ORG_ROLES, type MemberInfo, type OrgRole } from '@konzia/shared';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { ProNav } from '@/components/pro-nav';
-import { Button, Card, Field, Notice } from '@/components/ui';
+import { Button, Card, Field, Notice, Loading } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { useActiveOrg } from '@/lib/use-org';
 
@@ -94,7 +94,7 @@ export default function ProTeamPage() {
       <Card>
         <h2 className="font-display text-lg font-bold">Membres</h2>
         {!members ? (
-          <p className="text-sm text-muted">Chargement…</p>
+          <Loading lines={2} />
         ) : (
           <ul className="flex flex-col gap-2">
             {members.map((m) => (

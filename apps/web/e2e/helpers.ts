@@ -143,10 +143,24 @@ export async function submitVerificationViaApi(request: APIRequestContext, orgNa
   ).toBe(201);
 }
 
-/** Capture d'écran nommée, seulement si E2E_SHOTS (dossier) est fourni : visite guidée de l'application. */
+/**
+ * Capture d'écran nommée, seulement si E2E_SHOTS (dossier) est fourni : visite guidée de l'application.
+ * E2E_SHOT_WIDTHS="390,768,1440" capture aussi chaque écran à ces largeurs (contrôle du responsive).
+ */
 export async function shot(page: Page, name: string): Promise<void> {
   const dir = process.env.E2E_SHOTS;
   if (!dir) return;
   await page.waitForLoadState('networkidle').catch(() => undefined);
-  await page.screenshot({ path: `${dir}/${name}.png`, fullPage: true });
+  const widths = (process.env.E2E_SHOT_WIDTHS ?? '').split(',').map(Number).filter(Boolean);
+  if (widths.length === 0) {
+    await page.screenshot({ path: `${dir}/${name}.png`, fullPage: true });
+    return;
+  }
+  const initial = page.viewportSize();
+  for (const width of widths) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.waitForTimeout(150);
+    await page.screenshot({ path: `${dir}/${name}-${width}.png`, fullPage: true, scale: 'css' });
+  }
+  if (initial) await page.setViewportSize(initial);
 }

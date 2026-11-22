@@ -20,7 +20,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { StatusPill } from '@/components/status-pill';
-import { Button, Card, Field, Notice } from '@/components/ui';
+import { Button, Card, Field, Notice, Loading } from '@/components/ui';
 import { api, ApiError, apiUpload } from '@/lib/api';
 import { fmtDate } from '@/lib/format';
 
@@ -103,7 +103,7 @@ export function ParcelsBoard({ org }: { org: string }) {
       <Card>
         <h2 className="font-display text-lg font-bold">Colis</h2>
         {!list ? (
-          <p className="text-sm text-muted">Chargement…</p>
+          <Loading lines={2} />
         ) : list.length === 0 ? (
           <p className="text-sm text-muted">Aucun colis pour l’instant.</p>
         ) : (

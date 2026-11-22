@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { QuoteCard } from '@/components/quote-card';
 import { RequestItems } from '@/components/request-items';
 import { StatusPill } from '@/components/status-pill';
-import { Button, Card, Notice } from '@/components/ui';
+import { Button, Card, Notice, PageLoading } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { fmtDate } from '@/lib/format';
 import {
@@ -44,7 +44,7 @@ export default function RequestPage() {
         <Notice tone="error">{error}</Notice>
       </main>
     );
-  if (!r) return <main className="mx-auto max-w-md px-4 py-10 text-muted">Chargement…</main>;
+  if (!r) return <PageLoading width="max-w-md" />;
 
   const open = ['sent', 'partially_quoted', 'quoted'].includes(r.status);
   return (

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { OrderList } from '@/components/order-list';
 import { ProNav } from '@/components/pro-nav';
-import { Card } from '@/components/ui';
+import { Loading, EmptyState } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { useActiveOrg } from '@/lib/use-org';
 
@@ -28,14 +28,11 @@ export default function ProOrdersPage() {
       <ProNav />
       <h1 className="font-display text-2xl font-bold">Commandes</h1>
       <CsvExportButton org={org} kind="orders" label="Exporter les commandes (Excel)" />
-      {!orders && <p className="text-muted">Chargement…</p>}
+      {!orders && <Loading />}
       {orders?.length === 0 && (
-        <Card>
-          <p>
-            Aucune commande pour l’instant. Une commande est créée quand un client accepte votre
-            devis.
-          </p>
-        </Card>
+        <EmptyState title="Aucune commande pour l’instant">
+          Une commande est créée quand un client accepte votre devis.
+        </EmptyState>
       )}
       {orders && <OrderList orders={orders} href={(o) => `/pro/commandes/${o.id}`} showCustomer />}
     </main>

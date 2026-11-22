@@ -1,53 +1,70 @@
 'use client';
 
 import type { AdminOrganizationRow, AdminPage } from '@konzia/shared';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
+import { ScrollNav, SideNav, SidebarLayout, type NavGroup } from '@/components/nav';
 import { Button, Logo, Notice } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 
-const LINKS = [
-  { href: '/admin', label: 'Vue globale' },
-  { href: '/admin/commissionnaires', label: 'Commissionnaires' },
-  { href: '/admin/utilisateurs', label: 'Utilisateurs' },
-  { href: '/admin/commandes', label: 'Commandes' },
-  { href: '/admin/paiements', label: 'Paiements' },
-  { href: '/admin/colis', label: 'Colis' },
-  { href: '/admin/litiges', label: 'Litiges' },
-  { href: '/admin/journal', label: 'Journal' },
-  { href: '/admin/villes', label: 'Villes' },
-  { href: '/admin/taux', label: 'Taux' },
+const GROUPS: NavGroup[] = [
+  {
+    title: 'Pilotage',
+    links: [
+      { href: '/admin', label: 'Vue globale' },
+      { href: '/admin/commissionnaires', label: 'Commissionnaires' },
+      { href: '/admin/utilisateurs', label: 'Utilisateurs' },
+    ],
+  },
+  {
+    title: 'Opérations',
+    links: [
+      { href: '/admin/commandes', label: 'Commandes' },
+      { href: '/admin/paiements', label: 'Paiements' },
+      { href: '/admin/colis', label: 'Colis' },
+      { href: '/admin/litiges', label: 'Litiges' },
+    ],
+  },
+  {
+    title: 'Plateforme',
+    links: [
+      { href: '/admin/journal', label: 'Journal' },
+      { href: '/admin/villes', label: 'Villes' },
+      { href: '/admin/taux', label: 'Taux' },
+    ],
+  },
 ];
 
+const auditNote = (
+  <p className="text-xs text-muted">Chaque consultation est enregistrée dans le journal d’audit.</p>
+);
+
 export function AdminShell({ title, children }: { title: string; children: ReactNode }) {
-  const path = usePathname();
   return (
-    <main className="mx-auto flex max-w-4xl flex-col gap-5 px-4 py-10">
-      <header className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-3">
-          <Logo />
-          <span className="text-sm font-semibold text-muted">Administration</span>
-        </div>
-        <nav aria-label="Administration" className="flex gap-2 overflow-x-auto">
-          {LINKS.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              aria-current={path === l.href ? 'page' : undefined}
-              className="min-h-10 shrink-0 rounded-full border border-line px-4 py-2 text-sm font-semibold aria-[current=page]:border-copper aria-[current=page]:bg-copper-soft"
-            >
-              {l.label}
-            </Link>
-          ))}
-        </nav>
-      </header>
-      <h1 className="font-display text-2xl font-bold">{title}</h1>
-      <p className="text-xs text-muted">
-        Chaque consultation est enregistrée dans le journal d’audit.
-      </p>
-      {children}
-    </main>
+    <SidebarLayout
+      sidebar={
+        <SideNav
+          label="Administration"
+          groups={GROUPS}
+          exact={['/admin']}
+          top={<span className="text-xs font-semibold text-muted uppercase">Admin</span>}
+          bottom={auditNote}
+        />
+      }
+    >
+      <main className="mx-auto flex max-w-4xl flex-col gap-5 px-4 py-10 lg:px-8">
+        <header className="flex flex-col gap-3 lg:hidden">
+          <div className="flex items-center justify-between gap-3">
+            <Logo />
+            <span className="text-sm font-semibold text-muted">Administration</span>
+          </div>
+          <ScrollNav label="Administration" groups={GROUPS} exact={['/admin']} />
+        </header>
+        <h1 className="font-display text-2xl font-bold">{title}</h1>
+        <div className="lg:hidden">{auditNote}</div>
+        {children}
+      </main>
+    </SidebarLayout>
   );
 }
 
@@ -121,7 +138,7 @@ export function AdminList<T extends { id: string }>({
           <p className="text-sm text-muted">{data.total} résultat(s)</p>
           <div className="overflow-x-auto rounded-lg border border-line">
             <table className="w-full text-left text-sm">
-              <thead className="bg-copper-soft">
+              <thead className="bg-sunken">
                 <tr>
                   {columns.map((c) => (
                     <th key={c.label} className="px-3 py-2 font-semibold">
@@ -132,7 +149,10 @@ export function AdminList<T extends { id: string }>({
               </thead>
               <tbody>
                 {data.items.map((row) => (
-                  <tr key={row.id} className="border-t border-line">
+                  <tr
+                    key={row.id}
+                    className="border-t border-line transition-colors duration-150 hover:bg-sunken/60"
+                  >
                     {columns.map((c) => (
                       <td key={c.label} className="px-3 py-2 align-top">
                         {c.render(row)}
