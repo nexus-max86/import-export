@@ -78,6 +78,7 @@ Dans le dépôt, **Settings → Environments** : créez `staging` et `production
 | Secret | `DEPLOY_SSH_KEY` | contenu de `~/.ssh/konzia_deploy` (clé privée) |
 | Secret | `DEPLOY_KNOWN_HOSTS` | résultat de `ssh-keyscan <ip-du-vps>` |
 | Variable | `KONZIA_DOMAIN` | ex. `konzia.app` |
+| Variable | `DEPLOY_ENABLED` | `true` (une fois le serveur prêt ; sans elle, les images sont construites mais rien n'est déployé) |
 
 ## 6. Déployer
 
@@ -141,7 +142,7 @@ E2E_MAILPIT=http://<mailpit>:8025 E2E_DATABASE_URL=postgresql://… E2E_SHOTS=./
 pnpm exec playwright test -c playwright.prod.config.ts
 ```
 
-`E2E_SHOTS` enregistre 15 captures d'écran (visite guidée). Attention à la limite de 10 inscriptions par heure et par adresse IP : relancer trop souvent les parcours la déclenche.
+`E2E_SHOTS` enregistre 15 captures d'écran (visite guidée). Attention à la limite de 30 inscriptions par heure et par adresse IP : relancer trop souvent les parcours la déclenche.
 
 ## Ce qui a été vérifié avant livraison
 

@@ -74,7 +74,8 @@ jobs:
 
   deploy:
     needs: [images, backup-image]
-    if: always() && (github.event_name == 'workflow_dispatch' || (needs.images.result == 'success' && needs['backup-image'].result == 'success'))
+    # Sauté tant que le serveur n'est pas configuré (variable DEPLOY_ENABLED=true dans GitHub).
+    if: always() && vars.DEPLOY_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || (needs.images.result == 'success' && needs['backup-image'].result == 'success'))
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     environment:

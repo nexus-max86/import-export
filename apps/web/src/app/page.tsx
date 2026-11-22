@@ -32,6 +32,14 @@ export default function HomePage() {
           Se connecter
         </Link>
       </div>
+      <footer className="flex flex-wrap gap-4 text-sm text-muted">
+        <Link href="/conditions" className="underline">
+          Conditions d’utilisation
+        </Link>
+        <Link href="/confidentialite" className="underline">
+          Confidentialité
+        </Link>
+      </footer>
     </main>
   );
 }

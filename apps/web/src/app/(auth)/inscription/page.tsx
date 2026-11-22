@@ -87,7 +87,15 @@ function Register() {
           <label className="flex items-start gap-2">
             <input type="checkbox" name="acceptTerms" className="mt-1 size-4 accent-copper" />
             <span>
-              J’accepte les conditions d’utilisation et la politique de confidentialité de Konzia.
+              J’accepte les{' '}
+              <Link href="/conditions" target="_blank" className="text-copper underline">
+                conditions d’utilisation
+              </Link>{' '}
+              et la{' '}
+              <Link href="/confidentialite" target="_blank" className="text-copper underline">
+                politique de confidentialité
+              </Link>{' '}
+              de Konzia.
             </span>
           </label>
           {errors.acceptTerms && <p className="text-danger">{errors.acceptTerms}</p>}

@@ -3,6 +3,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { loadEnv } from './config/env';
+import { ErrorReportingFilter, initErrorReporting } from './monitoring/error-reporting';
 
 /** Configuration commune à l'application réelle et aux tests. */
 export function setupApp<T extends INestApplication>(app: T): T {
@@ -13,6 +14,8 @@ export function setupApp<T extends INestApplication>(app: T): T {
   app.setGlobalPrefix('api');
   app.use(helmet());
   app.use(cookieParser());
+  initErrorReporting(env);
+  app.useGlobalFilters(new ErrorReportingFilter(app.getHttpAdapter()));
   app.enableShutdownHooks();
   return app;
 }

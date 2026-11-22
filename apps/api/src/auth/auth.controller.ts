@@ -49,7 +49,9 @@ export class AuthController {
     @Req() req: Request,
     @Body(new ZodBody(RegisterSchema)) body: RegisterInput,
   ): Promise<void> {
-    await this.rateLimit.consume(`register:${req.ip}`, 10, 3600);
+    // 30 par heure et par adresse : en RDC, les opérateurs mobiles font partager une même adresse
+    // à beaucoup d'abonnés (une séance d'inscription en groupe ne doit pas être bloquée).
+    await this.rateLimit.consume(`register:${req.ip}`, 30, 3600);
     await this.auth.register(body);
   }
 

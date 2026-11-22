@@ -36,6 +36,12 @@ const EnvSchema = z
       .string()
       .regex(/^v\d+\.\d+$/)
       .default('v21.0'),
+    /** Alerte d'erreurs (Sentry) : facultative, inactive si vide. */
+    SENTRY_DSN: z.preprocess((v) => (v === '' ? undefined : v), z.url().optional()),
+    SENTRY_ENVIRONMENT: z.preprocess(
+      (v) => (v === '' ? undefined : v),
+      z.string().max(40).optional(),
+    ),
     /** Lecture des pages produits : http (réelle) ou fake (développement hors ligne, tests). */
     PRODUCT_FETCHER: z.enum(['http', 'fake']).default('http'),
     /** Stockage des fichiers : disque local (développement, tests) ou S3/R2 (production). */

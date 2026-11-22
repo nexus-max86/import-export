@@ -10,6 +10,10 @@ const valid = {
 };
 
 describe('loadEnv', () => {
+  it('un SENTRY_DSN vide laisse l’alerte d’erreurs inactive ; une valeur invalide est refusée', () => {
+    expect(loadEnv({ ...valid, SENTRY_DSN: '' }).SENTRY_DSN).toBeUndefined();
+    expect(() => loadEnv({ ...valid, SENTRY_DSN: 'pas-une-url' })).toThrow(/SENTRY_DSN/);
+  });
   it('applique les valeurs par défaut', () => {
     expect(loadEnv(valid)).toMatchObject({ API_PORT: 3001, NODE_ENV: 'development' });
   });
