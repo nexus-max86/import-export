@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   title: 'Konzia',
   description: 'Achetez à l’international avec des commissionnaires vérifiés, à Lubumbashi.',
   manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [{ url: '/favicon-32.png', sizes: '32x32', type: 'image/png' }],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+  },
 };
 
 export const viewport: Viewport = {
