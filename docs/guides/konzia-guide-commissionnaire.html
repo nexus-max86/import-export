@@ -1,0 +1,312 @@
+<title>Guide du commissionnaire Konzia</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Colonne unique pensée pour le téléphone ; la commande est un rail numéroté (vraie séquence). */
+:root {
+  --canvas: #eef1f3;
+  --surface: #ffffff;
+  --ink: #16212b;
+  --muted: #566672;
+  --line: #d6dde2;
+  --copper: #a8521f;
+  --copper-soft: #f6e7dd;
+  --ok: #1f7a4d;
+  --ok-soft: #e0f1e8;
+  --bubble: #dcf3e4;
+  --font-display: 'Archivo', 'Arial Narrow', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --canvas: #0f1519; --surface: #172027; --ink: #e7edf1; --muted: #9aabb8; --line: #2a3741;
+    --copper: #e0915f; --copper-soft: #3a271c; --ok: #5ec48f; --ok-soft: #173326; --bubble: #1d3a2b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --canvas: #0f1519; --surface: #172027; --ink: #e7edf1; --muted: #9aabb8; --line: #2a3741;
+  --copper: #e0915f; --copper-soft: #3a271c; --ok: #5ec48f; --ok-soft: #173326; --bubble: #1d3a2b;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font: 400 16px/1.6 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+.wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(2rem, 8vw, 2.6rem); font-weight: 800; letter-spacing: -0.01em; }
+h2 { font-size: 1.5rem; font-weight: 800; }
+h3 { font-size: 1.1rem; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--copper); }
+:focus-visible { outline: 3px solid var(--copper); outline-offset: 2px; border-radius: 4px; }
+.mono { font-family: var(--font-mono); font-size: 0.9em; }
+
+/* En-tête */
+header { padding-top: 32px; display: flex; flex-direction: column; gap: 14px; }
+.brand { font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; }
+.brand span { color: var(--copper); }
+.lede { font-size: 1.08rem; color: var(--muted); max-width: 34em; }
+nav.toc { display: flex; flex-wrap: wrap; gap: 8px; }
+nav.toc a {
+  text-decoration: none; color: var(--ink); font-weight: 600; font-size: 0.9rem;
+  border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; background: var(--surface);
+}
+.promise {
+  border-left: 4px solid var(--ok); background: var(--ok-soft); padding: 12px 16px; border-radius: 0 8px 8px 0;
+}
+.promise strong { color: var(--ok); }
+
+section { display: flex; flex-direction: column; gap: 16px; scroll-margin-top: 16px; }
+.kicker { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; font-weight: 600; color: var(--copper); }
+.where {
+  display: inline-block; font-family: var(--font-mono); font-size: 0.82rem; background: var(--copper-soft);
+  color: var(--ink); padding: 2px 8px; border-radius: 6px; white-space: normal;
+}
+
+/* Mise en route : liste à cocher (mémorisée sur ce téléphone seulement) */
+.setup { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.setup li { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.setup label { display: grid; grid-template-columns: 24px 1fr; gap: 12px; cursor: pointer; }
+.setup input { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--ok); }
+.setup .body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.setup li.done { opacity: 0.65; }
+.setup li.done h3 { text-decoration: line-through; text-decoration-color: var(--ok); }
+.small { font-size: 0.9rem; color: var(--muted); }
+
+/* La commande : rail numéroté */
+.rail { list-style: none; margin: 0; padding: 0; position: relative; display: flex; flex-direction: column; gap: 26px; }
+.rail::before { content: ""; position: absolute; left: 17px; top: 8px; bottom: 8px; width: 2px; background: var(--line); }
+.rail > li { display: grid; grid-template-columns: 36px 1fr; gap: 14px; position: relative; }
+.num {
+  width: 36px; height: 36px; border-radius: 50%; background: var(--copper); color: #fff;
+  font-family: var(--font-display); font-weight: 800; display: grid; place-items: center; z-index: 1;
+}
+.step { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.step ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 4px; }
+
+.example { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 0.92rem; }
+.example table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.example td { padding: 3px 0; vertical-align: top; }
+.example td:last-child { text-align: right; white-space: nowrap; padding-left: 12px; }
+.example tr.total td { border-top: 1px solid var(--line); padding-top: 6px; font-weight: 600; }
+.calc { font-family: var(--font-mono); font-size: 0.88rem; line-height: 1.7; overflow-x: auto; }
+
+.bubble {
+  background: var(--bubble); border-radius: 12px 12px 12px 2px; padding: 10px 14px; max-width: 30em;
+  font-size: 0.95rem; white-space: pre-line;
+}
+
+/* Étapes de la commande */
+.track { display: flex; flex-wrap: wrap; gap: 6px; }
+.track span {
+  font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface);
+}
+.track span.auto { border-color: var(--ok); color: var(--ok); }
+.legend { font-size: 0.85rem; color: var(--muted); }
+
+.roles { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 10px; overflow: hidden; font-size: 0.95rem; }
+.roles th, .roles td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.roles th { font-family: var(--font-display); font-weight: 600; width: 34%; }
+.table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+details + details { margin-top: 8px; }
+summary { font-weight: 600; cursor: pointer; }
+details p { margin-top: 8px; color: var(--muted); }
+
+footer { color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--line); padding-top: 16px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">Kon<span>zia</span></div>
+    <h1>Guide du commissionnaire</h1>
+    <p class="lede">Vos devis, les paiements reçus et l’endroit où se trouve chaque colis, au même endroit. Vos clients sont prévenus sans que vous ayez à répondre dix fois sur WhatsApp.</p>
+    <nav class="toc" aria-label="Sommaire">
+      <a href="#mise-en-route">Mise en route</a>
+      <a href="#commande">Une commande</a>
+      <a href="#probleme">Un problème</a>
+      <a href="#equipe">Votre équipe</a>
+      <a href="#questions">Questions</a>
+    </nav>
+    <p class="promise"><strong>Konzia ne touche jamais l’argent.</strong> Vos clients vous paient directement (M-Pesa, Orange Money, espèces, banque). Konzia vous aide à savoir qui a payé quoi.</p>
+  </header>
+
+  <section id="mise-en-route" aria-labelledby="t-setup">
+    <p class="kicker">Une seule fois · 20 minutes</p>
+    <h2 id="t-setup">Mise en route</h2>
+    <p class="small">Cochez au fur et à mesure (mémorisé sur ce téléphone).</p>
+    <ul class="setup">
+      <li><label><input type="checkbox" id="s-compte"><span class="body">
+        <h3>Créer votre compte</h3>
+        <span>Ouvrez l’adresse Konzia reçue par WhatsApp, puis <strong>Inscription</strong> et le lien reçu par e-mail. Ajoutez la page à l’écran d’accueil : elle s’ouvre comme une application.</span>
+      </span></label></li>
+      <li><label><input type="checkbox" id="s-espace"><span class="body">
+        <h3>Créer votre espace</h3>
+        <span class="where">Espace professionnel</span>
+        <span>Nom commercial, indépendant ou entreprise, WhatsApp professionnel, puis <strong>Créer mon espace</strong>.</span>
+      </span></label></li>
+      <li><label><input type="checkbox" id="s-verif"><span class="body">
+        <h3>Faire vérifier votre activité</h3>
+        <span class="where">Profil et vérification › Vérification</span>
+        <span>Une photo ou un PDF de votre <strong>RCCM</strong> et de la <strong>pièce d’identité du responsable</strong>. Une fois vérifiée, votre activité apparaît dans l’annuaire avec le badge « Vérifié ».</span>
+      </span></label></li>
+      <li><label><input type="checkbox" id="s-profil"><span class="body">
+        <h3>Régler votre profil</h3>
+        <span class="where">Profil et vérification</span>
+        <span>Vos sites (SHEIN, AliExpress, Amazon, Alibaba…), vos communes desservies, <strong>comment vos clients vous paient</strong> (numéros M-Pesa, Orange Money…) et le <strong>calcul de vos devis</strong> : commission en % et transport au kilo.</span>
+      </span></label></li>
+      <li><label><input type="checkbox" id="s-clients"><span class="body">
+        <h3>Importer vos clients depuis Excel</h3>
+        <span class="where">Clients › Importer vos clients depuis Excel</span>
+        <span>Votre fichier .xlsx ou .csv, avec au moins une colonne <strong>Nom</strong> et une colonne <strong>Téléphone</strong>. Konzia montre les doublons et les numéros invalides avant d’enregistrer.</span>
+        <span class="small">Vos clients n’ont pas besoin de l’application : vous travaillez pour eux.</span>
+      </span></label></li>
+    </ul>
+  </section>
+
+  <section id="commande" aria-labelledby="t-order">
+    <p class="kicker">Dans l’ordre d’une vraie commande</p>
+    <h2 id="t-order">Une commande, étape par étape</h2>
+    <ol class="rail">
+      <li><span class="num" aria-hidden="true">1</span><div class="step">
+        <h3>La demande</h3>
+        <ul>
+          <li>Un client avec l’application vous l’envoie : notification et e-mail.</li>
+          <li>Un client vous écrit sur WhatsApp : <span class="where">Demandes › Nouvelle demande pour un client</span>, collez le lien SHEIN ou Amazon, ou décrivez l’article.</li>
+        </ul>
+      </div></li>
+
+      <li><span class="num" aria-hidden="true">2</span><div class="step">
+        <h3>Le devis</h3>
+        <p>Ouvrez la demande, puis <strong>Préparer le devis</strong>. La commission et le transport se calculent d’après le poids estimé ; vous pouvez tout modifier.</p>
+        <div class="example" aria-label="Exemple de devis">
+          <table>
+            <tr><td>Robe midi plissée, M × 2</td><td>30,98 USD</td></tr>
+            <tr><td>Organiseur de cuisine × 1</td><td>8,00 USD</td></tr>
+            <tr><td>Commission 10 %</td><td>3,90 USD</td></tr>
+            <tr><td>Transport 1,5 kg × 12,00 USD/kg</td><td>18,00 USD</td></tr>
+            <tr><td>Douane et livraison Lubumbashi</td><td>25,40 USD</td></tr>
+            <tr class="total"><td>Total</td><td>86,28 USD</td></tr>
+          </table>
+        </div>
+        <p>Accord donné sur WhatsApp ? <strong>Le client a donné son accord ?</strong> et notez comment (« accord par WhatsApp le 21/11 ») : la commande <span class="mono">KZ-2026-000087</span> est créée.</p>
+      </div></li>
+
+      <li><span class="num" aria-hidden="true">3</span><div class="step">
+        <h3>Le paiement</h3>
+        <ul>
+          <li>Le client déclare son paiement : <span class="where">Paiements › À vérifier</span>. Contrôlez sur votre M-Pesa, puis <strong>Confirmer la réception</strong>.</li>
+          <li>Il vous a payé directement : sur la commande, <strong>Enregistrer un paiement reçu</strong>.</li>
+          <li>Acomptes et paiements en plusieurs fois acceptés. <span class="where">Paiements › Qui doit combien</span> remplace votre cahier.</li>
+        </ul>
+      </div></li>
+
+      <li><span class="num" aria-hidden="true">4</span><div class="step">
+        <h3>La règle d’achat</h3>
+        <p>Sur la commande, choisissez quand vous achetez chez le vendeur : <strong>après paiement complet</strong> (par défaut), <strong>après un acompte</strong> de 50 % par exemple, ou <strong>sur vos fonds propres</strong>.</p>
+      </div></li>
+
+      <li><span class="num" aria-hidden="true">5</span><div class="step">
+        <h3>L’achat chez le vendeur</h3>
+        <p><span class="where">Achats</span> Cochez les articles, même de plusieurs commandes dans un seul panier SHEIN. Indiquez la boutique et le montant payé.</p>
+        <p class="small">Le montant réel payé reste privé : ni le client ni vos commerciaux ne le voient. À l’arrivée : <strong>Réception à l’entrepôt</strong>.</p>
+      </div></li>
+
+      <li><span class="num" aria-hidden="true">6</span><div class="step">
+        <h3>Les colis</h3>
+        <p><span class="where">Colis › Nouveau colis</span> Ajoutez les articles reçus, même de clients différents. Saisissez poids et dimensions : le plus élevé du poids réel et du poids volumétrique est facturé.</p>
+        <div class="example calc" aria-label="Exemple de calcul du poids volumétrique">30 × 20 × 30 cm ÷ 6 000 = 3,0 kg volumétrique
+poids réel 2,5 kg → <strong>3,0 kg facturés</strong>
+code du colis : KZ-P-7KD3QX</div>
+        <p class="small">Une erreur d’étape se corrige par une nouvelle étape (Correction), jamais en effaçant. Fermez le colis quand il est prêt à partir.</p>
+      </div></li>
+
+      <li><span class="num" aria-hidden="true">7</span><div class="step">
+        <h3>L’expédition</h3>
+        <p><span class="where">Expéditions › Nouvelle expédition</span> Avion, bateau puis route, transitaire… Ajoutez vos colis fermés et enregistrez chaque étape <strong>une seule fois pour toute l’expédition</strong>.</p>
+        <p>Chaque client est prévenu et ne voit <strong>que ses articles</strong>, jamais ceux des autres clients du même colis. La commande avance toute seule :</p>
+        <div class="track" aria-label="Étapes de la commande">
+          <span>Payée</span><span>Achat en cours</span><span>Achetée</span><span class="auto">En préparation logistique</span><span class="auto">En transport</span><span class="auto">Au point de distribution</span><span class="auto">Prête</span><span class="auto">Terminée</span>
+        </div>
+        <p class="legend">En vert : étapes mises à jour automatiquement par le suivi des colis.</p>
+      </div></li>
+
+      <li><span class="num" aria-hidden="true">8</span><div class="step">
+        <h3>Prévenir le client sur WhatsApp</h3>
+        <p>Sur la commande, <strong>Écrire au client sur WhatsApp</strong> : le message est déjà rédigé selon l’étape. Modifiez-le si besoin, puis <strong>Ouvrir dans WhatsApp</strong>.</p>
+        <p class="bubble">Bonjour Ruth, il reste 45,00 USD à payer (commande KZ-2026-000087). Je lance l’achat dès réception.
+— Kaseba Import</p>
+      </div></li>
+    </ol>
+  </section>
+
+  <section id="probleme" aria-labelledby="t-dispute">
+    <h2 id="t-dispute">Si un client signale un problème</h2>
+    <p><span class="where">Litiges</span> Le client a décrit le problème avec ses photos. <strong>Répondez avec une proposition</strong> : remboursement partiel, échange… Sans accord, l’équipe Konzia tranche et sa décision est visible de vous deux.</p>
+  </section>
+
+  <section id="equipe" aria-labelledby="t-team">
+    <h2 id="t-team">Votre équipe</h2>
+    <p><span class="where">Équipe › Inviter un collaborateur</span> Son e-mail et son rôle : il reçoit un lien et rejoint votre activité.</p>
+    <div class="table-scroll">
+      <table class="roles">
+        <tr><th scope="row">Commercial</th><td>Clients, demandes, devis, suivi des commandes, litiges</td></tr>
+        <tr><th scope="row">Acheteur</th><td>Achats chez les vendeurs (coûts réels)</td></tr>
+        <tr><th scope="row">Logistique</th><td>Colis, expéditions, étapes de suivi</td></tr>
+        <tr><th scope="row">Comptable</th><td>Paiements, remboursements, exports Excel</td></tr>
+        <tr><th scope="row">Livreur</th><td>Remise des colis</td></tr>
+      </table>
+    </div>
+    <p class="small">Exports Excel : <span class="where">Commandes › Exporter les commandes</span> et <span class="where">Colis › Exporter les colis</span>.</p>
+  </section>
+
+  <section id="questions" aria-labelledby="t-faq">
+    <h2 id="t-faq">Questions fréquentes</h2>
+    <div>
+      <details><summary>Mon client n’a pas de smartphone.</summary>
+        <p>Travaillez pour lui comme client géré : vous enregistrez ses accords et ses paiements, il reçoit vos messages WhatsApp.</p></details>
+      <details><summary>Mon client veut suivre sa commande lui-même.</summary>
+        <p>Clients › son nom › Inviter à suivre ses commandes. Envoyez-lui le lien par WhatsApp : il retrouve tout son historique.</p></details>
+      <details><summary>Je me suis trompé d’étape sur un colis.</summary>
+        <p>Enregistrez une Correction avec une explication. L’historique reste complet, c’est voulu.</p></details>
+      <details><summary>Un client paie en francs congolais.</summary>
+        <p>L’équipe Konzia publie le taux du jour. Le paiement en CDF est converti à ce taux, et le taux utilisé est conservé.</p></details>
+      <details><summary>Qui voit mes prix d’achat ?</summary>
+        <p>Vous, vos acheteurs et votre comptable. Jamais vos clients, jamais vos commerciaux, jamais un autre commissionnaire.</p></details>
+    </div>
+  </section>
+
+  <footer>Une question ou un problème avec l’application : écrivez à l’équipe Konzia, sur le numéro WhatsApp donné au lancement du pilote.</footer>
+</div>
+
+<script>
+(function () {
+  var KEY = 'konzia-guide-setup';
+  var done = {};
+  try { done = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { done = {}; }
+  document.querySelectorAll('.setup input[type=checkbox]').forEach(function (box) {
+    var li = box.closest('li');
+    box.checked = !!done[box.id];
+    li.classList.toggle('done', box.checked);
+    box.addEventListener('change', function () {
+      done[box.id] = box.checked;
+      li.classList.toggle('done', box.checked);
+      try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) { /* stockage indisponible */ }
+    });
+  });
+})();
+</script>
