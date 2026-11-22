@@ -141,12 +141,6 @@ importers:
       '@fontsource-variable/archivo':
         specifier: 5.2.8
         version: 5.2.8
-      '@fontsource-variable/inter':
-        specifier: 5.2.8
-        version: 5.2.8
-      '@fontsource/archivo':
-        specifier: 5.2.8
-        version: 5.2.8
       '@konzia/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -557,12 +551,6 @@ packages:
 
   '@fontsource-variable/archivo@5.2.8':
     resolution: {integrity: sha512-R8EotpKHEsKv7d7oiUyjyPENRi2gtAlwdTlzDCOs5BfX/LJP7jvUYJ4fF/qyd3rnbgk3r1xp33g1P57bYJfhzQ==}
-
-  '@fontsource-variable/inter@5.2.8':
-    resolution: {integrity: sha512-kOfP2D+ykbcX/P3IFnokOhVRNoTozo5/JxhAIVYLpea/UBmCQ/YWPBfWIDuBImXX/15KH+eKh4xpEUyS2sQQGQ==}
-
-  '@fontsource/archivo@5.2.8':
-    resolution: {integrity: sha512-Fc4yuMt85MmcYooUVpYHAJRJTymPv2+J9HsMP2f5mxR/0pIWgE2V5XfgNTavPpklX2rJFprdT36iE6Rr8ds9MA==}
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -4799,10 +4787,6 @@ snapshots:
       lodash.uniq: 4.5.0
 
   '@fontsource-variable/archivo@5.2.8': {}
-
-  '@fontsource-variable/inter@5.2.8': {}
-
-  '@fontsource/archivo@5.2.8': {}
 
   '@humanfs/core@0.19.2':
     dependencies:
