@@ -27,8 +27,14 @@ if [ "${SKIP_PULL:-0}" != "1" ]; then
   compose --profile tools pull --quiet api web migrate backup
 fi
 
-echo "→ Base de données et Redis"
-compose up -d --wait postgres redis
+# Le conteneur postgres n'existe qu'avec COMPOSE_PROFILES=local-db ; sinon la base est externe (Neon…).
+if compose config --services | grep -qx postgres; then
+  echo "→ Base de données et Redis"
+  compose up -d --wait postgres redis
+else
+  echo "→ Redis (base de données externe)"
+  compose up -d --wait redis
+fi
 
 echo "→ Migrations"
 compose --profile tools run --rm migrate

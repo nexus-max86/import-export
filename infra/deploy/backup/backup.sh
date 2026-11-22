@@ -3,7 +3,8 @@
 # pg_dump (format custom) | age (clé PUBLIQUE : le serveur ne peut pas relire ses sauvegardes)
 # puis envoi vers R2 (rclone) et suppression des sauvegardes de plus de BACKUP_RETENTION_DAYS jours.
 #
-# Variables : KONZIA_ENV, PGHOST/PGUSER/PGPASSWORD/PGDATABASE, BACKUP_AGE_RECIPIENT (age1…),
+# Variables : KONZIA_ENV, PGHOST/PGUSER/PGPASSWORD/PGDATABASE ou BACKUP_DATABASE_URL (base externe),
+#             BACKUP_AGE_RECIPIENT (age1…),
 #             BACKUP_REMOTE (ex. r2:konzia-backups, ou un dossier local pour un essai),
 #             BACKUP_RETENTION_DAYS (30 par défaut).
 set -euo pipefail
@@ -17,8 +18,14 @@ trap 'rm -rf "$work"' EXIT
 
 log() { printf '%s [sauvegarde %s] %s\n' "$(date -u +%FT%TZ)" "$KONZIA_ENV" "$*"; }
 
-log "début : base ${PGDATABASE}"
-pg_dump --format=custom --compress=6 --no-password | age --encrypt --recipient "$BACKUP_AGE_RECIPIENT" > "$work/$name"
+target=(--format=custom --compress=6 --no-password)
+if [ -n "${BACKUP_DATABASE_URL:-}" ]; then
+  target+=(--dbname="$BACKUP_DATABASE_URL")
+  log "début : base externe" # l'URL contient le mot de passe : jamais dans les journaux
+else
+  log "début : base ${PGDATABASE}"
+fi
+pg_dump "${target[@]}" | age --encrypt --recipient "$BACKUP_AGE_RECIPIENT" > "$work/$name"
 size="$(stat -c %s "$work/$name")"
 if [ "$size" -lt 1024 ]; then
   log "ÉCHEC : fichier trop petit (${size} octets)"

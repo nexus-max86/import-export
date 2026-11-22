@@ -46,3 +46,11 @@ Ne figurent ici que les décisions difficiles à défaire, surprenantes sans con
 - **Contexte** : un colis mélange les articles de plusieurs clients (EF-84) ; la RLS par ligne ne suffit pas à masquer les autres articles ni les notes internes d'un même colis.
 - **Décision** : le client ne lit le suivi qu'à travers deux vues (`customer_parcel_tracking`, `customer_parcel_events`) appartenant au propriétaire du schéma, filtrées sur `app_current_user_id()` via `org_customers.user_id`, sans colonnes de notes ni d'identité d'autres clients. Lors d'une réclamation de compte, l'historique du client géré (commandes, lignes, ajustements, paiements, colis) est rattaché à l'utilisateur par un chemin système ; les déclencheurs de paiements et d'articles de colis l'autorisent hors rôle applicatif, et seulement pour les colonnes de rattachement.
 - **Coût** : toute nouvelle donnée de suivi destinée au client passe par ces vues (pas d'accès direct aux tables) ; toute table avec `customer_user_id` doit être ajoutée au rattachement (`CustomersService.linkHistory`).
+
+## D9 — Base de données externe possible (Neon) au lancement (22/11/2026)
+
+- **Contexte** : le lancement doit pouvoir se faire sans gérer soi-même Postgres sur le VPS ; le propriétaire choisit Neon plutôt que Supabase (offre gratuite déjà pleine). Chez Neon, le propriétaire de la base n'est pas superutilisateur.
+- **Décision** : `compose.yml` accepte deux modes. Le conteneur `postgres` ne démarre qu'avec le profil `local-db`. Sinon, la base est externe, via `DATABASE_URL` et `APP_DATABASE_URL`, en connexion directe sans « pooler », car les transactions fixent le contexte RLS. Le script d'activation de `konzia_app` ne touche plus à l'attribut BYPASSRLS, interdit à un non-superutilisateur : il vérifie que le rôle n'est ni SUPERUSER ni BYPASSRLS et refuse sinon. Les sauvegardes chiffrées vers R2 sont conservées dans les deux modes.
+- **Coût** :
+  - la base Neon doit rester en Postgres 16, comme l'outil de sauvegarde ;
+  - aucune migration ne doit exiger de superutilisateur : pas d'extension réservée, pas de `ALTER ROLE … BYPASSRLS`, pas de `FORCE ROW LEVEL SECURITY` sur le chemin système sans le vérifier.

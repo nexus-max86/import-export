@@ -67,6 +67,29 @@ Plus ceux demandés par Brevo (SPF, DKIM, DMARC) pour que les e-mails n'arrivent
    ```
    Caddy obtient seul les certificats Let's Encrypt.
 
+## 4 bis. Variante : base de données Neon
+
+Au lieu du conteneur Postgres, la base peut être hébergée chez **Neon** (neon.tech). Neon gère la base et ses sauvegardes à instant donné. Le serveur n'exécute plus que l'API, le web, Redis et les sauvegardes.
+
+1. **[Vous]** Sur console.neon.tech, créez un projet par environnement (`konzia-production`, `konzia-staging`) :
+   - version **Postgres 16** : l'outil de sauvegarde est en version 16 et refuse une base plus récente ;
+   - région la plus proche des utilisateurs : Europe, par exemple Francfort.
+2. **[Vous]** Dans **Connect**, copiez la chaîne de connexion **directe**, c'est-à-dire en désactivant « Connection pooling » : son adresse ne contient pas `-pooler`. Retirez `&channel_binding=require` si Prisma la refuse.
+3. Dans `/opt/konzia/production.env`, choisissez l'**option B** du modèle :
+   - `COMPOSE_PROFILES=` vide ;
+   - `DATABASE_URL` : la chaîne de Neon ;
+   - `APP_DATABASE_URL` : la même adresse avec l'utilisateur `konzia_app` et le mot de passe `APP_DB_PASSWORD`.
+4. Déployez normalement. `deploy.sh` voit qu'il n'y a pas de conteneur Postgres. Les migrations créent le rôle `konzia_app`, puis lui donnent la connexion après avoir vérifié qu'il ne contourne pas la RLS.
+
+Les sauvegardes chiffrées vers R2 (§ 8) restent actives et visent la base Neon. Le mode « scale to zero » de l'offre gratuite endort la base après 5 minutes sans activité : la première requête après une pause prend environ une seconde de plus.
+
+Vérifié avant livraison, sur un Postgres 16 vierge dont le propriétaire n'est pas superutilisateur (comme sur Neon) :
+- migrations et activation de `konzia_app` réussies ;
+- les 335 tests de l'API passent ;
+- sauvegarde réussie et relue.
+
+Le correctif du script d'activation vient de cet essai : un rôle non superutilisateur ne peut pas écrire `NOBYPASSRLS` dans un `ALTER ROLE`.
+
 ## 5. GitHub [Vous]
 
 Dans le dépôt, **Settings → Environments** : créez `staging` et `production`. Pour `production`, ajoutez une approbation obligatoire (vous). Puis, dans **Secrets and variables → Actions** :
@@ -160,6 +183,7 @@ Tout le parcours a été joué en local, avec Docker, sur des images identiques 
 **Pas encore éprouvé, faute d'accès :**
 
 - le VPS réel ;
+- une vraie base Neon (essai fait sur un Postgres équivalent) ;
 - les certificats Let's Encrypt (en local, Caddy a utilisé son autorité interne) ;
 - l'envoi réel par Brevo ;
 - les seaux R2 réels ;
