@@ -35,8 +35,9 @@ export class LocalDiskFileStorage implements FileStorage {
 }
 
 /**
- * Stockage S3 compatible (Cloudflare R2 prévu en production).
- * NON VÉRIFIÉ contre un vrai seau R2 à ce jour : à tester avec les identifiants de production (ticket #29).
+ * Stockage S3 compatible (Cloudflare R2 en production ; MinIO pour l'essai local de la pile).
+ * Adressage « chemin » (accepté par R2 et MinIO) ; sommes de contrôle seulement si l'opération
+ * les exige (les plus récentes, ajoutées par défaut au SDK, ont déjà été refusées par R2).
  */
 export class S3FileStorage implements FileStorage {
   private readonly client: S3Client;
@@ -49,6 +50,9 @@ export class S3FileStorage implements FileStorage {
       endpoint: config.endpoint,
       region: config.region,
       credentials: { accessKeyId: config.accessKeyId, secretAccessKey: config.secretAccessKey },
+      forcePathStyle: true,
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
     });
   }
 

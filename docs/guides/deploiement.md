@@ -130,6 +130,19 @@ Les migrations de base ne reviennent jamais en arrière. Elles sont écrites pou
 - **Journaux** : `docker compose -p konzia-production logs -f api` (aucune donnée personnelle n'y est écrite).
 - **Disque** : `df -h` et `docker system df` une fois par mois. Les journaux des conteneurs sont limités à 50 Mo chacun.
 
+## Recette sur la pile de production
+
+Les parcours de bout en bout se rejouent contre n'importe quel environnement HTTPS (staging, par exemple), avec un serveur SMTP de test pour lire les e-mails :
+
+```bash
+cd apps/web
+E2E_BASE_URL=https://staging.<domaine> E2E_API=https://staging.<domaine> \
+E2E_MAILPIT=http://<mailpit>:8025 E2E_DATABASE_URL=postgresql://… E2E_SHOTS=./captures \
+pnpm exec playwright test -c playwright.prod.config.ts
+```
+
+`E2E_SHOTS` enregistre 15 captures d'écran (visite guidée). Attention à la limite de 10 inscriptions par heure et par adresse IP : relancer trop souvent les parcours la déclenche.
+
 ## Ce qui a été vérifié avant livraison
 
 Tout le parcours a été joué en local, avec Docker, sur des images identiques à celles de production :

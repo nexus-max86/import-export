@@ -42,5 +42,5 @@ Décisions du propriétaire le 21/11/2026 : R1 **reporté après le MVP** ; R2, 
 
 ## En attente
 
-- Réponses du 2e commissionnaire pilote.
+- Réponses du 2e commissionnaire pilote : reportées au 22/11/2026 (pilote occupé) ; le pilote démarre avec Nicolas.
 - Un exemple de fichier Excel (noms modifiés) pour l'import des clients (#12).

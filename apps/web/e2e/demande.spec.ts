@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { approveOrgInDb, createOrgViaApi, login, verifiedAccount } from './helpers';
+import { shot, approveOrgInDb, createOrgViaApi, login, verifiedAccount } from './helpers';
 
 test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre', async ({
   browser,
@@ -9,7 +9,7 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   test.setTimeout(240_000);
   const suffix = Date.now();
   const orgName = `Kaseba Import ${suffix}`;
-  const setup = await playwright.request.newContext();
+  const setup = await playwright.request.newContext({ ignoreHTTPSErrors: true });
   const proEmail = await verifiedAccount(setup, 'Kaseba');
   await createOrgViaApi(setup, proEmail, orgName);
   approveOrgInDb(orgName);
@@ -29,8 +29,24 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
     .getByLabel('Lien du produit')
     .fill('Regarde https://fr.shein.com/Robe-Midi-p-2814455.html?utm_source=wa');
   await client.getByRole('button', { name: 'Lire le lien' }).click();
-  await expect(client.getByText('SHEIN reconnu')).toBeVisible();
-  await expect(client.getByText('Prix indicatif')).toBeVisible();
+  // En production, le site peut refuser la lecture : le client complète alors à la main,
+  // capture d'écran à l'appui (envoyée au stockage de fichiers chiffrés).
+  const unreachable = client.getByText(/Site injoignable/);
+  await expect(client.getByText('SHEIN reconnu').or(unreachable)).toBeVisible();
+  if (await unreachable.isVisible()) {
+    await client.getByLabel('Nom de l’article').fill('Robe midi plissée à col montant (exemple)');
+    await client.getByLabel('Joindre une capture d’écran').setInputFiles({
+      name: 'capture-shein.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+        'base64',
+      ),
+    });
+    await expect(client.getByText('Capture : capture-shein.png', { exact: false })).toBeVisible();
+  } else {
+    await expect(client.getByText('Prix indicatif')).toBeVisible();
+  }
   await client.getByLabel('Taille').fill('M');
   await client.getByLabel('Quantité').fill('2');
   await client.getByRole('button', { name: 'Ajouter à ma demande' }).click();
@@ -40,6 +56,7 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await client.getByLabel('Nom de l’article').fill('Organiseur de cuisine en bambou');
   await client.getByRole('button', { name: 'Ajouter à ma demande' }).click();
   await expect(client.getByRole('heading', { name: 'Articles (2)' })).toBeVisible();
+  await shot(client, '01-client-demande');
 
   await client.getByRole('checkbox', { name: new RegExp(orgName) }).check();
   await client.getByRole('button', { name: 'Envoyer la demande' }).click();
@@ -58,6 +75,7 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await expect(pro.getByText('Robe midi plissée à col montant (exemple)')).toBeVisible();
   await expect(pro.getByText('Organiseur de cuisine en bambou')).toBeVisible();
   await expect(pro.getByText('Lue')).toBeVisible();
+  await shot(pro, '03-pro-demande-recue');
 
   // Le client voit que sa demande a été lue.
   await client.reload();
@@ -73,6 +91,7 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await prices.nth(3).fill('28,56');
   await prices.nth(4).fill('9,00');
   await expect(pro.getByText('Total').locator('..')).toContainText('86,28 USD');
+  await shot(pro, '04-pro-devis');
   await pro.getByRole('button', { name: 'Enregistrer le brouillon' }).click();
   await expect(pro.getByText('Brouillon enregistré.')).toBeVisible();
   await pro.getByRole('button', { name: 'Envoyer le devis au client' }).click();
@@ -84,6 +103,7 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await client.reload();
   await expect(client.getByRole('heading', { name: 'Devis reçu' })).toBeVisible();
   await expect(client.getByText('86,28 USD').first()).toBeVisible();
+  await shot(client, '05-client-devis-recu');
   await client.getByRole('button', { name: 'Accepter ce devis' }).click();
   await client.getByRole('button', { name: 'Confirmer et créer la commande' }).click();
   await expect(client.getByRole('heading', { name: /^KZ-\d{4}-\d{6}$/ })).toBeVisible();
@@ -121,9 +141,11 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await pro.getByRole('button', { name: 'Confirmer la réception' }).click();
   await expect(pro.getByText('Paiement de 91,28 USD confirmé.')).toBeVisible();
   await expect(pro.getByText('Aucun solde en attente : tout est payé.')).toBeVisible();
+  await shot(pro, '06-pro-paiements');
 
   await client.reload();
   await expect(client.getByText('Payée').first()).toBeVisible();
+  await shot(client, '07-client-commande-payee');
 
   await pro.getByRole('link', { name: 'Commandes', exact: true }).click();
   await pro
@@ -161,6 +183,7 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await expect(
     pro.getByText('Devis version 1 accepté · Accord par WhatsApp', { exact: false }),
   ).toBeVisible();
+  await shot(pro, '08-pro-commande-client-gere-whatsapp');
 
   // --- Message WhatsApp prérempli selon l'étape (R6) : ici, rappel de paiement ---
   await expect(pro.getByRole('heading', { name: 'Écrire au client sur WhatsApp' })).toBeVisible();
@@ -188,6 +211,7 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await pro.getByRole('button', { name: 'Enregistrer l’achat' }).click();
   await expect(pro.getByText('payé 118,40', { exact: false })).toBeVisible();
   await expect(pro.getByText('Aucun article à acheter pour l’instant.')).toBeVisible();
+  await shot(pro, '09-pro-achats');
   await pro.getByRole('button', { name: 'Réception à l’entrepôt' }).click();
   await pro.getByRole('button', { name: 'Enregistrer la réception' }).click();
   await expect(pro.getByText('Reçu', { exact: true })).toBeVisible();
@@ -226,6 +250,7 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await expect(pro.getByText('Étape enregistrée.')).toBeVisible();
   await pro.getByRole('button', { name: 'Fermer le colis' }).click();
   await expect(pro.getByText('Colis fermé.')).toBeVisible();
+  await shot(pro, '10-pro-colis');
 
   await client.reload();
   await expect(client.getByText('En préparation logistique').first()).toBeVisible();
@@ -245,6 +270,7 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await pro.getByRole('button', { name: 'Enregistrer l’étape' }).click();
   await expect(pro.getByText('Étape enregistrée pour tous les colis.')).toBeVisible();
   await expect(pro.getByText('En route')).toBeVisible();
+  await shot(pro, '11-pro-expedition');
 
   await client.reload();
   await expect(client.getByText('En transport').first()).toBeVisible();
@@ -255,10 +281,12 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await expect(client.getByText('Reçu à l’entrepôt d’origine')).toBeVisible();
   await expect(client.getByText('Chaussures de sécurité')).toHaveCount(0);
   await expect(client.getByText('Patrick', { exact: false })).toHaveCount(0);
+  await shot(client, '12-client-suivi-colis');
 
   // --- Notifications du client : chaque étape importante, sans rien demander ---
   await client.getByRole('link', { name: /^Notifications/ }).click();
   await expect(client.getByRole('button', { name: /Colis expédié/ })).toBeVisible();
+  await shot(client, '13-client-notifications');
   await expect(client.getByRole('button', { name: /Paiement confirmé/ })).toBeVisible();
   await client.getByRole('button', { name: 'Tout marquer comme lu' }).click();
   await expect(client.getByRole('button', { name: /^Non lue/ })).toHaveCount(0);

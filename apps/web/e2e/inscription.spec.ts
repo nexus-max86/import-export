@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { lastMailText } from './helpers';
 
 test('un client s’inscrit, confirme son e-mail et gère ses appareils', async ({
   page,
@@ -22,11 +23,8 @@ test('un client s’inscrit, confirme son e-mail et gère ses appareils', async 
   await expect(page.getByRole('heading', { name: 'Bonjour Ruth Kabeya' })).toBeVisible();
   await expect(page.getByText(/Confirmez votre adresse/)).toBeVisible();
 
-  // Lien reçu par e-mail (boîte d'envoi factice, disponible seulement hors production).
-  const mail = await request.get(
-    `http://localhost:3101/api/_dev/outbox?to=${encodeURIComponent(email)}`,
-  );
-  const link = (await mail.json()).text.match(/http\S+jeton=\S+/)[0] as string;
+  // Lien reçu par e-mail (boîte factice en dev, serveur SMTP de test sur la pile de production).
+  const link = (await lastMailText(request, email)).match(/http\S+jeton=\S+/)![0] as string;
   await page.goto(new URL(link).pathname + new URL(link).search);
   await expect(page.getByText('Votre adresse est confirmée')).toBeVisible();
 

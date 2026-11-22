@@ -2,7 +2,32 @@ import { execFileSync } from 'node:child_process';
 import { createHmac } from 'node:crypto';
 import { expect, type APIRequestContext, type Page } from '@playwright/test';
 
-export const API = 'http://localhost:3101';
+/** API visée : dev (3101) par défaut ; pile de production via E2E_API (ex. https://app.localhost). */
+export const API = process.env.E2E_API ?? 'http://localhost:3101';
+const MAILPIT = process.env.E2E_MAILPIT;
+
+/**
+ * Texte du dernier e-mail reçu par `to` : boîte factice de l'API en dev, ou serveur SMTP de test
+ * (Mailpit) quand la pile de production est testée.
+ */
+export async function lastMailText(request: APIRequestContext, to: string): Promise<string> {
+  if (!MAILPIT) {
+    const res = await request.get(`${API}/api/_dev/outbox?to=${encodeURIComponent(to)}`);
+    return (await res.json()).text as string;
+  }
+  for (let i = 0; i < 40; i++) {
+    const res = await request.get(
+      `${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${to}"`)}`,
+    );
+    const found = (await res.json()) as { messages: { ID: string }[] };
+    if (found.messages?.length) {
+      const msg = await request.get(`${MAILPIT}/api/v1/message/${found.messages[0]!.ID}`);
+      return ((await msg.json()) as { Text: string }).Text;
+    }
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  throw new Error(`Aucun e-mail reçu pour ${to}`);
+}
 export const PASSWORD = 'motdepasse-solide-42';
 const CSRF = { 'x-konzia-csrf': '1' };
 
@@ -14,8 +39,7 @@ export async function verifiedAccount(request: APIRequestContext, name: string):
     data: { email, password: PASSWORD, displayName: name, acceptTerms: true },
   });
   expect(res.status()).toBe(201);
-  const mail = await request.get(`${API}/api/_dev/outbox?to=${encodeURIComponent(email)}`);
-  const token = (await mail.json()).text.match(/jeton=([\w-]+)/)[1] as string;
+  const token = (await lastMailText(request, email)).match(/jeton=([\w-]+)/)![1] as string;
   expect(
     (
       await request.post(`${API}/api/auth/verify-email`, { headers: CSRF, data: { token } })
@@ -117,4 +141,12 @@ export async function submitVerificationViaApi(request: APIRequestContext, orgNa
       })
     ).status(),
   ).toBe(201);
+}
+
+/** Capture d'écran nommée, seulement si E2E_SHOTS (dossier) est fourni : visite guidée de l'application. */
+export async function shot(page: Page, name: string): Promise<void> {
+  const dir = process.env.E2E_SHOTS;
+  if (!dir) return;
+  await page.waitForLoadState('networkidle').catch(() => undefined);
+  await page.screenshot({ path: `${dir}/${name}.png`, fullPage: true });
 }

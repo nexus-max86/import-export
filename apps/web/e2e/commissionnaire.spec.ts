@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { login, verifiedAccount } from './helpers';
+import { shot, login, verifiedAccount } from './helpers';
 
 test('un commissionnaire ajoute un client géré, qui réclame ensuite sa fiche', async ({
   browser,
@@ -83,6 +83,7 @@ test('un commissionnaire ajoute un client géré, qui réclame ensuite sa fiche'
   // --- Le commissionnaire voit que le client a maintenant un compte ---
   await pro.reload();
   await expect(pro.getByText('Compte Konzia')).toBeVisible();
+  await shot(pro, '02-pro-clients');
 
   // --- Équipe : inviter un acheteur ---
   await pro.getByRole('link', { name: 'Équipe', exact: true }).click();

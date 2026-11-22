@@ -46,6 +46,7 @@ Pour l'import Excel : faites l'import avec le pilote, sur son fichier. L'aperçu
 
 ## E. Sujets en attente
 
-- Réponses du 2e pilote au questionnaire et exemple de son fichier Excel (noms modifiés).
+- Réponses du 2e pilote au questionnaire et exemple de son fichier Excel (noms modifiés) : **reportés** (décision du 22/11/2026, le pilote est occupé). Le lancement commence avec Nicolas seul.
+- Contact WhatsApp de l'équipe Konzia pour les pilotes : 090 195 1088.
 - Lien de suivi sans compte (R1), reporté après le MVP : à reconsidérer selon les retours.
 - WhatsApp automatique (API Meta) : à activer après validation du compte professionnel par Meta.

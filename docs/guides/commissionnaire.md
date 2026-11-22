@@ -103,4 +103,4 @@ Sur chaque commande, **Écrire au client sur WhatsApp** : un message est déjà 
 - **Mon client n'a pas de smartphone.** Travaillez pour lui comme client géré : il reçoit vos messages WhatsApp, et vous enregistrez ses accords et ses paiements.
 - **Je me suis trompé d'étape sur un colis.** Enregistrez une **Correction** avec une explication. L'historique reste complet, c'est voulu.
 - **Le taux du franc congolais.** L'équipe Konzia publie le taux du jour. Un paiement en CDF est converti à ce taux, et le taux utilisé est conservé.
-- **Un problème avec l'application ?** Écrivez à l'équipe Konzia (adresse donnée au lancement du pilote).
+- **Un problème avec l'application ?** Écrivez à l'équipe Konzia sur WhatsApp au **090 195 1088** (+243 90 195 1088).
