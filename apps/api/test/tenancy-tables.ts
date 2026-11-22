@@ -33,6 +33,8 @@ export const TENANT_TABLES: { table: string; orgColumn: string }[] = [
   { table: 'shipments', orgColumn: 'organization_id' },
   { table: 'shipment_parcels', orgColumn: 'organization_id' },
   { table: 'shipment_events', orgColumn: 'organization_id' },
+  { table: 'disputes', orgColumn: 'organization_id' },
+  { table: 'dispute_messages', orgColumn: 'organization_id' },
 ];
 
 /** Données personnelles d'un utilisateur : seul leur propriétaire y accède. */

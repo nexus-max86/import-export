@@ -412,6 +412,7 @@ enum FilePurpose {
   payment_proof
   purchase_proof
   parcel_photo
+  dispute_evidence
 }
 
 /// Fichier stocké chiffré (AES-256-GCM) ; le contenu n'est jamais servi sans contrôle d'accès.
@@ -1247,4 +1248,54 @@ model OutboundMessage {
 
   @@index([status, createdAt])
   @@map("outbound_messages")
+}
+
+enum DisputeStatus {
+  awaiting_commissioner
+  under_review
+  resolved
+  closed
+}
+
+/// Litige sur une commande (EF-100, EF-101). Jamais supprimé ; clos = figé sauf réouverture admin.
+model Dispute {
+  id             String        @id @default(uuid(7)) @db.Uuid
+  organizationId String        @map("organization_id") @db.Uuid
+  orderId        String        @map("order_id") @db.Uuid
+  customerUserId String        @map("customer_user_id") @db.Uuid
+  category       String
+  description    String
+  status         DisputeStatus @default(awaiting_commissioner)
+  resolution     String?
+  resolvedBy     String?       @map("resolved_by") @db.Uuid
+  resolvedAt     DateTime?     @map("resolved_at") @db.Timestamptz(3)
+  closedAt       DateTime?     @map("closed_at") @db.Timestamptz(3)
+  reopenedAt     DateTime?     @map("reopened_at") @db.Timestamptz(3)
+  reopenReason   String?       @map("reopen_reason")
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  messages DisputeMessage[]
+
+  @@index([organizationId, status])
+  @@index([customerUserId])
+  @@map("disputes")
+}
+
+/// Échange dans un litige (insertion seule), avec preuves éventuelles.
+model DisputeMessage {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  disputeId      String   @map("dispute_id") @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  authorUserId   String   @map("author_user_id") @db.Uuid
+  /// customer, commissioner ou support.
+  authorRole     String   @map("author_role")
+  body           String
+  fileIds        String[] @default([]) @map("file_ids") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  dispute Dispute @relation(fields: [disputeId], references: [id])
+
+  @@index([disputeId, createdAt])
+  @@map("dispute_messages")
 }

@@ -14,6 +14,7 @@ const LINKS = [
   { href: '/admin/commandes', label: 'Commandes' },
   { href: '/admin/paiements', label: 'Paiements' },
   { href: '/admin/colis', label: 'Colis' },
+  { href: '/admin/litiges', label: 'Litiges' },
   { href: '/admin/journal', label: 'Journal' },
   { href: '/admin/villes', label: 'Villes' },
   { href: '/admin/taux', label: 'Taux' },

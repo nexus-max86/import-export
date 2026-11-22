@@ -85,9 +85,10 @@ export class AdminService {
     };
   }
 
-  /** Remplacé par le décompte réel quand les litiges existent (ticket #28). */
-  protected async openDisputes(): Promise<number> {
-    return 0;
+  private openDisputes(): Promise<number> {
+    return this.system.dispute.count({
+      where: { status: { in: ['awaiting_commissioner', 'under_review'] } },
+    });
   }
 
   async users(adminId: string, q: AdminListQuery): Promise<AdminPage<AdminUserRow>> {

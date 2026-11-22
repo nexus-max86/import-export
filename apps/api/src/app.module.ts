@@ -24,6 +24,7 @@ import { ExportsModule } from './exports/exports.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { AdminModule } from './admin/admin.module';
+import { DisputesModule } from './disputes/disputes.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProfileModule } from './profile/profile.module';
 import { RequestsModule } from './requests/requests.module';
@@ -77,6 +78,7 @@ const env = loadEnv();
     NotificationsModule,
     WhatsAppModule,
     AdminModule,
+    DisputesModule,
     ...(env.NODE_ENV !== 'production' && env.EMAIL_TRANSPORT === 'fake' ? [DevModule] : []),
   ],
   controllers: [HealthController],

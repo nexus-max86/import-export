@@ -12,6 +12,7 @@ const LINKS = [
   { href: '/pro/colis', label: 'Colis' },
   { href: '/pro/expeditions', label: 'Expéditions' },
   { href: '/pro/paiements', label: 'Paiements' },
+  { href: '/pro/litiges', label: 'Litiges' },
   { href: '/pro/clients', label: 'Clients' },
   { href: '/pro/profil', label: 'Profil et vérification' },
 ];

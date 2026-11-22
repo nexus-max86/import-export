@@ -183,5 +183,5 @@ Validée quand : l'application tourne sur Hostinger en HTTPS, une sauvegarde a �
 | 5 — Paiements directs | Terminée (#18 ; #8 livré en phase 4) |
 | 6 — Achats et colis | Terminée (#19 achats, #20 colis, #21 suivi et expéditions, #22 suivi client et exports) |
 | 7 — Notifications | Terminée (#23 centre, #24 e-mails en file, #25 WhatsApp prérempli ; envoi WhatsApp automatique désactivé jusqu'à validation Meta) |
-| 8 — Administration | En cours : #26 (console), #27 (MFA, décisions, écran 10) faits |
+| 8 — Administration | Terminée (#26 console, #27 MFA et décisions, #28 litiges) |
 | 9 — Production et pilote | À faire |

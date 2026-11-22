@@ -21,6 +21,12 @@ export type DomainEvent =
   | { kind: 'parcel_step'; parcelId: string; stepCode: string; anomaly?: boolean }
   | { kind: 'order_completed'; orderId: string }
   | {
+      kind: 'dispute_updated';
+      disputeId: string;
+      actor: 'customer' | 'commissioner' | 'support';
+      what: 'opened' | 'message' | 'resolved' | 'closed' | 'reopened';
+    }
+  | {
       kind: 'organization_status';
       organizationId: string;
       decision: 'approved' | 'rejected' | 'suspended' | 'reactivated';
@@ -250,6 +256,42 @@ export class NotificationsService {
           body: text(o.number),
           link: `/commandes/${o.id}`,
         }));
+      }
+      case 'dispute_updated': {
+        const d = await db.dispute.findUniqueOrThrow({
+          where: { id: e.disputeId },
+          select: { customerUserId: true, organizationId: true, orderId: true },
+        });
+        const { number } = await db.order.findUniqueOrThrow({
+          where: { id: d.orderId },
+          select: { number: true },
+        });
+        const text = {
+          opened: `Un litige a été ouvert sur la commande ${number}.`,
+          message: `Nouveau message dans le litige de la commande ${number}.`,
+          resolved: `Konzia a rendu sa décision sur le litige de la commande ${number}.`,
+          closed: `Le litige de la commande ${number} est clos.`,
+          reopened: `Le litige de la commande ${number} a été rouvert par Konzia.`,
+        }[e.what];
+        const out: NewNotification[] = [];
+        if (e.actor !== 'customer')
+          out.push({
+            recipientUserId: d.customerUserId,
+            organizationId: d.organizationId,
+            type: 'dispute_updated',
+            body: text,
+            link: `/litiges/${e.disputeId}`,
+          });
+        if (e.actor !== 'commissioner')
+          for (const userId of await this.members(d.organizationId, ['owner', 'sales']))
+            out.push({
+              recipientUserId: userId,
+              organizationId: d.organizationId,
+              type: 'dispute_updated',
+              body: text,
+              link: `/pro/litiges/${e.disputeId}`,
+            });
+        return out;
       }
       case 'organization_status': {
         const org = await db.organization.findUniqueOrThrow({

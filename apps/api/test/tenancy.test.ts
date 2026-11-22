@@ -198,6 +198,13 @@ describe('Isolation entre commissionnaires', () => {
       })
       .set(...asOrg(orgA))
       .expect(201);
+    // Un litige ouvert par le client de A.
+    await buyer.agent
+      .post(`/api/orders/${accepted.body.orderId}/disputes`, {
+        category: 'delay',
+        description: 'Aucune nouvelle depuis trois semaines.',
+      })
+      .expect(201);
     await t.prisma.organization.update({ where: { id: orgA }, data: { status: 'pending' } });
     await a.agent
       .postFile(

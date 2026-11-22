@@ -10,6 +10,7 @@ import { OrderView } from '@/components/order-view';
 import { CustomerPayments } from '@/components/payments';
 import { CustomerTracking } from '@/components/tracking';
 import { CustomerWhatsAppButton } from '@/components/whatsapp';
+import { OpenDisputeCard } from '@/components/disputes';
 import { Notice } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 
@@ -37,6 +38,7 @@ export default function OrderPage() {
           <OrderView order={order} />
           <CustomerTracking key={order.status} orderId={order.id} />
           <CustomerWhatsAppButton order={order} />
+          <OpenDisputeCard orderId={order.id} />
           <CustomerPayments
             order={order}
             onChanged={() => void api<OrderDetail>(`/orders/${id}`).then(setOrder)}

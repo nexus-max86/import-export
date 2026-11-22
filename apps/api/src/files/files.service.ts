@@ -36,7 +36,8 @@ export class FilesService {
       | 'product_screenshot'
       | 'payment_proof'
       | 'purchase_proof'
-      | 'parcel_photo',
+      | 'parcel_photo'
+      | 'dispute_evidence',
     upload: UploadedBlob,
   ) {
     if (upload.size > MAX_UPLOAD_BYTES)
@@ -57,6 +58,7 @@ export class FilesService {
       payment_proof: 'payments',
       purchase_proof: 'purchases',
       parcel_photo: 'parcels',
+      dispute_evidence: 'disputes',
     }[purpose];
     const storageKey = `${folder}/${organizationId ?? userId}/${randomUUID()}`;
     // Le contenu est écrit avant la ligne en base : un échec SQL laisse au pire un fichier orphelin chiffré.
