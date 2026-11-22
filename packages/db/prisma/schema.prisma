@@ -46,6 +46,10 @@ model User {
   locale          String        @default("fr")
   platformRole    PlatformRole? @map("platform_role")
   mfaSecretEnc    String?       @map("mfa_secret_enc")
+  /// Date d'activation de la double authentification (TOTP) ; nulle = non activée.
+  mfaEnabledAt    DateTime?     @map("mfa_enabled_at") @db.Timestamptz(3)
+  /// Dernier pas de temps TOTP accepté : un code ne sert qu'une fois.
+  mfaLastStep     BigInt?       @map("mfa_last_step")
   status          UserStatus    @default(active)
   createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
@@ -72,6 +76,8 @@ model Session {
   lastSeenAt DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz(3)
   expiresAt  DateTime  @map("expires_at") @db.Timestamptz(3)
   revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(3)
+  /// Double authentification validée pour CETTE session (exigée pour l'administration).
+  mfaVerifiedAt DateTime? @map("mfa_verified_at") @db.Timestamptz(3)
   createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
