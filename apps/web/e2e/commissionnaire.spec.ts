@@ -83,4 +83,11 @@ test('un commissionnaire ajoute un client géré, qui réclame ensuite sa fiche'
   // --- Le commissionnaire voit que le client a maintenant un compte ---
   await pro.reload();
   await expect(pro.getByText('Compte Konzia')).toBeVisible();
+
+  // --- Équipe : inviter un acheteur ---
+  await pro.getByRole('link', { name: 'Équipe', exact: true }).click();
+  await pro.getByLabel('Adresse e-mail').fill(`acheteur.${Date.now()}@example.test`);
+  await pro.getByRole('radio', { name: /^Acheteur/ }).check();
+  await pro.getByRole('button', { name: 'Envoyer l’invitation' }).click();
+  await expect(pro.getByText(/^Invitation envoyée à acheteur\./)).toBeVisible();
 });
