@@ -25,6 +25,12 @@ export default function AdminRatesPage() {
     } catch (err) {
       if (err instanceof ApiError && err.status === 401)
         router.replace('/connexion?suite=/admin/taux');
+      else if (
+        err instanceof ApiError &&
+        err.status === 403 &&
+        /double authentification/i.test(err.message)
+      )
+        router.replace('/admin/securite?suite=/admin/taux');
       else if (err instanceof ApiError) setMsg({ tone: 'error', text: err.message });
     }
   }, [router]);

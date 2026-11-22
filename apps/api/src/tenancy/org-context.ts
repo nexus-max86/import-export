@@ -52,11 +52,18 @@ export class OrgGuard implements CanActivate {
     const member = await this.db.run(userId, (tx) =>
       tx.organizationMember.findFirst({
         where: { organizationId: orgId, userId, status: 'active' },
-        select: { role: true },
+        select: { role: true, organization: { select: { status: true } } },
       }),
     );
     // Même réponse qu'il s'agisse d'une autre organisation ou d'une organisation inexistante.
     if (!member) throw new ForbiddenException('Accès refusé à cette organisation.');
+
+    // Activité suspendue par l'administration : consultation seulement, aucune action.
+    if (member.organization.status === 'suspended' && req.method !== 'GET') {
+      throw new ForbiddenException(
+        'Votre activité est suspendue par Konzia : aucune action n’est possible pour le moment.',
+      );
+    }
 
     const permission = this.reflector.get<Permission | undefined>(PERMISSION, context.getHandler());
     if (permission && !can(member.role, permission)) {

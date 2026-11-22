@@ -212,7 +212,7 @@ describe('Notifications', () => {
 
   it('préférences e-mail par type, activées par défaut', async () => {
     const prefs = await ruth.agent.get('/api/me/notification-preferences').expect(200);
-    expect(prefs.body).toHaveLength(14);
+    expect(prefs.body).toHaveLength(15);
     expect(prefs.body.every((p: { email: boolean }) => p.email)).toBe(true);
     const updated = await ruth.agent
       .put('/api/me/notification-preferences', {

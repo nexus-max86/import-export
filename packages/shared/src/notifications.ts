@@ -16,6 +16,7 @@ export const NOTIFICATION_TYPES = [
   'order_completed',
   'dispute_updated',
   'parcel_anomaly',
+  'organization_status',
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
@@ -34,6 +35,7 @@ export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
   order_completed: 'Commande terminée',
   dispute_updated: 'Litige mis à jour',
   parcel_anomaly: 'Problème sur un colis',
+  organization_status: 'Décision sur votre activité',
 };
 
 export const NOTIFICATION_CHANNELS = ['email', 'whatsapp'] as const;

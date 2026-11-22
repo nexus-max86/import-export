@@ -43,7 +43,7 @@ describe('Villes, zones et zones desservies', () => {
     expect(res.body.map((c: { name: string }) => c.name)).toEqual(['Kolwezi', 'Lubumbashi']);
 
     const audit = await t.prisma.auditLog.findMany({
-      where: { actorUserId: admin.userId },
+      where: { actorUserId: admin.userId, action: { startsWith: 'geo.' } },
       orderBy: { id: 'asc' },
     });
     expect(audit.map((a) => a.action)).toEqual([

@@ -17,6 +17,12 @@ export default function AdminCitiesPage() {
       setCities(await api<CityInfo[]>('/admin/cities'));
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) router.replace('/connexion');
+      else if (
+        err instanceof ApiError &&
+        err.status === 403 &&
+        /double authentification/i.test(err.message)
+      )
+        router.replace('/admin/securite?suite=/admin/villes');
       else if (err instanceof ApiError) setNotice({ tone: 'error', text: err.message });
     }
   }, [router]);

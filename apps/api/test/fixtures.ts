@@ -1,3 +1,4 @@
+import { base32Decode, stepOf, totpAt } from '../src/auth/totp';
 import { ORG_HEADER } from '@konzia/shared';
 import type { TestAgent, TestContext } from './app';
 
@@ -44,10 +45,22 @@ export async function addMember(
   return t.prisma.organizationMember.create({ data: { organizationId: orgId, userId, role } });
 }
 
-/** Promeut un compte en administrateur de la plateforme. */
-export async function makeAdmin(t: TestContext, who: Actor): Promise<Actor> {
+/** Code TOTP courant pour une clé base32 (comme l'application d'authentification du téléphone). */
+export function totpNow(secret: string, offsetSteps = 0): string {
+  return totpAt(base32Decode(secret), stepOf(Date.now()) + offsetSteps);
+}
+
+/** Promeut un compte en administrateur, double authentification activée et validée (EF-04). */
+export async function makeAdmin(
+  t: TestContext,
+  who: Actor,
+  withMfa = true,
+): Promise<Actor & { mfaSecret?: string }> {
   await t.prisma.user.update({ where: { id: who.userId }, data: { platformRole: 'admin' } });
-  return who;
+  if (!withMfa) return who;
+  const setup = await who.agent.post('/api/auth/mfa/setup').expect(201);
+  await who.agent.post('/api/auth/mfa/enable', { code: totpNow(setup.body.secret) }).expect(204);
+  return { ...who, mfaSecret: setup.body.secret as string };
 }
 
 /** Petit PDF factice (signature %PDF-) pour les tests d'envoi de documents. */

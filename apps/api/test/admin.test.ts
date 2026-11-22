@@ -12,7 +12,7 @@ describe('Console d’administration', () => {
 
   const reads = () =>
     t.prisma.auditLog.findMany({
-      where: { actorUserId: admin.userId },
+      where: { actorUserId: admin.userId, action: { startsWith: 'admin.' } },
       select: { action: true, entityType: true, entityId: true, organizationId: true },
       orderBy: { createdAt: 'asc' },
     });

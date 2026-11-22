@@ -19,7 +19,13 @@ export type DomainEvent =
   | { kind: 'purchase_done'; orderIds: string[] }
   | { kind: 'items_received'; orderIds: string[] }
   | { kind: 'parcel_step'; parcelId: string; stepCode: string; anomaly?: boolean }
-  | { kind: 'order_completed'; orderId: string };
+  | { kind: 'order_completed'; orderId: string }
+  | {
+      kind: 'organization_status';
+      organizationId: string;
+      decision: 'approved' | 'rejected' | 'suspended' | 'reactivated';
+      reason: string | null;
+    };
 
 export interface NewNotification {
   recipientUserId: string;
@@ -243,6 +249,25 @@ export class NotificationsService {
           type: e.kind,
           body: text(o.number),
           link: `/commandes/${o.id}`,
+        }));
+      }
+      case 'organization_status': {
+        const org = await db.organization.findUniqueOrThrow({
+          where: { id: e.organizationId },
+          select: { name: true },
+        });
+        const text = {
+          approved: `${org.name} est vérifié : votre profil est visible des clients.`,
+          rejected: `Le dossier de vérification de ${org.name} n’a pas été accepté.`,
+          suspended: `${org.name} est suspendu : aucune action n’est possible pour le moment.`,
+          reactivated: `${org.name} est de nouveau actif.`,
+        }[e.decision];
+        return (await this.members(e.organizationId, ['owner'])).map((userId) => ({
+          recipientUserId: userId,
+          organizationId: e.organizationId,
+          type: 'organization_status' as const,
+          body: e.reason ? `${text} Motif : ${e.reason}` : text,
+          link: '/pro/profil',
         }));
       }
       case 'parcel_step': {

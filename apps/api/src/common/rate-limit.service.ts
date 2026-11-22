@@ -23,4 +23,16 @@ export class RateLimitService {
       );
     }
   }
+
+  /** Lève 429 si `key` a déjà atteint `limit` (sans compter cet appel) : pour ne compter que les échecs. */
+  async assertBelow(key: string, limit: number): Promise<void> {
+    if (this.redis.status === 'wait') await this.redis.connect();
+    const count = Number((await this.redis.get(`rl:${key}`)) ?? 0);
+    if (count >= limit) {
+      throw new HttpException(
+        'Trop de tentatives. Réessayez dans quelques minutes.',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+  }
 }

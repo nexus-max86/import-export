@@ -1,5 +1,17 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query, Res, StreamableFile } from '@nestjs/common';
 import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  Res,
+  StreamableFile,
+} from '@nestjs/common';
+import {
+  AdminDecisionSchema,
   AdminListQuerySchema,
   type AdminAuditRow,
   type AdminListQuery,
@@ -16,16 +28,82 @@ import type { Response } from 'express';
 import type { AuthContext } from '../auth/auth.types';
 import { Auth } from '../auth/decorators';
 import { ZodBody } from '../common/zod-body.pipe';
+import { z } from 'zod';
+import { AdminDecisionsService } from './admin-decisions.service';
 import { AdminService } from './admin.service';
 import { PlatformAdmin } from './platform-admin.guard';
 
+const ApproveSchema = z.object({ note: z.string().trim().max(1000).optional() });
 const ListQuery = () => Query(new ZodBody(AdminListQuerySchema));
 
 /** Console d'administration en lecture (ticket #26). */
 @Controller('admin')
 @PlatformAdmin()
 export class AdminController {
-  constructor(private readonly admin: AdminService) {}
+  constructor(
+    private readonly admin: AdminService,
+    private readonly decisions: AdminDecisionsService,
+  ) {}
+
+  @Post('organizations/:id/approve')
+  @HttpCode(204)
+  approve(
+    @Auth() auth: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodBody(ApproveSchema)) body: { note?: string },
+  ): Promise<void> {
+    return this.decisions.decideOrganization(auth.userId, id, 'approve', body.note || null);
+  }
+
+  @Post('organizations/:id/reject')
+  @HttpCode(204)
+  reject(
+    @Auth() auth: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodBody(AdminDecisionSchema)) body: { reason: string },
+  ): Promise<void> {
+    return this.decisions.decideOrganization(auth.userId, id, 'reject', body.reason);
+  }
+
+  @Post('organizations/:id/suspend')
+  @HttpCode(204)
+  suspend(
+    @Auth() auth: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodBody(AdminDecisionSchema)) body: { reason: string },
+  ): Promise<void> {
+    return this.decisions.decideOrganization(auth.userId, id, 'suspend', body.reason);
+  }
+
+  @Post('organizations/:id/reactivate')
+  @HttpCode(204)
+  reactivate(
+    @Auth() auth: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodBody(AdminDecisionSchema)) body: { reason: string },
+  ): Promise<void> {
+    return this.decisions.decideOrganization(auth.userId, id, 'reactivate', body.reason);
+  }
+
+  @Post('users/:id/suspend')
+  @HttpCode(204)
+  suspendUser(
+    @Auth() auth: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodBody(AdminDecisionSchema)) body: { reason: string },
+  ): Promise<void> {
+    return this.decisions.decideUser(auth.userId, id, 'suspend', body.reason);
+  }
+
+  @Post('users/:id/reactivate')
+  @HttpCode(204)
+  reactivateUser(
+    @Auth() auth: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodBody(AdminDecisionSchema)) body: { reason: string },
+  ): Promise<void> {
+    return this.decisions.decideUser(auth.userId, id, 'reactivate', body.reason);
+  }
 
   @Get('overview')
   overview(@Auth() auth: AuthContext): Promise<AdminOverview> {

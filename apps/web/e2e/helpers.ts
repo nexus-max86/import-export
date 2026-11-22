@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { createHmac } from 'node:crypto';
 import { expect, type APIRequestContext, type Page } from '@playwright/test';
 
 export const API = 'http://localhost:3101';
@@ -31,7 +32,7 @@ export async function login(page: Page, email: string): Promise<void> {
 
 const DB = process.env.E2E_DATABASE_URL ?? 'postgresql://konzia:konzia@localhost:5432/konzia_test';
 
-/** Approuve une organisation directement en base (l'écran d'administration arrive au ticket #27). */
+/** Approuve une organisation directement en base (raccourci : le parcours admin a son propre test). */
 export function approveOrgInDb(name: string): void {
   execFileSync('psql', [
     DB,
@@ -59,6 +60,60 @@ export async function createOrgViaApi(
       await request.post(`${API}/api/organizations`, {
         headers: CSRF,
         data: { name, type: 'independent' },
+      })
+    ).status(),
+  ).toBe(201);
+}
+
+/** Donne le rôle d'administrateur de la plateforme à un compte (aucun écran ne le fait, volontairement). */
+export function makeAdminInDb(email: string): void {
+  execFileSync('psql', [
+    DB,
+    '-qc',
+    `UPDATE users SET platform_role = 'admin' WHERE email = '${email.replace(/'/g, "''")}'`,
+  ]);
+}
+
+/** Code TOTP actuel (RFC 6238) pour une clé base32, comme l'application du téléphone. */
+export function totp(base32: string, offsetSteps = 0): string {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = 0;
+  let value = 0;
+  const bytes: number[] = [];
+  for (const ch of base32.replace(/\s/g, '').toUpperCase()) {
+    value = (value << 5) | alphabet.indexOf(ch);
+    bits += 5;
+    if (bits >= 8) {
+      bytes.push((value >>> (bits - 8)) & 255);
+      bits -= 8;
+    }
+  }
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30_000) + offsetSteps));
+  const h = createHmac('sha1', Buffer.from(bytes)).update(counter).digest();
+  const o = h[h.length - 1]! & 15;
+  return String((h.readUInt32BE(o) & 0x7fffffff) % 1_000_000).padStart(6, '0');
+}
+
+/** Envoie le dossier de vérification (RCCM + pièce d'identité) de l'activité active du compte. */
+export async function submitVerificationViaApi(request: APIRequestContext, orgName: string) {
+  const orgs = await (await request.get(`${API}/api/organizations/mine`)).json();
+  const org = (orgs as { organizationId?: string; id?: string; name: string }[]).find(
+    (o) => o.name === orgName,
+  )!;
+  const orgId = org.organizationId ?? org.id!;
+  const pdf = Buffer.from('%PDF-1.4\n% dossier e2e\n%%EOF\n');
+  for (const kind of ['rccm', 'identity']) {
+    const res = await request.post(`${API}/api/org/verification/documents`, {
+      headers: { ...CSRF, 'x-konzia-org': orgId },
+      multipart: { kind, file: { name: `${kind}.pdf`, mimeType: 'application/pdf', buffer: pdf } },
+    });
+    expect(res.status()).toBe(201);
+  }
+  expect(
+    (
+      await request.post(`${API}/api/org/verification/submit`, {
+        headers: { ...CSRF, 'x-konzia-org': orgId },
       })
     ).status(),
   ).toBe(201);
