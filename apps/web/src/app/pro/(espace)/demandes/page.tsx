@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { ProNav } from '@/components/pro-nav';
+import { ResponsiveList } from '@/components/responsive-list';
 import { StatusPill } from '@/components/status-pill';
 import { Button, Card, Field, Notice, Loading, EmptyState } from '@/components/ui';
 import { api, ApiError, fieldErrors } from '@/lib/api';
@@ -40,7 +41,7 @@ export default function ProRequestsPage() {
   const done = list?.filter((r) => !['sent', 'viewed', 'evaluating'].includes(r.status)) ?? [];
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 py-10">
+    <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 py-10 lg:max-w-5xl lg:px-8">
       <ProNav />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-2xl font-bold">Demandes de devis</h1>
@@ -49,11 +50,13 @@ export default function ProRequestsPage() {
         )}
       </div>
       {creating && (
-        <ManagedRequestForm
-          org={org}
-          onCancel={() => setCreating(false)}
-          onCreated={(id) => router.push(`/pro/demandes/${id}`)}
-        />
+        <div className="lg:max-w-2xl">
+          <ManagedRequestForm
+            org={org}
+            onCancel={() => setCreating(false)}
+            onCreated={(id) => router.push(`/pro/demandes/${id}`)}
+          />
+        </div>
       )}
       {!list && <Loading />}
       {list?.length === 0 && (
@@ -72,27 +75,48 @@ function RequestList({ title, items }: { title: string; items: OrgRequestSummary
   return (
     <section className="flex flex-col gap-3">
       <h2 className="font-display text-lg font-bold">{title}</h2>
-      <ul className="flex flex-col gap-3">
-        {items.map((r) => (
-          <li key={r.id}>
-            <Link
-              href={`/pro/demandes/${r.id}`}
-              className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-4 outline-none focus-visible:ring-2 focus-visible:ring-copper"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <strong>{r.customerName}</strong>
-                <StatusPill tone={recipientTone(r.status)}>
-                  {RECIPIENT_STATUS_LABELS[r.status]}
-                </StatusPill>
-              </div>
-              <span className="text-sm text-muted">
-                {r.itemCount} article(s){r.firstItemTitle ? ` · ${r.firstItemTitle}` : ''} · reçue
-                le {fmtDate(r.sentAt)}
+      <ResponsiveList
+        rows={items}
+        href={(r) => `/pro/demandes/${r.id}`}
+        caption={title}
+        columns={[
+          { label: 'Client', cell: (r) => r.customerName },
+          {
+            label: 'Articles',
+            cell: (r) => (
+              <span className="line-clamp-1 text-muted">
+                {r.itemCount} article(s){r.firstItemTitle ? ` · ${r.firstItemTitle}` : ''}
               </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+            ),
+          },
+          {
+            label: 'Reçue le',
+            cell: (r) => <span className="text-muted">{fmtDate(r.sentAt)}</span>,
+          },
+          {
+            label: 'Statut',
+            cell: (r) => (
+              <StatusPill tone={recipientTone(r.status)}>
+                {RECIPIENT_STATUS_LABELS[r.status]}
+              </StatusPill>
+            ),
+          },
+        ]}
+        card={(r) => (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <strong>{r.customerName}</strong>
+              <StatusPill tone={recipientTone(r.status)}>
+                {RECIPIENT_STATUS_LABELS[r.status]}
+              </StatusPill>
+            </div>
+            <span className="text-sm text-muted">
+              {r.itemCount} article(s){r.firstItemTitle ? ` · ${r.firstItemTitle}` : ''} · reçue le{' '}
+              {fmtDate(r.sentAt)}
+            </span>
+          </>
+        )}
+      />
     </section>
   );
 }

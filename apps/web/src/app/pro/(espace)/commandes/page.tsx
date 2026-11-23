@@ -24,7 +24,7 @@ export default function ProOrdersPage() {
   }, [org, router]);
   if (!org) return null;
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 py-10">
+    <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 py-10 lg:max-w-5xl lg:px-8">
       <ProNav />
       <h1 className="font-display text-2xl font-bold">Commandes</h1>
       <CsvExportButton org={org} kind="orders" label="Exporter les commandes (Excel)" />

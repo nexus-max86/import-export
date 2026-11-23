@@ -16,11 +16,11 @@ import {
   type ParcelSummary,
   type RouteTemplateInfo,
 } from '@konzia/shared';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { ResponsiveList } from '@/components/responsive-list';
 import { StatusPill } from '@/components/status-pill';
-import { Button, Card, Field, Notice, Loading } from '@/components/ui';
+import { Button, Card, Field, Notice, Loading, EmptyState } from '@/components/ui';
 import { api, ApiError, apiUpload } from '@/lib/api';
 import { fmtDate } from '@/lib/format';
 
@@ -78,66 +78,92 @@ export function ParcelsBoard({ org }: { org: string }) {
     }
   }
 
+  const summary = (p: ParcelSummary) =>
+    [
+      `${p.itemCount} article(s)`,
+      `${p.customerCount} client(s)`,
+      p.weightG != null && fmtKg(p.weightG),
+      p.locationLabel,
+      fmtDate(p.createdAt),
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  const pill = (p: ParcelSummary) => (
+    <StatusPill tone={p.status === 'open' ? 'warn' : 'neutral'}>
+      {PARCEL_STATUS_LABELS[p.status]}
+    </StatusPill>
+  );
+
   return (
-    <>
-      <Card>
-        <h2 className="font-display text-lg font-bold">Nouveau colis</h2>
-        <form onSubmit={create} className="flex flex-col gap-3">
-          <Field id="parcelLocation" label="Lieu (facultatif)" placeholder="Entrepôt Guangzhou" />
-          <label className="flex flex-col gap-1 text-sm font-semibold">
-            Diviseur volumétrique du transporteur
-            <select name="divisor" className="min-h-11 rounded-lg border border-line px-3">
-              {VOLUMETRIC_DIVISORS.map((d) => (
-                <option key={d} value={d}>
-                  ÷ {d.toLocaleString('fr-FR')}
-                </option>
-              ))}
-            </select>
-          </label>
-          {error && <Notice tone="error">{error}</Notice>}
-          <Button type="submit" busy={busy}>
-            Créer le colis
-          </Button>
-        </form>
-      </Card>
-      <Card>
-        <h2 className="font-display text-lg font-bold">Colis</h2>
+    <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+      <div className="lg:sticky lg:top-6 lg:order-2">
+        <Card>
+          <h2 className="font-display text-lg font-bold">Nouveau colis</h2>
+          <form onSubmit={create} className="flex flex-col gap-3">
+            <Field id="parcelLocation" label="Lieu (facultatif)" placeholder="Entrepôt Guangzhou" />
+            <label className="flex flex-col gap-1 text-sm font-semibold">
+              Diviseur volumétrique du transporteur
+              <select name="divisor" className="min-h-11 rounded-lg border border-line px-3">
+                {VOLUMETRIC_DIVISORS.map((d) => (
+                  <option key={d} value={d}>
+                    ÷ {d.toLocaleString('fr-FR')}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {error && <Notice tone="error">{error}</Notice>}
+            <Button type="submit" busy={busy}>
+              Créer le colis
+            </Button>
+          </form>
+        </Card>
+      </div>
+      <section className="flex flex-col gap-3 lg:order-1">
+        <h2 className="font-display text-lg font-bold">Vos colis</h2>
         {!list ? (
           <Loading lines={2} />
         ) : list.length === 0 ? (
-          <p className="text-sm text-muted">Aucun colis pour l’instant.</p>
+          <EmptyState title="Aucun colis pour l’instant">
+            Créez un colis, puis ajoutez-y les articles reçus à l’entrepôt.
+          </EmptyState>
         ) : (
-          <ul className="flex flex-col gap-2">
-            {list.map((p) => (
-              <li key={p.id}>
-                <Link
-                  href={`/pro/colis/${p.id}`}
-                  className="flex flex-col gap-1 rounded-lg border border-line p-3 text-sm"
-                >
-                  <span className="flex items-center justify-between gap-2">
-                    <strong className="font-mono">{p.code}</strong>
-                    <StatusPill tone={p.status === 'open' ? 'warn' : 'neutral'}>
-                      {PARCEL_STATUS_LABELS[p.status]}
-                    </StatusPill>
-                  </span>
-                  <span className="text-muted">
-                    {[
-                      `${p.itemCount} article(s)`,
-                      `${p.customerCount} client(s)`,
-                      p.weightG != null && fmtKg(p.weightG),
-                      p.locationLabel,
-                      fmtDate(p.createdAt),
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <ResponsiveList
+            rows={list}
+            href={(p) => `/pro/colis/${p.id}`}
+            caption="Colis"
+            columns={[
+              {
+                label: 'Colis',
+                cell: (p) => <span className="font-mono whitespace-nowrap">{p.code}</span>,
+              },
+              { label: 'Articles', numeric: true, cell: (p) => p.itemCount },
+              { label: 'Clients', numeric: true, cell: (p) => p.customerCount },
+              {
+                label: 'Poids',
+                numeric: true,
+                cell: (p) => (p.weightG != null ? fmtKg(p.weightG) : '—'),
+              },
+              { label: 'Lieu', wide: true, cell: (p) => p.locationLabel ?? '—' },
+              {
+                label: 'Créé le',
+                wide: true,
+                cell: (p) => <span className="text-muted">{fmtDate(p.createdAt)}</span>,
+              },
+              { label: 'État', cell: pill },
+            ]}
+            card={(p) => (
+              <>
+                <span className="flex items-center justify-between gap-2">
+                  <strong className="font-mono">{p.code}</strong>
+                  {pill(p)}
+                </span>
+                <span className="text-sm text-muted">{summary(p)}</span>
+              </>
+            )}
+          />
         )}
-      </Card>
-    </>
+      </section>
+    </div>
   );
 }
 

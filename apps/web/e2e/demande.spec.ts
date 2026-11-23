@@ -72,6 +72,8 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await expect(pro.getByText('À traiter (1)')).toBeVisible();
   await expect(pro.getByRole('link', { name: 'Notifications, 1 non lue(s)' })).toBeVisible();
   await pro.getByRole('link', { name: /Ruth/ }).click();
+  // Attendre la fiche : le titre du premier article figure aussi dans la liste.
+  await expect(pro).toHaveURL(/\/pro\/demandes\/[0-9a-f-]{36}$/);
   await expect(pro.getByText('Robe midi plissée à col montant (exemple)')).toBeVisible();
   await expect(pro.getByText('Organiseur de cuisine en bambou')).toBeVisible();
   await expect(pro.getByText('Lue')).toBeVisible();
@@ -111,7 +113,7 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await expect(client.getByText(/· Devis version 1 accepté$/)).toBeVisible();
 
   await pro.getByRole('link', { name: 'Commandes', exact: true }).click();
-  await pro.getByText(/KZ-\d{4}-\d{6}/).click();
+  await pro.getByRole('link', { name: /KZ-\d{4}-\d{6}/ }).click();
 
   // --- Ajustement de prix : sans effet avant l'accord du client ---
   await pro.getByRole('button', { name: 'Proposer un ajustement de prix' }).click();
@@ -149,7 +151,7 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
 
   await pro.getByRole('link', { name: 'Commandes', exact: true }).click();
   await pro
-    .getByText(/KZ-\d{4}-\d{6}/)
+    .getByRole('link', { name: /KZ-\d{4}-\d{6}/ })
     .first()
     .click();
   await pro.getByRole('button', { name: 'Passer à « Achat en cours »' }).click();

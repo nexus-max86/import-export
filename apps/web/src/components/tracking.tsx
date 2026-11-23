@@ -102,7 +102,7 @@ export function CsvExportButton({
     }
   }
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1 lg:items-start">
       <Button variant="ghost" busy={busy} onClick={() => void download()}>
         {label}
       </Button>
