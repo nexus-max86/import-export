@@ -263,7 +263,7 @@ Deux directions ont été écartées et justifiées : « marché numérique » e
 |---|---|
 | `pnpm verify` (formatage, lint, types, build, tests) | Réussi |
 | Tests du paquet partagé (Vitest) | **65 / 65** |
-| Tests de l'API (Vitest, contre un vrai PostgreSQL et un vrai Redis) | **335 / 335**, dont les tests d’isolation sur les 34 tables métier listées dans `tenancy-tables.ts` |
+| Tests de l'API (Vitest, contre un vrai PostgreSQL et un vrai Redis) | **335 / 335**, dont les tests d’isolation sur les 32 tables d’organisation et les 2 tables personnelles listées dans `tenancy-tables.ts` |
 | Parcours de bout en bout (Playwright, Pixel 7) | **5 / 5** : inscription ; erreur de saisie ; demande → devis → paiement → achat → colis → expédition → suivi → notifications ; client géré qui réclame sa fiche ; administrateur avec MFA qui approuve |
 | Même suite sur la pile Docker de production (HTTPS) | 5 / 5 (le 22/11) |
 | Restauration d'une sauvegarde | Réussie (en local) |
