@@ -11,7 +11,7 @@ export default function ProParcelPage() {
   const org = useActiveOrg();
   if (!org) return null;
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 py-10">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-8 lg:px-8">
       <ProNav />
       <Link href="/pro/colis" className="text-sm font-semibold text-primary underline">
         ← Tous les colis

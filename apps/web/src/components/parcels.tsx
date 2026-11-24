@@ -15,7 +15,10 @@ import {
   type ParcelDetail,
   type ParcelSummary,
   type RouteTemplateInfo,
+  type ParcelItemInfo,
 } from '@konzia/shared';
+import { Check, Lock } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { ResponsiveList } from '@/components/responsive-list';
@@ -168,6 +171,90 @@ export function ParcelsBoard({ org }: { org: string }) {
 }
 
 /** Écran 09 : préparer un colis (multi-commandes, multi-clients). */
+const CONDITION_LABELS: Record<ParcelDetail['condition'], string> = {
+  ok: 'État : correct',
+  damaged: 'État : endommagé',
+  opened: 'État : ouvert',
+};
+
+/** Articles actifs regroupés par client (un colis peut mêler plusieurs clients). */
+function groupByCustomer(items: ParcelItemInfo[]) {
+  const map = new Map<
+    string,
+    {
+      customer: string;
+      managed: boolean;
+      orders: { id: string; number: string }[];
+      items: ParcelItemInfo[];
+    }
+  >();
+  for (const i of items) {
+    const g = map.get(i.customerName) ?? {
+      customer: i.customerName,
+      managed: i.managedCustomer,
+      orders: [],
+      items: [],
+    };
+    if (!g.orders.some((o) => o.id === i.orderId))
+      g.orders.push({ id: i.orderId, number: i.orderNumber });
+    g.items.push(i);
+    map.set(i.customerName, g);
+  }
+  return [...map.values()];
+}
+
+/**
+ * Cycle des articles du colis, d'après ses données réelles : « Contrôlé » vient de l'étape de suivi
+ * du même nom (contrôle du colis entier ; le contrôle article par article viendra avec R-3).
+ */
+function ItemCycle({ parcel, hasItems }: { parcel: ParcelDetail; hasItems: boolean }) {
+  const reached = (code: string) =>
+    parcel.events.some((e) => e.kind === 'step' && e.stepCode === code);
+  const shipped = Boolean(parcel.shipmentId) || reached('shipped_to_drc');
+  const steps: { label: string; state: 'done' | 'todo'; detail?: string }[] = [
+    {
+      label: 'Reçu',
+      state: hasItems ? 'done' : 'todo',
+      detail: hasItems ? 'à l’entrepôt' : undefined,
+    },
+    {
+      label: 'Contrôlé',
+      state: reached('checked') ? 'done' : 'todo',
+      detail: reached('checked') ? 'colis entier' : undefined,
+    },
+    {
+      label: 'Regroupé',
+      state: hasItems ? 'done' : 'todo',
+      detail: hasItems ? 'dans ce colis' : undefined,
+    },
+    { label: 'Expédié', state: shipped ? 'done' : 'todo' },
+    { label: 'Livré', state: parcel.status === 'delivered' ? 'done' : 'todo' },
+  ];
+  return (
+    <ol
+      aria-label="Cycle des articles"
+      className="grid grid-cols-5 gap-2 rounded-2xl border border-line bg-surface px-4 py-4 text-center text-xs font-semibold text-muted"
+    >
+      {steps.map((st) => (
+        <li key={st.label} className="flex flex-col items-center gap-1.5">
+          <span
+            className={`flex size-7 items-center justify-center rounded-full border-2 ${
+              st.state === 'done'
+                ? 'border-primary bg-primary text-on-primary'
+                : 'border-line-strong bg-surface'
+            }`}
+          >
+            {st.state === 'done' && <Check aria-hidden size={14} strokeWidth={3} />}
+          </span>
+          <span className={st.state === 'done' ? 'text-ink' : ''}>{st.label}</span>
+          {st.detail && <span className="font-normal">{st.detail}</span>}
+          <span className="sr-only">{st.state === 'done' ? 'fait' : 'à venir'}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export function ParcelEditor({ org, id }: { org: string; id: string }) {
   const [parcel, setParcel] = useState<ParcelDetail>();
   const [packable, setPackable] = useState<PackableItem[]>([]);
@@ -214,174 +301,230 @@ export function ParcelEditor({ org, id }: { org: string; id: string }) {
   const active = parcel.items.filter((i) => !i.removedAt);
   const removed = parcel.items.filter((i) => i.removedAt);
 
+  const groups = groupByCustomer(active);
+  const orderCount = new Set(active.map((i) => i.orderId)).size;
+
   return (
     <>
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="font-mono text-2xl font-bold">{parcel.code}</h1>
-        <StatusPill tone={open ? 'warn' : 'neutral'}>
-          {PARCEL_STATUS_LABELS[parcel.status]}
-        </StatusPill>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="font-mono text-2xl font-bold tracking-wide">{parcel.code}</h1>
+            <StatusPill tone={open ? 'warn' : 'neutral'}>
+              {PARCEL_STATUS_LABELS[parcel.status]}
+            </StatusPill>
+            <StatusPill tone={parcel.condition === 'ok' ? 'ok' : 'bad'}>
+              {CONDITION_LABELS[parcel.condition]}
+            </StatusPill>
+          </div>
+          <p className="text-sm text-muted">
+            {active.length} article(s) · {groups.length} client(s) · {orderCount} commande(s)
+            {parcel.locationLabel ? ` · ${parcel.locationLabel}` : ''}
+          </p>
+        </div>
       </div>
       {error && <Notice tone="error">{error}</Notice>}
       {info && <Notice tone="ok">{info}</Notice>}
 
-      <MeasuresCard
-        key={`${parcel.weightG}-${parcel.lengthMm}-${parcel.widthMm}-${parcel.heightMm}-${parcel.volumetricDivisor}-${parcel.condition}`}
-        parcel={parcel}
-        disabled={!editable}
-        busy={busy === 'measures'}
-        onSave={(body) =>
-          run(
-            'measures',
-            () => api<ParcelDetail>(`/org/parcels/${id}`, { org, method: 'PATCH', body }),
-            'Mesures enregistrées.',
-          )
-        }
-      />
+      <ItemCycle parcel={parcel} hasItems={active.length > 0} />
 
-      <Card>
-        <h2 className="font-display text-lg font-bold">Articles dans ce colis ({active.length})</h2>
-        {active.length === 0 ? (
-          <p className="text-sm text-muted">Aucun article pour l’instant.</p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {active.map((i) => (
-              <ParcelItemRow
-                key={i.id}
-                item={i}
-                canRemove={open}
-                busy={busy === i.id}
-                onRemove={(reason) =>
-                  run(i.id, () =>
-                    api<ParcelDetail>(`/org/parcels/${id}/items/${i.id}/remove`, {
-                      org,
-                      body: { reason },
-                    }),
-                  )
-                }
-              />
-            ))}
-          </ul>
-        )}
-        {removed.length > 0 && (
-          <details className="text-sm">
-            <summary className="cursor-pointer text-muted">
-              Articles retirés ({removed.length}) — historique conservé
-            </summary>
-            <ul className="mt-2 flex flex-col gap-1">
-              {removed.map((i) => (
-                <li key={i.id} className="text-muted">
-                  {i.description} × {i.quantity} · {i.orderNumber} · retiré le{' '}
-                  {fmtDate(i.removedAt)} : {i.removedReason}
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
-      </Card>
+      <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+        <div className="flex min-w-0 flex-col gap-5">
+          <MeasuresCard
+            key={`${parcel.weightG}-${parcel.lengthMm}-${parcel.widthMm}-${parcel.heightMm}-${parcel.volumetricDivisor}-${parcel.condition}`}
+            parcel={parcel}
+            disabled={!editable}
+            busy={busy === 'measures'}
+            onSave={(body) =>
+              run(
+                'measures',
+                () => api<ParcelDetail>(`/org/parcels/${id}`, { org, method: 'PATCH', body }),
+                'Mesures enregistrées.',
+              )
+            }
+          />
 
-      {open && (
-        <AddItemsCard
-          items={packable}
-          busy={busy === 'add'}
-          onAdd={(items) =>
-            run(
-              'add',
-              () => api<ParcelDetail>(`/org/parcels/${id}/items`, { org, body: { items } }),
-              'Articles ajoutés au colis.',
-            )
-          }
-        />
-      )}
+          <Card>
+            <h2 className="font-display text-lg font-bold">
+              Articles dans ce colis ({active.length})
+            </h2>
+            <p className="-mt-2 flex items-center gap-1.5 text-xs text-muted">
+              <Lock aria-hidden size={13} />
+              Chaque client ne voit que ses propres articles.
+            </p>
+            {active.length === 0 ? (
+              <p className="text-sm text-muted">Aucun article pour l’instant.</p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {groups.map((g) => (
+                  <section
+                    key={g.customer}
+                    aria-label={`Articles de ${g.customer}`}
+                    className="flex flex-col gap-2"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-sunken px-3 py-2 text-sm">
+                      <strong>
+                        {g.customer}
+                        {g.managed && (
+                          <span className="font-normal text-muted"> · client géré</span>
+                        )}
+                      </strong>
+                      <span className="flex flex-wrap gap-2">
+                        {g.orders.map((o) => (
+                          <Link
+                            key={o.id}
+                            href={`/pro/commandes/${o.id}`}
+                            className="font-mono text-xs font-bold text-primary-strong hover:underline"
+                          >
+                            {o.number}
+                          </Link>
+                        ))}
+                      </span>
+                    </div>
+                    <ul className="flex flex-col gap-2">
+                      {g.items.map((i) => (
+                        <ParcelItemRow
+                          key={i.id}
+                          item={i}
+                          canRemove={open}
+                          busy={busy === i.id}
+                          onRemove={(reason) =>
+                            run(i.id, () =>
+                              api<ParcelDetail>(`/org/parcels/${id}/items/${i.id}/remove`, {
+                                org,
+                                body: { reason },
+                              }),
+                            )
+                          }
+                        />
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            )}
+            {removed.length > 0 && (
+              <details className="text-sm">
+                <summary className="cursor-pointer text-muted">
+                  Articles retirés ({removed.length}) — historique conservé
+                </summary>
+                <ul className="mt-2 flex flex-col gap-1">
+                  {removed.map((i) => (
+                    <li key={i.id} className="text-muted">
+                      {i.description} × {i.quantity} · {i.orderNumber} · retiré le{' '}
+                      {fmtDate(i.removedAt)} : {i.removedReason}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </Card>
 
-      <TrackingCard
-        parcel={parcel}
-        templates={templates}
-        busy={busy}
-        onTemplate={(routeTemplateId) =>
-          run(
-            'route',
-            () =>
-              api<ParcelDetail>(`/org/parcels/${id}`, {
-                org,
-                method: 'PATCH',
-                body: { routeTemplateId },
-              }),
-            'Itinéraire enregistré.',
-          )
-        }
-        onEvent={(body) =>
-          run(
-            'event',
-            () => api<ParcelDetail>(`/org/parcels/${id}/events`, { org, body }),
-            'Étape enregistrée.',
-          )
-        }
-      />
-
-      <PhotosCard
-        org={org}
-        parcel={parcel}
-        busy={busy === 'photo'}
-        onUpload={(file) => {
-          const form = new FormData();
-          form.append('file', file);
-          void run(
-            'photo',
-            () => apiUpload<ParcelDetail>(`/org/parcels/${id}/photos`, form, org),
-            'Photo ajoutée.',
-          );
-        }}
-      />
-
-      <Card>
-        <h2 className="font-display text-lg font-bold">État du colis</h2>
-        <div className="flex flex-wrap gap-2">
           {open && (
-            <Button
-              busy={busy === 'close'}
-              onClick={() =>
+            <AddItemsCard
+              items={packable}
+              busy={busy === 'add'}
+              onAdd={(items) =>
                 run(
-                  'close',
-                  () => api<ParcelDetail>(`/org/parcels/${id}/close`, { org, body: {} }),
-                  'Colis fermé.',
+                  'add',
+                  () => api<ParcelDetail>(`/org/parcels/${id}/items`, { org, body: { items } }),
+                  'Articles ajoutés au colis.',
                 )
               }
-            >
-              Fermer le colis
-            </Button>
-          )}
-          {parcel.status === 'closed' && (
-            <Button
-              variant="ghost"
-              busy={busy === 'reopen'}
-              onClick={() =>
-                run('reopen', () =>
-                  api<ParcelDetail>(`/org/parcels/${id}/reopen`, { org, body: {} }),
-                )
-              }
-            >
-              Rouvrir le colis
-            </Button>
-          )}
-          {open && active.length === 0 && (
-            <Button
-              variant="ghost"
-              busy={busy === 'cancel'}
-              onClick={() =>
-                run('cancel', () =>
-                  api<ParcelDetail>(`/org/parcels/${id}/cancel`, { org, body: {} }),
-                )
-              }
-            >
-              Annuler ce colis vide
-            </Button>
+            />
           )}
         </div>
-        <p className="text-xs text-muted">
-          Un colis fermé peut rejoindre une expédition (menu « Expéditions »).
-        </p>
-      </Card>
+        <div className="flex min-w-0 flex-col gap-5">
+          <TrackingCard
+            parcel={parcel}
+            templates={templates}
+            busy={busy}
+            onTemplate={(routeTemplateId) =>
+              run(
+                'route',
+                () =>
+                  api<ParcelDetail>(`/org/parcels/${id}`, {
+                    org,
+                    method: 'PATCH',
+                    body: { routeTemplateId },
+                  }),
+                'Itinéraire enregistré.',
+              )
+            }
+            onEvent={(body) =>
+              run(
+                'event',
+                () => api<ParcelDetail>(`/org/parcels/${id}/events`, { org, body }),
+                'Étape enregistrée.',
+              )
+            }
+          />
+
+          <PhotosCard
+            org={org}
+            parcel={parcel}
+            busy={busy === 'photo'}
+            onUpload={(file) => {
+              const form = new FormData();
+              form.append('file', file);
+              void run(
+                'photo',
+                () => apiUpload<ParcelDetail>(`/org/parcels/${id}/photos`, form, org),
+                'Photo ajoutée.',
+              );
+            }}
+          />
+
+          <Card>
+            <h2 className="font-display text-lg font-bold">État du colis</h2>
+            <div className="flex flex-wrap gap-2">
+              {open && (
+                <Button
+                  busy={busy === 'close'}
+                  onClick={() =>
+                    run(
+                      'close',
+                      () => api<ParcelDetail>(`/org/parcels/${id}/close`, { org, body: {} }),
+                      'Colis fermé.',
+                    )
+                  }
+                >
+                  Fermer le colis
+                </Button>
+              )}
+              {parcel.status === 'closed' && (
+                <Button
+                  variant="ghost"
+                  busy={busy === 'reopen'}
+                  onClick={() =>
+                    run('reopen', () =>
+                      api<ParcelDetail>(`/org/parcels/${id}/reopen`, { org, body: {} }),
+                    )
+                  }
+                >
+                  Rouvrir le colis
+                </Button>
+              )}
+              {open && active.length === 0 && (
+                <Button
+                  variant="ghost"
+                  busy={busy === 'cancel'}
+                  onClick={() =>
+                    run('cancel', () =>
+                      api<ParcelDetail>(`/org/parcels/${id}/cancel`, { org, body: {} }),
+                    )
+                  }
+                >
+                  Annuler ce colis vide
+                </Button>
+              )}
+            </div>
+            <p className="text-xs text-muted">
+              Un colis fermé peut rejoindre une expédition (menu « Expéditions »).
+            </p>
+          </Card>
+        </div>
+      </div>
     </>
   );
 }
@@ -535,10 +678,6 @@ function ParcelItemRow({
           {item.description} × {item.quantity}
         </strong>
         <span className="font-mono text-xs">{item.orderNumber}</span>
-      </span>
-      <span className="text-muted">
-        {item.customerName}
-        {item.managedCustomer ? ' · client géré' : ''}
       </span>
       {canRemove && !asking && (
         <button
