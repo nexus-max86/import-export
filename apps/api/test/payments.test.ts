@@ -165,6 +165,14 @@ describe('Paiements directs', () => {
       .set(...asOrg(orgO))
       .expect(404);
     expect((await other.agent.get('/api/org/payments').set(...asOrg(orgO))).body).toEqual([]);
+    const mine = await kaseba.agent
+      .get('/api/org/payments')
+      .set(...asOrg(orgK))
+      .expect(200);
+    expect(mine.body[0].customerName).toEqual(expect.any(String));
+    // Le nom de la fiche client reste propre au commissionnaire : absent côté client.
+    const own = await ruth.agent.get(`/api/orders/${orderId}/payments`).expect(200);
+    expect(own.body[0].customerName).toBeUndefined();
   });
 
   it('paiement en francs congolais converti au taux en vigueur, taux conservé', async () => {

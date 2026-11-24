@@ -17,7 +17,7 @@ import { api, ApiError, apiUpload } from '@/lib/api';
 import { fmtAmount, fmtDate } from '@/lib/format';
 import { inputToMinor, minorToInput } from '@/lib/money-input';
 
-const tone = (s: PaymentInfo['status']) =>
+export const paymentTone = (s: PaymentInfo['status']) =>
   s === 'confirmed'
     ? 'ok'
     : s === 'pending_verification'
@@ -50,7 +50,7 @@ export function PaymentHistory({
                 </span>
               )}
             </strong>
-            <StatusPill tone={tone(p.status)}>{PAYMENT_STATE_LABELS[p.status]}</StatusPill>
+            <StatusPill tone={paymentTone(p.status)}>{PAYMENT_STATE_LABELS[p.status]}</StatusPill>
           </div>
           <span className="text-muted">
             {[

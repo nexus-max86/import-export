@@ -97,6 +97,8 @@ export interface PaymentInfo {
   declaredByCustomer: boolean;
   confirmedAt: string | null;
   createdAt: string;
+  /** Nom du client, renseigné seulement dans les listes du commissionnaire. */
+  customerName?: string;
 }
 
 /** « Qui doit combien » : soldes par client et par devise. */

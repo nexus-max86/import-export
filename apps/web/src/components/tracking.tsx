@@ -68,7 +68,7 @@ export function CsvExportButton({
   label,
 }: {
   org: string;
-  kind: 'orders' | 'parcels';
+  kind: 'orders' | 'parcels' | 'payments';
   label: string;
 }) {
   const [busy, setBusy] = useState(false);

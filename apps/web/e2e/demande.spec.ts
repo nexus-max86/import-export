@@ -143,8 +143,11 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await expect(pro.getByText('Ruth', { exact: false }).first()).toBeVisible();
   await pro.getByRole('button', { name: 'Confirmer la réception' }).click();
   await expect(pro.getByText('Paiement de 91,28 USD confirmé.')).toBeVisible();
-  await expect(pro.getByText('Aucun solde en attente : tout est payé.')).toBeVisible();
+  await pro.getByRole('tab', { name: /Tous les paiements/ }).click();
+  await expect(pro.getByText('Confirmé').first()).toBeVisible();
   await shot(pro, '06-pro-paiements');
+  await pro.getByRole('tab', { name: /Soldes clients/ }).click();
+  await expect(pro.getByText('Aucun solde en attente')).toBeVisible();
 
   await client.reload();
   await expect(client.getByText('Payée').first()).toBeVisible();

@@ -468,20 +468,33 @@ export class PaymentsService {
     org: OrgContext,
     filter: { orderId?: string; pending?: boolean },
   ): Promise<PaymentInfo[]> {
-    return this.db.run(userId, async (tx) =>
-      (
-        await tx.payment.findMany({
-          where: {
-            organizationId: org.organizationId,
-            ...(filter.orderId ? { orderId: filter.orderId } : {}),
-            ...(filter.pending ? { status: 'pending_verification' } : {}),
-          },
-          select: PAYMENT_SELECT,
-          orderBy: { createdAt: filter.pending ? 'asc' : 'desc' },
-          take: 300,
-        })
-      ).map(toInfo),
-    );
+    return this.db.run(userId, async (tx) => {
+      const rows = await tx.payment.findMany({
+        where: {
+          organizationId: org.organizationId,
+          ...(filter.orderId ? { orderId: filter.orderId } : {}),
+          ...(filter.pending ? { status: 'pending_verification' } : {}),
+        },
+        select: PAYMENT_SELECT,
+        orderBy: { createdAt: filter.pending ? 'asc' : 'desc' },
+        take: 300,
+      });
+      // Nom du client (fiche du commissionnaire) pour les listes de l'espace professionnel.
+      const orders = await tx.order.findMany({
+        where: { id: { in: [...new Set(rows.map((r) => r.orderId))] } },
+        select: { id: true, orgCustomerId: true },
+      });
+      const customers = await tx.orgCustomer.findMany({
+        where: { id: { in: [...new Set(orders.map((o) => o.orgCustomerId))] } },
+        select: { id: true, fullName: true },
+      });
+      const nameOf = new Map(customers.map((c) => [c.id, c.fullName]));
+      const customerOf = new Map(orders.map((o) => [o.id, nameOf.get(o.orgCustomerId)]));
+      return rows.map((r) => ({
+        ...toInfo(r),
+        customerName: customerOf.get(r.orderId) ?? undefined,
+      }));
+    });
   }
 
   /** Preuve de paiement déchiffrée, pour les membres autorisés du commissionnaire (RLS sur files). */
