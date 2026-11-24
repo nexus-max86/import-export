@@ -172,3 +172,105 @@ export const PurchaseRuleSchema = z
     message: 'Indiquez le pourcentage d’acompte.',
     path: ['depositBps'],
   });
+
+// --- Liste paginée des commandes côté commissionnaire (décision R-9, D10) ---------------------
+
+/** Onglets du tableau des commandes : chaque onglet regroupe des étapes. */
+export const ORG_ORDER_TABS = [
+  'all',
+  'awaiting_payment',
+  'payment_to_verify',
+  'to_purchase',
+  'logistics',
+  'in_transit',
+  'to_handover',
+  'completed',
+  'cancelled',
+] as const;
+export type OrgOrderTab = (typeof ORG_ORDER_TABS)[number];
+
+export const ORG_ORDER_TAB_LABELS: Record<OrgOrderTab, string> = {
+  all: 'Toutes',
+  awaiting_payment: 'Attente de paiement',
+  payment_to_verify: 'Paiement à vérifier',
+  to_purchase: 'À acheter',
+  logistics: 'En logistique',
+  in_transit: 'En transport',
+  to_handover: 'À remettre',
+  completed: 'Terminées',
+  cancelled: 'Annulées',
+};
+
+export const ORG_ORDER_TAB_STATUSES: Record<Exclude<OrgOrderTab, 'all'>, OrderStatus[]> = {
+  awaiting_payment: ['awaiting_payment'],
+  payment_to_verify: ['payment_to_verify'],
+  to_purchase: ['paid', 'purchasing', 'partially_purchased'],
+  logistics: ['purchased', 'in_logistics'],
+  in_transit: ['in_transit'],
+  to_handover: ['at_distribution_point', 'ready_for_handover'],
+  completed: ['completed'],
+  cancelled: ['cancelled'],
+};
+
+export const OrgOrderPageQuerySchema = z.object({
+  tab: z.enum(ORG_ORDER_TABS).default('all'),
+  q: z.string().trim().max(80).optional(),
+  payment: z.enum(['owing', 'paid']).optional(),
+  sort: z.enum(['activity', 'created', 'amount']).default('activity'),
+  dir: z.enum(['asc', 'desc']).default('desc'),
+  page: z.coerce.number().int().min(1).max(10_000).default(1),
+  pageSize: z.coerce
+    .number()
+    .int()
+    .refine((n) => [25, 50, 100].includes(n), 'Taille de page : 25, 50 ou 100.')
+    .default(25),
+});
+export type OrgOrderPageQuery = z.infer<typeof OrgOrderPageQuerySchema>;
+
+/** Prochaine action du commissionnaire, déduite des données existantes (aucune saisie). */
+export const ORDER_NEXT_ACTIONS = [
+  'verify_payment',
+  'await_payment',
+  'purchase',
+  'complete_purchase',
+  'receive',
+  'pack',
+  'ship',
+  'await_arrival',
+  'prepare_handover',
+  'collect_balance',
+  'hand_over',
+] as const;
+export type OrderNextAction = (typeof ORDER_NEXT_ACTIONS)[number];
+
+export const ORDER_NEXT_ACTION_LABELS: Record<OrderNextAction, string> = {
+  verify_payment: 'Vérifier le paiement',
+  await_payment: 'En attente du client',
+  purchase: 'Enregistrer l’achat',
+  complete_purchase: 'Compléter l’achat',
+  receive: 'Réceptionner les articles',
+  pack: 'Mettre en colis',
+  ship: 'Expédier',
+  await_arrival: 'Suivre l’arrivée',
+  prepare_handover: 'Préparer la remise',
+  collect_balance: 'Encaisser le solde',
+  hand_over: 'Remettre au client',
+};
+
+/** Actions qui n'attendent que les autres (client, transporteur) : affichées en discret. */
+export const WAITING_NEXT_ACTIONS: OrderNextAction[] = ['await_payment', 'await_arrival'];
+
+export interface OrgOrderRow extends OrderSummary {
+  itemCount: number;
+  firstItem: string | null;
+  nextAction: OrderNextAction | null;
+  updatedAt: string;
+}
+
+export interface OrgOrderPage {
+  items: OrgOrderRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  counts: Record<OrgOrderTab, number>;
+}

@@ -15,6 +15,7 @@ import { FxModule } from './fx/fx.module';
 import { GeoModule } from './geo/geo.module';
 import { HealthController } from './health/health.controller';
 import { OrdersModule } from './orders/orders.module';
+import { OverviewModule } from './overview/overview.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { PaymentsModule } from './payments/payments.module';
 import { SupplierOrdersModule } from './supplier-orders/supplier-orders.module';
@@ -70,6 +71,7 @@ const env = loadEnv();
     FxModule,
     QuotesModule,
     OrdersModule,
+    OverviewModule,
     PaymentsModule,
     SupplierOrdersModule,
     ParcelsModule,

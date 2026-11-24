@@ -81,6 +81,31 @@ describe('Cycle de vie des commandes', () => {
     ]);
   });
 
+  it('tableau paginé : onglets, recherche, tri, prochaine action (R-9)', async () => {
+    const page = (qs: string) => kaseba.agent.get(`/api/org/orders/page?${qs}`).set(...asOrg(orgK));
+    const all = await page('pageSize=25').expect(200);
+    const row = all.body.items.find((r: { id: string }) => r.id === orderId);
+    expect(row).toMatchObject({ nextAction: 'await_payment', itemCount: expect.any(Number) });
+    expect(all.body.counts.awaiting_payment).toBeGreaterThanOrEqual(1);
+    expect(all.body.total).toBe(all.body.counts.all);
+
+    const number = row.number as string;
+    const found = await page(`q=${encodeURIComponent(number)}`).expect(200);
+    expect(found.body.items.map((r: { id: string }) => r.id)).toEqual([orderId]);
+    await page('q=aucun-resultat-xyz')
+      .expect(200)
+      .expect((r) => expect(r.body.items).toEqual([]));
+
+    await setStatus('paid');
+    const toBuy = await page('tab=to_purchase&sort=amount&dir=asc').expect(200);
+    expect(toBuy.body.items.find((r: { id: string }) => r.id === orderId)?.nextAction).toBe(
+      'purchase',
+    );
+
+    await page('pageSize=7').expect(400);
+    await page('tab=inconnu').expect(400);
+  });
+
   it('refuse un saut d’étape, même en SQL direct', async () => {
     await setStatus('paid');
     await move('in_transit').expect(400);

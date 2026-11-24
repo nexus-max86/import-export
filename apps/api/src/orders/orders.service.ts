@@ -10,7 +10,13 @@ import {
   PURCHASE_RULE_LABELS,
   ORG_NEXT_STATUSES,
   ORDER_STATUS_LABELS,
+  ORG_ORDER_TABS,
+  ORG_ORDER_TAB_STATUSES,
   type OrderDetail,
+  type OrderNextAction,
+  type OrgOrderPage,
+  type OrgOrderPageQuery,
+  type OrgOrderTab,
   type OrderPaymentStatus,
   type OrderStatus,
   type OrderSummary,
@@ -71,6 +77,38 @@ const PRE_PURCHASE_STATUSES: OrderStatus[] = ['awaiting_payment', 'payment_to_ve
 
 /** Statuts de paiement pour lesquels un solde reste dû. */
 const OUTSTANDING: readonly OrderPaymentStatus[] = ['unpaid', 'partially_paid'];
+
+/** Prochaine action déduite de l'étape, du paiement et des réceptions (aucune donnée nouvelle). */
+export function nextAction(
+  status: OrderStatus,
+  payment: OrderPaymentStatus,
+  paymentPending: boolean,
+  itemsToReceive: boolean,
+): OrderNextAction | null {
+  if (status === 'completed' || status === 'cancelled' || status === 'in_dispute') return null;
+  if (paymentPending || status === 'payment_to_verify') return 'verify_payment';
+  switch (status) {
+    case 'awaiting_payment':
+      return 'await_payment';
+    case 'paid':
+      return 'purchase';
+    case 'purchasing':
+    case 'partially_purchased':
+      return 'complete_purchase';
+    case 'purchased':
+      return itemsToReceive ? 'receive' : 'pack';
+    case 'in_logistics':
+      return 'ship';
+    case 'in_transit':
+      return 'await_arrival';
+    case 'at_distribution_point':
+      return 'prepare_handover';
+    case 'ready_for_handover':
+      return OUTSTANDING.includes(payment) ? 'collect_balance' : 'hand_over';
+    default:
+      return null;
+  }
+}
 
 @Injectable()
 export class OrdersService {
@@ -411,6 +449,106 @@ export class OrdersService {
     });
     if (!o) throw new NotFoundException('Commande introuvable.');
     return o;
+  }
+
+  /** Tableau paginé du commissionnaire : onglets, recherche, tri, prochaine action (R-9). */
+  pageForOrg(userId: string, org: OrgContext, q: OrgOrderPageQuery): Promise<OrgOrderPage> {
+    return this.db.run(userId, async (tx) => {
+      const base: Prisma.OrderWhereInput = { organizationId: org.organizationId };
+      if (q.q) {
+        const term = q.q;
+        const digits = term.replace(/\D/g, '');
+        const customers = await tx.orgCustomer.findMany({
+          where: {
+            organizationId: org.organizationId,
+            OR: [
+              { fullName: { contains: term, mode: 'insensitive' } },
+              ...(digits.length >= 4 ? [{ phoneWhatsapp: { contains: digits } }] : []),
+            ],
+          },
+          select: { id: true },
+          take: 500,
+        });
+        base.OR = [
+          { number: { contains: term, mode: 'insensitive' } },
+          { orgCustomerId: { in: customers.map((c) => c.id) } },
+        ];
+      }
+      if (q.payment === 'owing') base.paymentStatus = { in: [...OUTSTANDING] };
+      if (q.payment === 'paid') base.paymentStatus = { notIn: [...OUTSTANDING] };
+
+      const grouped = await tx.order.groupBy({
+        by: ['status'],
+        where: base,
+        _count: { _all: true },
+      });
+      const byStatus = new Map(grouped.map((g) => [g.status, g._count._all]));
+      const counts = Object.fromEntries(
+        ORG_ORDER_TABS.map((tab) => [
+          tab,
+          tab === 'all'
+            ? grouped.reduce((n, g) => n + g._count._all, 0)
+            : ORG_ORDER_TAB_STATUSES[tab].reduce((n, s) => n + (byStatus.get(s) ?? 0), 0),
+        ]),
+      ) as Record<OrgOrderTab, number>;
+
+      const where: Prisma.OrderWhereInput =
+        q.tab === 'all' ? base : { ...base, status: { in: ORG_ORDER_TAB_STATUSES[q.tab] } };
+      const orderBy: Prisma.OrderOrderByWithRelationInput =
+        q.sort === 'amount'
+          ? { finalAmount: q.dir }
+          : q.sort === 'created'
+            ? { createdAt: q.dir }
+            : { updatedAt: q.dir };
+      const rows = await tx.order.findMany({
+        where,
+        orderBy: [orderBy, { id: 'desc' }],
+        skip: (q.page - 1) * q.pageSize,
+        take: q.pageSize,
+        select: { ...SUMMARY_SELECT, updatedAt: true },
+      });
+      const ids = rows.map((r) => r.id);
+      const [summaries, items, pending] = await Promise.all([
+        this.summaries(tx, rows),
+        tx.orderItem.findMany({
+          where: { orderId: { in: ids } },
+          orderBy: { createdAt: 'asc' },
+          select: {
+            orderId: true,
+            description: true,
+            qtyPurchased: true,
+            qtyReceived: true,
+          },
+        }),
+        tx.payment.groupBy({
+          by: ['orderId'],
+          where: { orderId: { in: ids }, status: 'pending_verification' },
+          _count: { _all: true },
+        }),
+      ]);
+      const pendingIds = new Set(pending.map((p) => p.orderId));
+      return {
+        items: summaries.map((s, i) => {
+          const own = items.filter((it) => it.orderId === s.id);
+          return {
+            ...s,
+            itemCount: own.length,
+            firstItem: own[0]?.description ?? null,
+            updatedAt: rows[i]!.updatedAt.toISOString(),
+            nextAction: nextAction(
+              s.status,
+              s.paymentStatus,
+              pendingIds.has(s.id),
+              own.some((it) => it.qtyReceived < it.qtyPurchased),
+            ),
+          };
+        }),
+        total: counts[q.tab],
+        page: q.page,
+        pageSize: q.pageSize,
+        counts,
+      };
+    });
   }
 
   listForCustomer(userId: string): Promise<OrderSummary[]> {

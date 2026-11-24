@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
 import {
   CancelOrderSchema,
   DecideAdjustmentSchema,
@@ -10,6 +10,9 @@ import {
   type OrderDetail,
   type OrderStatus,
   type OrderSummary,
+  OrgOrderPageQuerySchema,
+  type OrgOrderPage,
+  type OrgOrderPageQuery,
 } from '@konzia/shared';
 import { ZodBody } from '../common/zod-body.pipe';
 import type { AuthContext } from '../auth/auth.types';
@@ -35,6 +38,16 @@ export class OrdersController {
   @ForOrg('order.view')
   listForOrg(@Auth() auth: AuthContext, @Org() org: OrgContext): Promise<OrderSummary[]> {
     return this.orders.listForOrg(auth.userId, org);
+  }
+
+  @Get('org/orders/page')
+  @ForOrg('order.view')
+  pageForOrg(
+    @Auth() auth: AuthContext,
+    @Org() org: OrgContext,
+    @Query(new ZodBody(OrgOrderPageQuerySchema)) q: OrgOrderPageQuery,
+  ): Promise<OrgOrderPage> {
+    return this.orders.pageForOrg(auth.userId, org, q);
   }
 
   @Get('org/orders/:id')
