@@ -113,7 +113,8 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await expect(client.getByText(/· Devis version 1 accepté$/)).toBeVisible();
 
   await pro.getByRole('link', { name: 'Commandes', exact: true }).click();
-  await pro.getByRole('link', { name: /KZ-\d{4}-\d{6}/ }).click();
+  await pro.getByRole('button', { name: /KZ-\d{4}-\d{6}/ }).click();
+  await pro.getByRole('link', { name: 'Ouvrir la fiche' }).click();
 
   // --- Ajustement de prix : sans effet avant l'accord du client ---
   await pro.getByRole('button', { name: 'Proposer un ajustement de prix' }).click();
@@ -151,9 +152,10 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
 
   await pro.getByRole('link', { name: 'Commandes', exact: true }).click();
   await pro
-    .getByRole('link', { name: /KZ-\d{4}-\d{6}/ })
+    .getByRole('button', { name: /KZ-\d{4}-\d{6}/ })
     .first()
     .click();
+  await pro.getByRole('link', { name: 'Ouvrir la fiche' }).click();
   await pro.getByRole('button', { name: 'Passer à « Achat en cours »' }).click();
   await expect(pro.getByText('Achat en cours').first()).toBeVisible();
 

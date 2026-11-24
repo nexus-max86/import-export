@@ -45,6 +45,7 @@
   --ease-in-out-quad: cubic-bezier(0.45, 0, 0.55, 1);
   --animate-enter: kz-enter 220ms var(--ease-out-quint) backwards;
   --animate-page: kz-page 200ms var(--ease-out-quint) backwards;
+  --animate-drawer: kz-drawer 240ms var(--ease-out-quint) backwards;
   --animate-shimmer: kz-shimmer 1.4s var(--ease-in-out-quad) infinite;
   --animate-spin-fast: spin 0.7s linear infinite;
 
@@ -58,6 +59,12 @@
     from {
       opacity: 0;
       transform: translateY(6px);
+    }
+  }
+  @keyframes kz-drawer {
+    from {
+      transform: translateX(24px);
+      opacity: 0;
     }
   }
   @keyframes kz-shimmer {

@@ -33,9 +33,10 @@ export default function ProHomePage() {
     void load();
   }, [load]);
 
-  function open(id: string) {
+  /** Activité existante : vue générale ; activité tout juste créée : d'abord les clients. */
+  function open(id: string, to = '/pro/vue-generale') {
     setActiveOrg(id);
-    router.push('/pro/clients');
+    router.push(to);
   }
 
   async function create(e: FormEvent<HTMLFormElement>) {
@@ -55,7 +56,7 @@ export default function ProHomePage() {
     setBusy(true);
     try {
       const org = await api<MembershipSummary>('/organizations', { body: parsed.data });
-      open(org.organizationId);
+      open(org.organizationId, '/pro/clients');
     } catch (err) {
       if (err instanceof ApiError) setFormError(err.message);
       setBusy(false);

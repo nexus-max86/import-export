@@ -4,7 +4,7 @@ import { Card } from '@/components/ui';
 import { fmtAmount, fmtDate } from '@/lib/format';
 
 /** Vue d'une commande commune au client et au commissionnaire. */
-const EVENT_LABELS: Record<string, string> = {
+export const EVENT_LABELS: Record<string, string> = {
   created: 'Commande créée',
   adjustment_proposed: 'Ajustement proposé',
   adjustment_accepted: 'Ajustement accepté',

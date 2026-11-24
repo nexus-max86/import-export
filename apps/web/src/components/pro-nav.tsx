@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import {
   BadgeCheck,
+  LayoutDashboard,
   Boxes,
   Inbox,
   Package,
@@ -21,6 +22,7 @@ const GROUPS: NavGroup[] = [
   {
     title: 'Activité',
     links: [
+      { href: '/pro/vue-generale', label: 'Vue générale', icon: LayoutDashboard },
       { href: '/pro/demandes', label: 'Demandes', icon: Inbox },
       { href: '/pro/commandes', label: 'Commandes', icon: Package },
       { href: '/pro/achats', label: 'Achats', icon: ShoppingBag },

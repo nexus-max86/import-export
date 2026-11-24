@@ -11,6 +11,9 @@ export default defineConfig({
   globalSetup: './e2e/global-setup.ts',
   fullyParallel: false,
   retries: process.env.CI ? 1 : 0,
+  // Le serveur Next.js de développement compile chaque page à sa première visite : 10 s laissent
+  // le temps à cette compilation sans masquer une vraie attente.
+  expect: { timeout: 10_000 },
   use: { baseURL: 'http://localhost:3100', trace: 'off', locale: 'fr-FR' },
   projects: [{ name: 'android', use: { ...devices['Pixel 7'] } }],
   webServer: [
