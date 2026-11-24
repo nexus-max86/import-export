@@ -3,6 +3,8 @@ import {
   csvAmount,
   ORDER_STATUS_LABELS,
   PARCEL_STATUS_LABELS,
+  PAYMENT_METHOD_LABELS,
+  PAYMENT_STATE_LABELS,
   PAYMENT_STATUS_LABELS,
   STEP_LABELS,
   toCsv,
@@ -101,6 +103,86 @@ export class ExportsController {
       ]);
     });
     return this.file(res, csv, 'commandes');
+  }
+
+  /** Paiements et remboursements (EF-108) : tous statuts, la trace de chaque mouvement d'argent. */
+  @Get('payments.csv')
+  @ForOrg('export.csv')
+  @Header('Cache-Control', 'private, no-store')
+  async payments(
+    @Auth() auth: AuthContext,
+    @Org() org: OrgContext,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    const csv = await this.db.run(auth.userId, async (tx) => {
+      const rows = await tx.payment.findMany({
+        where: { organizationId: org.organizationId },
+        select: {
+          orderId: true,
+          orgCustomerId: true,
+          kind: true,
+          method: true,
+          provider: true,
+          amount: true,
+          currency: true,
+          orderAmount: true,
+          fxRate: true,
+          payerReference: true,
+          status: true,
+          createdAt: true,
+          confirmedAt: true,
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+      const orders = await tx.order.findMany({
+        where: { id: { in: [...new Set(rows.map((r) => r.orderId))] } },
+        select: { id: true, number: true, currency: true },
+      });
+      const byId = new Map(orders.map((o) => [o.id, o]));
+      const names = await this.customers(
+        tx,
+        rows.map((r) => r.orgCustomerId),
+      );
+      await this.trace(tx, auth, org, 'export.payments_csv', rows.length);
+      return toCsv([
+        [
+          'Date',
+          'Commande',
+          'Client',
+          'Type',
+          'Moyen',
+          'Opérateur',
+          'Montant',
+          'Devise',
+          'Montant (devise commande)',
+          'Devise commande',
+          'Taux',
+          'Statut',
+          'Référence',
+          'Confirmé le',
+        ],
+        ...rows.map((r) => {
+          const o = byId.get(r.orderId);
+          return [
+            day(r.createdAt),
+            o?.number,
+            names.get(r.orgCustomerId)?.fullName,
+            r.kind === 'refund' ? 'Remboursement' : 'Paiement',
+            PAYMENT_METHOD_LABELS[r.method],
+            r.provider,
+            csvAmount(Number(r.amount)),
+            r.currency,
+            csvAmount(Number(r.orderAmount)),
+            o?.currency,
+            r.fxRate?.toString().replace('.', ','),
+            PAYMENT_STATE_LABELS[r.status],
+            r.payerReference,
+            r.confirmedAt ? day(r.confirmedAt) : '',
+          ];
+        }),
+      ]);
+    });
+    return this.file(res, csv, 'paiements');
   }
 
   @Get('parcels.csv')

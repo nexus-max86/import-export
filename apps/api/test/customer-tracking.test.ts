@@ -241,7 +241,20 @@ describe('Suivi client et exports', () => {
       expect(res.text).toContain(`"'=HYPERLINK(""http://evil"")"`);
     });
 
+    it('paiements (EF-108) : chaque mouvement, statut et devise ; journalisé', async () => {
+      const res = await asK(kaseba.agent.get('/api/org/exports/payments.csv')).expect(200);
+      expect(res.headers['content-disposition']).toMatch(/konzia-paiements-/);
+      const lines = res.text.replace('\uFEFF', '').trim().split('\r\n');
+      expect(lines[0]).toBe(
+        'Date;Commande;Client;Type;Moyen;Opérateur;Montant;Devise;Montant (devise commande);Devise commande;Taux;Statut;Référence;Confirmé le',
+      );
+      expect(lines.length).toBeGreaterThan(1);
+      expect(lines.slice(1).every((l) => /^\d{4}-\d{2}-\d{2};KZ-/.test(l))).toBe(true);
+      expect(await t.prisma.auditLog.count({ where: { action: 'export.payments_csv' } })).toBe(1);
+    });
+
     it('réservés au propriétaire et à la comptabilité', async () => {
+      await asK(vendeuse.agent.get('/api/org/exports/payments.csv')).expect(403);
       await asK(vendeuse.agent.get('/api/org/exports/orders.csv')).expect(403);
       await asK(vendeuse.agent.get('/api/org/exports/parcels.csv')).expect(403);
     });
