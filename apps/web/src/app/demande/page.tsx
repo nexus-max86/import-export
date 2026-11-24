@@ -43,7 +43,7 @@ export default function NewRequestPage() {
     <main className="mx-auto flex max-w-md flex-col gap-5 px-4 py-10">
       <div className="flex items-center justify-between">
         <ClientHeader />
-        <Link href="/demandes" className="text-sm font-semibold text-copper underline">
+        <Link href="/demandes" className="text-sm font-semibold text-primary underline">
           Mes demandes
         </Link>
       </div>
@@ -142,7 +142,7 @@ function AddItem({ onAdded }: { onAdded: (d: RequestDetail) => void }) {
       {!lookup && !manual && (
         <button
           type="button"
-          className="text-left text-sm font-semibold text-copper underline"
+          className="text-left text-sm font-semibold text-primary underline"
           onClick={() => setManual(true)}
         >
           Pas de lien ? Décrire l’article à la main
@@ -261,7 +261,7 @@ function ItemDetails({
         <>
           {lookup && <Notice>{lookup.message}</Notice>}
           <Field id="title" label="Nom de l’article" error={errors.title} />
-          <label className="flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-line px-4 text-sm font-semibold focus-within:ring-2 focus-within:ring-copper">
+          <label className="flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-line px-4 text-sm font-semibold focus-within:ring-2 focus-within:ring-primary">
             {screenshot
               ? `Capture : ${screenshot.name} (changer)`
               : 'Joindre une capture d’écran (facultatif)'}
@@ -351,11 +351,11 @@ function SendForm({ draft, onSent }: { draft: RequestDetail; onSent: (id: string
         {commissioners?.map((c) => (
           <label
             key={c.slug}
-            className="flex cursor-pointer items-start gap-3 rounded-lg border border-line p-3 has-[:checked]:border-copper has-[:checked]:bg-copper-soft"
+            className="flex cursor-pointer items-start gap-3 rounded-lg border border-line p-3 has-[:checked]:border-primary has-[:checked]:bg-primary-soft"
           >
             <input
               type="checkbox"
-              className="mt-1 size-5 accent-copper"
+              className="mt-1 size-5 accent-primary"
               checked={chosen.has(c.slug)}
               disabled={!chosen.has(c.slug) && chosen.size >= 5}
               onChange={() =>
@@ -401,7 +401,7 @@ function SendForm({ draft, onSent }: { draft: RequestDetail; onSent: (id: string
               </option>
             ))}
           </select>
-          <Link href="/compte/profil" className="text-sm text-copper underline">
+          <Link href="/compte/profil" className="text-sm text-primary underline">
             Gérer mes adresses
           </Link>
         </div>

@@ -42,7 +42,7 @@ export default function MyRequestsPage() {
           <li key={r.id}>
             <Link
               href={r.status === 'draft' ? '/demande' : `/demandes/${r.id}`}
-              className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4 outline-none focus-visible:ring-2 focus-visible:ring-copper"
+              className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4 outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <strong className="min-w-0 truncate">{r.firstItemTitle ?? 'Demande vide'}</strong>

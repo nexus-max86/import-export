@@ -31,7 +31,7 @@ function UserAction({ user }: { user: AdminUserRow }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="text-left text-copper underline"
+          className="text-left text-primary underline"
         >
           {decision === 'suspend' ? 'Suspendre…' : 'Réactiver…'}
         </button>

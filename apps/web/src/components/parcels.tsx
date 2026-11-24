@@ -544,7 +544,7 @@ function ParcelItemRow({
         <button
           type="button"
           onClick={() => setAsking(true)}
-          className="self-start text-sm font-semibold text-copper underline"
+          className="self-start text-sm font-semibold text-primary underline"
         >
           Retirer du colis
         </button>
@@ -707,7 +707,7 @@ function ParcelPhoto({ org, parcelId, fileId }: { org: string; parcelId: string;
   return src ? (
     <img src={src} alt="Photo du colis" className="aspect-square rounded-lg object-cover" />
   ) : (
-    <div className="aspect-square rounded-lg bg-copper-soft" aria-hidden />
+    <div className="aspect-square rounded-lg bg-primary-soft" aria-hidden />
   );
 }
 

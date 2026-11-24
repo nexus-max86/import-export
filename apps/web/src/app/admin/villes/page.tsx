@@ -88,7 +88,7 @@ export default function AdminCitiesPage() {
             <h2 className="font-display text-lg font-bold">
               {city.name}{' '}
               <span
-                className={`ml-1 rounded-full px-2 py-0.5 text-xs font-semibold ${city.isActive ? 'bg-ok-soft text-ok' : 'bg-copper-soft text-ink'}`}
+                className={`ml-1 rounded-full px-2 py-0.5 text-xs font-semibold ${city.isActive ? 'bg-ok-soft text-ok' : 'bg-primary-soft text-ink'}`}
               >
                 {city.isActive ? 'Ouverte' : 'Fermée'}
               </span>

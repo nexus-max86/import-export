@@ -170,14 +170,14 @@ function VerificationCard({
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <strong className="min-w-0">{VERIFICATION_DOCUMENTS[kind]}</strong>
                 <span
-                  className={`rounded-full px-2 text-xs font-semibold ${doc ? 'bg-ok-soft text-ok' : 'bg-copper-soft'}`}
+                  className={`rounded-full px-2 text-xs font-semibold ${doc ? 'bg-ok-soft text-ok' : 'bg-primary-soft'}`}
                 >
                   {doc ? 'Reçu' : 'À envoyer'}
                 </span>
               </div>
               {doc && <p className="text-sm text-muted break-all">{doc.originalName}</p>}
               {!locked && (
-                <label className="flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-line px-4 font-semibold focus-within:ring-2 focus-within:ring-copper">
+                <label className="flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-line px-4 font-semibold focus-within:ring-2 focus-within:ring-primary">
                   {busy === kind
                     ? 'Envoi…'
                     : doc
@@ -253,14 +253,14 @@ function ServicesCard({
             {(Object.entries(MARKETPLACES) as [MarketplaceCode, string][]).map(([code, label]) => (
               <label
                 key={code}
-                className="flex min-h-10 items-center gap-2 rounded-full border border-line px-3 has-[:checked]:border-copper has-[:checked]:bg-copper-soft"
+                className="flex min-h-10 items-center gap-2 rounded-full border border-line px-3 has-[:checked]:border-primary has-[:checked]:bg-primary-soft"
               >
                 <input
                   type="checkbox"
                   name="marketplaces"
                   value={code}
                   defaultChecked={profile.marketplaces.includes(code)}
-                  className="size-4 accent-copper"
+                  className="size-4 accent-primary"
                 />
                 {label}
               </label>
@@ -273,14 +273,14 @@ function ServicesCard({
             {(Object.entries(TRANSPORT_MODES) as [TransportMode, string][]).map(([code, label]) => (
               <label
                 key={code}
-                className="flex min-h-10 items-center gap-2 rounded-full border border-line px-3 has-[:checked]:border-copper has-[:checked]:bg-copper-soft"
+                className="flex min-h-10 items-center gap-2 rounded-full border border-line px-3 has-[:checked]:border-primary has-[:checked]:bg-primary-soft"
               >
                 <input
                   type="checkbox"
                   name="transportModes"
                   value={code}
                   defaultChecked={profile.transportModes.includes(code)}
-                  className="size-4 accent-copper"
+                  className="size-4 accent-primary"
                 />
                 {label}
               </label>
@@ -298,7 +298,7 @@ function ServicesCard({
             rows={3}
             defaultValue={profile.pricingPolicy ?? ''}
             placeholder="Ex. : commission de 10 % du prix des articles, transport aérien au kilo."
-            className="rounded-lg border border-line bg-surface p-3 outline-none focus-visible:ring-2 focus-visible:ring-copper"
+            className="rounded-lg border border-line bg-surface p-3 outline-none focus-visible:ring-2 focus-visible:ring-primary"
           />
         </div>
         {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
@@ -393,7 +393,7 @@ function ZonesCard({
                           aria-label={`${HANDOVER_LABELS[m]} à ${z.name}`}
                           checked={selected.get(z.id)?.includes(m) ?? false}
                           onChange={() => toggle(z.id, m)}
-                          className="size-5 accent-copper"
+                          className="size-5 accent-primary"
                         />
                       </td>
                     ))}

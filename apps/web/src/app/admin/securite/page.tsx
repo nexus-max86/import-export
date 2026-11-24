@@ -66,12 +66,12 @@ function Security() {
             lien depuis votre téléphone) :
           </p>
           <code
-            className="break-all rounded-lg bg-copper-soft p-3 font-mono text-lg"
+            className="break-all rounded-lg bg-primary-soft p-3 font-mono text-lg"
             aria-label="Clé secrète"
           >
             {setup.secret.replace(/(.{4})/g, '$1 ').trim()}
           </code>
-          <a href={setup.otpauthUrl} className="text-sm font-semibold text-copper underline">
+          <a href={setup.otpauthUrl} className="text-sm font-semibold text-primary underline">
             Ouvrir dans l’application d’authentification
           </a>
         </Card>

@@ -74,7 +74,7 @@ export default function ProHomePage() {
               <button
                 type="button"
                 onClick={() => open(o.organizationId)}
-                className="flex w-full flex-col items-start gap-1 rounded-2xl border border-line bg-surface px-5 py-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-copper"
+                className="flex w-full flex-col items-start gap-1 rounded-2xl border border-line bg-surface px-5 py-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <span className="font-semibold">{o.name}</span>
                 <span className="text-sm text-muted">
@@ -106,7 +106,7 @@ export default function ProHomePage() {
                   name="orgType"
                   value="independent"
                   defaultChecked
-                  className="size-4 accent-copper"
+                  className="size-4 accent-primary"
                 />
                 Commissionnaire indépendant
               </label>
@@ -115,7 +115,7 @@ export default function ProHomePage() {
                   type="radio"
                   name="orgType"
                   value="company"
-                  className="size-4 accent-copper"
+                  className="size-4 accent-primary"
                 />
                 Entreprise (plusieurs employés)
               </label>

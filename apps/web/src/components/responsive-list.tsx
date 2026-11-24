@@ -35,7 +35,7 @@ export function ResponsiveList<T extends { id: string }>({
           <li key={r.id}>
             <Link
               href={href(r)}
-              className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-4 outline-none transition-[border-color] duration-150 ease-out-quint hover:border-line-strong focus-visible:ring-2 focus-visible:ring-copper"
+              className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-4 outline-none transition-[border-color] duration-150 ease-out-quint hover:border-line-strong focus-visible:ring-2 focus-visible:ring-primary"
             >
               {card(r)}
             </Link>

@@ -22,7 +22,7 @@ export default function InvitationPage() {
               <Notice tone="ok">
                 Bienvenue chez {m.name}. Votre rôle : {ORG_ROLE_LABELS[m.role]}.
               </Notice>
-              <Link href="/pro/clients" className="font-semibold text-copper underline">
+              <Link href="/pro/clients" className="font-semibold text-primary underline">
                 Ouvrir l’espace professionnel
               </Link>
             </>

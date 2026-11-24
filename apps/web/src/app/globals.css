@@ -1,34 +1,40 @@
 @import 'tailwindcss';
 
 /*
- * Système Konzia — direction « Bordereau » (voir DESIGN.md).
- * Encre et papier pour la structure, cuivre réservé à l'action principale, filets fins plutôt
- * qu'ombres. Le mode sombre redéfinit exactement les mêmes jetons.
+ * Système KONZIA — direction « Global Commerce Interface » (voir DESIGN_SYSTEM.md, D10).
+ * Bleu pour agir, encre pour lire, cuivre pour la marque. Chaque teinte de texte passe le
+ * contraste WCAG AA ; les teintes vives d'état servent aux fonds et aux icônes.
+ * Le mode sombre redéfinit exactement les mêmes jetons.
  */
 @theme {
-  /* Marque */
-  --color-copper: #b05a2a;
-  --color-copper-strong: #934819;
-  --color-copper-soft: #f6e7dd;
-  /* Texte posé sur le cuivre plein (blanc en clair, encre en sombre : contraste ≥ 4,5). */
-  --color-on-copper: #ffffff;
-  --color-ink: #16212b;
-  /* Texte secondaire et surfaces */
-  --color-muted: #5b6b78;
-  --color-line: #dbe1e5;
-  --color-line-strong: #c3ccd3;
+  /* Action principale */
+  --color-primary: #2457f5;
+  --color-primary-strong: #1742c5;
+  --color-primary-soft: #eef2fe;
+  --color-on-primary: #ffffff;
+  /* Marque (point du logo, « Business », « bientôt ») : jamais en texte clair */
+  --color-accent: #b87345;
+  --color-accent-text: #7e4a26;
+  --color-accent-soft: #f6ede6;
+  /* Texte et surfaces */
+  --color-ink: #172033;
+  --color-ink-2: #3d4659;
+  --color-muted: #697386;
+  --color-line: #e5e9f2;
+  --color-line-strong: #d5dbe8;
   --color-surface: #ffffff;
-  --color-sunken: #f5f7f8;
-  --color-canvas: #eef1f3;
-  /* États */
-  --color-ok: #1f7a4d;
-  --color-ok-soft: #e0f1e8;
-  --color-warn: #7a5000;
-  --color-warn-soft: #f8ecd2;
-  --color-danger: #b3261e;
-  --color-danger-soft: #f9e0de;
-  --color-info: #285e80;
-  --color-info-soft: #e0edf5;
+  --color-sunken: #f1f4fa;
+  --color-canvas: #f7f8fc;
+  --color-admin: #121a2b;
+  /* États : la teinte nommée est celle du texte (contraste AA), « -soft » le fond */
+  --color-ok: #11694a;
+  --color-ok-soft: #e6f4ee;
+  --color-warn: #8a5300;
+  --color-warn-soft: #fff3df;
+  --color-danger: #a12a2a;
+  --color-danger-soft: #fde7e7;
+  --color-info: #1742c5;
+  --color-info-soft: #eef2fe;
 
   /* Une seule famille (variable) : titres en 750–800, texte en 400–600. */
   --font-sans: 'Archivo Variable', system-ui, sans-serif;
@@ -67,25 +73,30 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-copper: #de8a57;
-    --color-copper-strong: #ec9f70;
-    --color-copper-soft: #3a271c;
-    --color-on-copper: #0f1519;
-    --color-ink: #e7edf1;
-    --color-muted: #9aabb8;
-    --color-line: #2a3741;
-    --color-line-strong: #3a4954;
-    --color-surface: #172027;
-    --color-sunken: #131b21;
-    --color-canvas: #0f1519;
-    --color-ok: #5ec48f;
-    --color-ok-soft: #173326;
-    --color-warn: #e6b866;
-    --color-warn-soft: #352a12;
-    --color-danger: #f08a82;
-    --color-danger-soft: #3d1c1a;
-    --color-info: #7fb8dc;
-    --color-info-soft: #16293a;
+    --color-primary: #7ea0ff;
+    --color-primary-strong: #9db7ff;
+    --color-primary-soft: #1a2747;
+    --color-on-primary: #0b1220;
+    --color-accent: #e0a47a;
+    --color-accent-text: #e0a47a;
+    --color-accent-soft: #33241a;
+    --color-ink: #e6ebf5;
+    --color-ink-2: #c3cbdb;
+    --color-muted: #9aa6bd;
+    --color-line: #26324a;
+    --color-line-strong: #34415c;
+    --color-surface: #161f33;
+    --color-sunken: #121a2b;
+    --color-canvas: #0f1626;
+    --color-admin: #0b1120;
+    --color-ok: #5ed3a1;
+    --color-ok-soft: #12302a;
+    --color-warn: #f0b95a;
+    --color-warn-soft: #33270f;
+    --color-danger: #f38b8b;
+    --color-danger-soft: #3a1a1e;
+    --color-info: #9db7ff;
+    --color-info-soft: #1a2747;
     color-scheme: dark;
   }
 }
@@ -143,8 +154,8 @@
   select:focus-visible,
   textarea:focus-visible {
     outline: none;
-    border-color: var(--color-copper);
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-copper) 28%, transparent);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 28%, transparent);
   }
   textarea {
     padding-block: 0.625rem;
@@ -156,7 +167,7 @@
   }
   input[type='checkbox'],
   input[type='radio'] {
-    accent-color: var(--color-copper);
+    accent-color: var(--color-primary);
     width: 1.125rem;
     height: 1.125rem;
   }
@@ -192,11 +203,11 @@
   }
 
   :focus-visible {
-    outline-color: var(--color-copper);
+    outline-color: var(--color-primary);
   }
 
   ::selection {
-    background: color-mix(in oklab, var(--color-copper) 25%, transparent);
+    background: color-mix(in oklab, var(--color-primary) 25%, transparent);
   }
 }
 

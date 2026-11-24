@@ -3,7 +3,7 @@
 import type { CityInfo } from '@konzia/shared';
 
 const selectClass =
-  'min-h-11 rounded-lg border border-line bg-surface px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-copper';
+  'min-h-11 rounded-lg border border-line bg-surface px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-primary';
 
 /** Choix ville + commune, à partir des villes ouvertes. */
 export function PlaceSelect({

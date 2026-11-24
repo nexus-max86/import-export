@@ -51,7 +51,7 @@ export default function ProfilePage() {
   return (
     <main className="mx-auto flex max-w-md flex-col gap-5 px-4 py-10">
       <ClientHeader />
-      <Link href="/compte" className="text-sm font-semibold text-copper underline">
+      <Link href="/compte" className="text-sm font-semibold text-primary underline">
         ← Mon compte
       </Link>
       <h1 className="font-display text-2xl font-bold">Profil et adresses</h1>
@@ -286,7 +286,7 @@ function AddressForm({
       />
       {!initial?.isDefault && (
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name={`${prefix}-default`} className="size-4 accent-copper" />
+          <input type="checkbox" name={`${prefix}-default`} className="size-4 accent-primary" />
           Utiliser par défaut
         </label>
       )}

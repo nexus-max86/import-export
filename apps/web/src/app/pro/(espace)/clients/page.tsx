@@ -165,7 +165,7 @@ function CustomerRow({ org, customer }: { org: string; customer: OrgCustomerInfo
       <div className="flex flex-wrap items-center justify-between gap-2">
         <strong>{customer.fullName}</strong>
         <span
-          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${customer.hasAccount ? 'bg-ok-soft text-ok' : 'bg-copper-soft text-ink'}`}
+          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${customer.hasAccount ? 'bg-ok-soft text-ok' : 'bg-primary-soft text-ink'}`}
         >
           {customer.hasAccount ? 'Compte Konzia' : 'Client géré'}
         </span>
@@ -188,7 +188,7 @@ function CustomerRow({ org, customer }: { org: string; customer: OrgCustomerInfo
         </div>
       )}
       {claim && (
-        <div className="flex flex-col gap-2 rounded-lg bg-copper-soft p-3 text-sm">
+        <div className="flex flex-col gap-2 rounded-lg bg-primary-soft p-3 text-sm">
           <p>Envoyez ce lien au client (valable 14 jours) :</p>
           <p className="break-all font-mono text-xs select-all">{claim.link}</p>
           <div className="flex flex-wrap gap-2">

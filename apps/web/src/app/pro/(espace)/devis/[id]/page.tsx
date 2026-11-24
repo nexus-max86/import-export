@@ -82,7 +82,7 @@ export default function QuoteEditorPage() {
       {quote && (
         <Link
           href={`/pro/demandes/${quote.quoteRequestId}`}
-          className="text-sm font-semibold text-copper underline"
+          className="text-sm font-semibold text-primary underline"
         >
           ← Retour à la demande
         </Link>
@@ -377,7 +377,7 @@ function Editor({
                       type="checkbox"
                       checked={l.isEstimate}
                       onChange={(e) => set(l.key, { isEstimate: e.target.checked })}
-                      className="size-4 accent-copper"
+                      className="size-4 accent-primary"
                     />
                     Estimation (le montant final peut varier)
                   </label>
@@ -529,7 +529,7 @@ function SentView({
                   {l.description}
                   {l.quantity > 1 ? ` × ${l.quantity}` : ''}
                   {l.isEstimate && (
-                    <span className="ml-1 text-xs font-semibold text-copper">estimation</span>
+                    <span className="ml-1 text-xs font-semibold text-primary">estimation</span>
                   )}
                 </td>
                 <td className="py-2 text-right tabular-nums whitespace-nowrap">

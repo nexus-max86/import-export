@@ -12,7 +12,7 @@ import { ApiError, apiUpload } from '@/lib/api';
 
 const STATUS = {
   ok: { label: 'À importer', cls: 'bg-ok-soft text-ok' },
-  duplicate: { label: 'Doublon', cls: 'bg-copper-soft' },
+  duplicate: { label: 'Doublon', cls: 'bg-primary-soft' },
   error: { label: 'À corriger', cls: 'bg-danger-soft text-danger' },
 } as const;
 
@@ -71,7 +71,7 @@ export function CustomerImport({
         Fichier .xlsx ou .csv. La première ligne doit contenir les titres des colonnes, par exemple
         : Nom, Téléphone, Commune, Adresse, Note. Rien n’est enregistré avant votre confirmation.
       </p>
-      <label className="flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-line px-4 font-semibold focus-within:ring-2 focus-within:ring-copper">
+      <label className="flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-line px-4 font-semibold focus-within:ring-2 focus-within:ring-primary">
         {busy && !preview
           ? 'Lecture…'
           : file

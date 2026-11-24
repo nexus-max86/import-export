@@ -74,7 +74,7 @@ export function OpenDisputeCard({ orderId }: { orderId: string }) {
     return (
       <Link
         href={`/litiges/${existing.id}`}
-        className="self-start text-sm font-semibold text-copper underline"
+        className="self-start text-sm font-semibold text-primary underline"
       >
         Litige en cours : {DISPUTE_STATUS_LABELS[existing.status]} — voir les échanges
       </Link>
@@ -84,7 +84,7 @@ export function OpenDisputeCard({ orderId }: { orderId: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="self-start text-sm font-semibold text-copper underline"
+        className="self-start text-sm font-semibold text-primary underline"
       >
         Signaler un problème sur cette commande
       </button>
@@ -229,7 +229,7 @@ export function DisputeThread({
                   key={f.id}
                   type="button"
                   onClick={() => void openFile(f.id)}
-                  className="self-start text-copper underline"
+                  className="self-start text-primary underline"
                 >
                   {f.name}
                 </button>

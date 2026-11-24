@@ -12,7 +12,7 @@ export function Badges({ c }: { c: PublicCommissioner }) {
         Vérifié
       </span>
       {c.isNew && (
-        <span className="rounded-full bg-copper-soft px-2 py-0.5 text-xs font-semibold">
+        <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-semibold">
           Nouveau
         </span>
       )}

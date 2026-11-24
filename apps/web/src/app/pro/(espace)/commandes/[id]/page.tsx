@@ -29,7 +29,7 @@ export default function ProOrderPage() {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 py-10">
       <ProNav />
-      <Link href="/pro/commandes" className="text-sm font-semibold text-copper underline">
+      <Link href="/pro/commandes" className="text-sm font-semibold text-primary underline">
         ← Toutes les commandes
       </Link>
       {error && <Notice tone="error">{error}</Notice>}

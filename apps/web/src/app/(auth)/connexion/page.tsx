@@ -61,14 +61,14 @@ function Login() {
         </Button>
       </form>
       <div className="flex flex-col gap-1 text-sm">
-        <Link href="/mot-de-passe-oublie" className="font-semibold text-copper underline">
+        <Link href="/mot-de-passe-oublie" className="font-semibold text-primary underline">
           Mot de passe oublié ?
         </Link>
         <p>
           Pas encore de compte ?{' '}
           <Link
             href={next ? `/inscription?suite=${encodeURIComponent(next)}` : '/inscription'}
-            className="font-semibold text-copper underline"
+            className="font-semibold text-primary underline"
           >
             Créer un compte
           </Link>

@@ -149,7 +149,7 @@ export function OrgOrderActions({
                 name="adjKind"
                 value="surcharge"
                 defaultChecked
-                className="size-4 accent-copper"
+                className="size-4 accent-primary"
               />
               Supplément
             </label>
@@ -158,7 +158,7 @@ export function OrgOrderActions({
                 type="radio"
                 name="adjKind"
                 value="discount"
-                className="size-4 accent-copper"
+                className="size-4 accent-primary"
               />
               Remise
             </label>

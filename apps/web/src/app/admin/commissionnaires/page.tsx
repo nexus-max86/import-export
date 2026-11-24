@@ -36,7 +36,7 @@ export default function AdminCommissionersPage() {
             render: (o) => (
               <Link
                 href={`/admin/commissionnaires/${o.id}`}
-                className="font-semibold text-copper underline"
+                className="font-semibold text-primary underline"
               >
                 {o.name}
               </Link>

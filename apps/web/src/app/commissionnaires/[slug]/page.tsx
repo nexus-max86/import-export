@@ -23,7 +23,7 @@ export default function CommissionerPage() {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 py-10">
       <Logo />
-      <Link href="/commissionnaires" className="text-sm font-semibold text-copper underline">
+      <Link href="/commissionnaires" className="text-sm font-semibold text-primary underline">
         ← Tous les commissionnaires
       </Link>
       {error && <Notice tone="error">{error}</Notice>}

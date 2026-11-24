@@ -207,7 +207,7 @@ function ManagedRequestForm({
               </option>
             ))}
           </select>
-          <Link href="/pro/clients" className="text-sm text-copper underline">
+          <Link href="/pro/clients" className="text-sm text-primary underline">
             Client absent de la liste ? Ajoutez-le d’abord
           </Link>
         </div>

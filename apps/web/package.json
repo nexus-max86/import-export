@@ -13,6 +13,7 @@
   "dependencies": {
     "@fontsource-variable/archivo": "5.2.8",
     "@konzia/shared": "workspace:*",
+    "lucide-react": "1.79.0",
     "next": "15.5.29",
     "react": "19.2.0",
     "react-dom": "19.2.0"

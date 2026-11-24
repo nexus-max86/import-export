@@ -29,7 +29,7 @@ export default function OrderPage() {
   return (
     <main className="mx-auto flex max-w-md flex-col gap-5 px-4 py-10">
       <ClientHeader />
-      <Link href="/commandes" className="text-sm font-semibold text-copper underline">
+      <Link href="/commandes" className="text-sm font-semibold text-primary underline">
         ← Mes commandes
       </Link>
       {error && <Notice tone="error">{error}</Notice>}

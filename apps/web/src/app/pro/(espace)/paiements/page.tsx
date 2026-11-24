@@ -159,7 +159,7 @@ export default function ProPaymentsPage() {
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <strong>{b.customerName}</strong>
-                <strong className="tabular-nums text-copper">
+                <strong className="tabular-nums text-primary">
                   {fmtAmount(b.outstanding, b.currency)}
                 </strong>
               </div>

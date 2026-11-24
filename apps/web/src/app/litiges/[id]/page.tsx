@@ -27,7 +27,7 @@ export default function CustomerDisputePage() {
       {dispute && (
         <Link
           href={`/commandes/${dispute.orderId}`}
-          className="text-sm font-semibold text-copper underline"
+          className="text-sm font-semibold text-primary underline"
         >
           ← Commande {dispute.orderNumber}
         </Link>

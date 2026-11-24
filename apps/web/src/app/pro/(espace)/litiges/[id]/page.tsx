@@ -25,7 +25,7 @@ export default function ProDisputePage() {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 py-10">
       <ProNav />
-      <Link href="/pro/litiges" className="text-sm font-semibold text-copper underline">
+      <Link href="/pro/litiges" className="text-sm font-semibold text-primary underline">
         ← Tous les litiges
       </Link>
       {error && <Notice tone="error">{error}</Notice>}

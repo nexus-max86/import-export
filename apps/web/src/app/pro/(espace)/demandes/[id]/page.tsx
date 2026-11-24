@@ -47,7 +47,7 @@ export default function ProRequestPage() {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 py-10">
       <ProNav />
-      <Link href="/pro/demandes" className="text-sm font-semibold text-copper underline">
+      <Link href="/pro/demandes" className="text-sm font-semibold text-primary underline">
         ← Toutes les demandes
       </Link>
       {error && <Notice tone="error">{error}</Notice>}
@@ -81,7 +81,7 @@ export default function ProRequestPage() {
                   {formatPhone(r.customer.phoneWhatsapp)}
                 </span>{' '}
                 <a
-                  className="font-semibold text-copper underline"
+                  className="font-semibold text-primary underline"
                   target="_blank"
                   rel="noreferrer"
                   href={whatsappLink(

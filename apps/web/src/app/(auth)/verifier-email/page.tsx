@@ -41,7 +41,7 @@ function VerifyEmail() {
           nouveau lien.
         </Notice>
       )}
-      <Link href="/compte" className="font-semibold text-copper underline">
+      <Link href="/compte" className="font-semibold text-primary underline">
         Aller à mon compte
       </Link>
     </Card>

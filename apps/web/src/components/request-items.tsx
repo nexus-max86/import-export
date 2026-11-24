@@ -63,7 +63,7 @@ export function RequestItems({
                   href={i.sourceUrl}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="truncate text-sm text-copper underline"
+                  className="truncate text-sm text-primary underline"
                 >
                   Voir sur le site
                 </a>

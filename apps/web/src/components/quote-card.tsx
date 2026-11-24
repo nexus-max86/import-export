@@ -57,7 +57,7 @@ export function QuoteCard({
                 {l.description}
                 {l.quantity > 1 && ` × ${l.quantity}`}
                 {l.isEstimate && (
-                  <span className="ml-1 text-xs font-semibold text-copper">estimation</span>
+                  <span className="ml-1 text-xs font-semibold text-primary">estimation</span>
                 )}
               </td>
               <td className="py-1.5 text-right tabular-nums whitespace-nowrap">
@@ -110,7 +110,7 @@ export function QuoteCard({
         </div>
       )}
       {mode === 'accept' && (
-        <div className="flex flex-col gap-2 rounded-lg bg-copper-soft p-3">
+        <div className="flex flex-col gap-2 rounded-lg bg-primary-soft p-3">
           <p className="text-sm">
             En acceptant, vous créez une commande chez {quote.organizationName} pour{' '}
             {fmtAmount(v.totalAmount, v.currency)}. Vous paierez ensuite le commissionnaire selon

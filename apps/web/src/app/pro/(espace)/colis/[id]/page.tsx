@@ -13,7 +13,7 @@ export default function ProParcelPage() {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 py-10">
       <ProNav />
-      <Link href="/pro/colis" className="text-sm font-semibold text-copper underline">
+      <Link href="/pro/colis" className="text-sm font-semibold text-primary underline">
         ← Tous les colis
       </Link>
       <ParcelEditor org={org} id={id} />

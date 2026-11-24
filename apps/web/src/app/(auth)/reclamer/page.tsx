@@ -24,7 +24,7 @@ export default function ClaimPage() {
             <Notice tone="ok">
               C’est fait : votre fiche chez {r.organizationName} est reliée à votre compte.
             </Notice>
-            <Link href="/compte" className="font-semibold text-copper underline">
+            <Link href="/compte" className="font-semibold text-primary underline">
               Aller à mon compte
             </Link>
           </>

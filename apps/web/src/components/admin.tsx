@@ -2,6 +2,18 @@
 
 import type { AdminOrganizationRow, AdminPage } from '@konzia/shared';
 import { useRouter } from 'next/navigation';
+import {
+  ArrowLeftRight,
+  Boxes,
+  LayoutDashboard,
+  MapPin,
+  Package,
+  Scale,
+  ScrollText,
+  Store,
+  Users,
+  Wallet,
+} from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { ScrollNav, SideNav, SidebarLayout, type NavGroup } from '@/components/nav';
 import { Button, Logo, Notice } from '@/components/ui';
@@ -11,26 +23,26 @@ const GROUPS: NavGroup[] = [
   {
     title: 'Pilotage',
     links: [
-      { href: '/admin', label: 'Vue globale' },
-      { href: '/admin/commissionnaires', label: 'Commissionnaires' },
-      { href: '/admin/utilisateurs', label: 'Utilisateurs' },
+      { href: '/admin', label: 'Vue globale', icon: LayoutDashboard },
+      { href: '/admin/commissionnaires', label: 'Commissionnaires', icon: Store },
+      { href: '/admin/utilisateurs', label: 'Utilisateurs', icon: Users },
     ],
   },
   {
     title: 'Opérations',
     links: [
-      { href: '/admin/commandes', label: 'Commandes' },
-      { href: '/admin/paiements', label: 'Paiements' },
-      { href: '/admin/colis', label: 'Colis' },
-      { href: '/admin/litiges', label: 'Litiges' },
+      { href: '/admin/commandes', label: 'Commandes', icon: Package },
+      { href: '/admin/paiements', label: 'Paiements', icon: Wallet },
+      { href: '/admin/colis', label: 'Colis', icon: Boxes },
+      { href: '/admin/litiges', label: 'Litiges', icon: Scale },
     ],
   },
   {
     title: 'Plateforme',
     links: [
-      { href: '/admin/journal', label: 'Journal' },
-      { href: '/admin/villes', label: 'Villes' },
-      { href: '/admin/taux', label: 'Taux' },
+      { href: '/admin/journal', label: 'Journal', icon: ScrollText },
+      { href: '/admin/villes', label: 'Villes', icon: MapPin },
+      { href: '/admin/taux', label: 'Taux', icon: ArrowLeftRight },
     ],
   },
 ];
@@ -47,8 +59,13 @@ export function AdminShell({ title, children }: { title: string; children: React
           label="Administration"
           groups={GROUPS}
           exact={['/admin']}
-          top={<span className="text-xs font-semibold text-muted uppercase">Admin</span>}
-          bottom={auditNote}
+          badge="Admin"
+          tone="admin"
+          bottom={
+            <p className="text-xs text-[#8f9ab3]">
+              Chaque consultation est enregistrée dans le journal d’audit.
+            </p>
+          }
         />
       }
     >

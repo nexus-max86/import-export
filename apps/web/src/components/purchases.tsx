@@ -185,7 +185,7 @@ export function OrderPurchases({ org, orderId }: { org: string; orderId: string 
     <Card>
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-display text-lg font-bold">Achats chez les vendeurs</h2>
-        <Link href="/pro/achats" className="text-sm font-semibold text-copper underline">
+        <Link href="/pro/achats" className="text-sm font-semibold text-primary underline">
           Gérer les achats
         </Link>
       </div>

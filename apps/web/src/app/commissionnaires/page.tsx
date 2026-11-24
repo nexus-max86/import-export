@@ -73,7 +73,7 @@ export default function DirectoryPage() {
                 type="button"
                 aria-pressed={site === code}
                 onClick={() => setSite(code)}
-                className="min-h-10 rounded-full border border-line px-3 text-sm aria-pressed:border-copper aria-pressed:bg-copper-soft aria-pressed:font-semibold"
+                className="min-h-10 rounded-full border border-line px-3 text-sm aria-pressed:border-primary aria-pressed:bg-primary-soft aria-pressed:font-semibold"
               >
                 {code ? MARKETPLACES[code] : 'Tous'}
               </button>
@@ -105,7 +105,7 @@ export default function DirectoryPage() {
           <li key={c.slug}>
             <Link
               href={`/commissionnaires/${c.slug}`}
-              className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4 outline-none focus-visible:ring-2 focus-visible:ring-copper"
+              className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4 outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <strong className="text-lg">{c.name}</strong>

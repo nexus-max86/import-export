@@ -25,13 +25,13 @@ export function LegalPage({
       </p>
       <div className="legal flex flex-col gap-5 text-[15px] leading-relaxed">{children}</div>
       <nav className="flex flex-wrap gap-4 border-t border-line pt-4 text-sm">
-        <Link href="/conditions" className="text-copper underline">
+        <Link href="/conditions" className="text-primary underline">
           Conditions d’utilisation
         </Link>
-        <Link href="/confidentialite" className="text-copper underline">
+        <Link href="/confidentialite" className="text-primary underline">
           Politique de confidentialité
         </Link>
-        <Link href="/" className="text-copper underline">
+        <Link href="/" className="text-primary underline">
           Accueil
         </Link>
       </nav>

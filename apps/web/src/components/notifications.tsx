@@ -1,6 +1,7 @@
 'use client';
 
 import type { NotificationInfo, NotificationPreferenceInfo } from '@konzia/shared';
+import { Bell } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -22,21 +23,14 @@ export function NotificationBell() {
     <Link
       href="/notifications"
       aria-label={count > 0 ? `Notifications, ${count} non lue(s)` : 'Notifications'}
-      className="relative inline-flex min-h-10 min-w-10 items-center justify-center gap-2 rounded-full border border-line bg-surface px-2.5 text-sm font-semibold outline-none transition-[border-color,background-color] duration-150 ease-out-quint hover:border-muted focus-visible:ring-2 focus-visible:ring-copper sm:px-3"
+      className="relative inline-flex min-h-10 min-w-10 items-center justify-center gap-2 rounded-full border border-line bg-surface px-2.5 text-sm font-semibold outline-none transition-[border-color,background-color] duration-150 ease-out-quint hover:border-muted focus-visible:ring-2 focus-visible:ring-primary sm:px-3"
     >
-      <svg
-        aria-hidden
-        viewBox="0 0 24 24"
-        className="size-[18px] fill-none stroke-current stroke-[1.8]"
-      >
-        <path d="M6 9a6 6 0 1 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9Z" strokeLinejoin="round" />
-        <path d="M10 19a2 2 0 0 0 4 0" strokeLinecap="round" />
-      </svg>
+      <Bell aria-hidden size={18} strokeWidth={1.8} />
       <span className="hidden sm:inline">Notifications</span>
       {count > 0 && (
         <span
           key={count}
-          className="animate-enter rounded-full bg-copper px-1.5 text-xs leading-5 text-on-copper tabular"
+          className="animate-enter rounded-full bg-primary px-1.5 text-xs leading-5 text-on-primary tabular"
         >
           {count}
         </span>
@@ -127,10 +121,10 @@ export function NotificationCenter() {
                 <button
                   type="button"
                   onClick={() => void open(n)}
-                  className={`relative flex w-full flex-col gap-1 rounded-lg border border-line py-3 pr-3 pl-4 text-left text-sm outline-none transition-[background-color,border-color] duration-150 ease-out-quint hover:bg-sunken focus-visible:ring-2 focus-visible:ring-copper ${
+                  className={`relative flex w-full flex-col gap-1 rounded-lg border border-line py-3 pr-3 pl-4 text-left text-sm outline-none transition-[background-color,border-color] duration-150 ease-out-quint hover:bg-sunken focus-visible:ring-2 focus-visible:ring-primary ${
                     n.read
                       ? 'text-muted'
-                      : 'bg-surface before:absolute before:inset-y-3 before:left-0 before:w-[3px] before:rounded-full before:bg-copper'
+                      : 'bg-surface before:absolute before:inset-y-3 before:left-0 before:w-[3px] before:rounded-full before:bg-primary'
                   }`}
                 >
                   <span
@@ -138,7 +132,7 @@ export function NotificationCenter() {
                   >
                     {!n.read && (
                       <>
-                        <span aria-hidden className="size-2 shrink-0 rounded-full bg-copper" />
+                        <span aria-hidden className="size-2 shrink-0 rounded-full bg-primary" />
                         <span className="sr-only">Non lue : </span>
                       </>
                     )}

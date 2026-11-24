@@ -45,7 +45,7 @@ function ResetPassword() {
     return (
       <Card>
         <Notice tone="ok">Mot de passe changé. Tous vos appareils ont été déconnectés.</Notice>
-        <Link href="/connexion" className="font-semibold text-copper underline">
+        <Link href="/connexion" className="font-semibold text-primary underline">
           Se connecter
         </Link>
       </Card>

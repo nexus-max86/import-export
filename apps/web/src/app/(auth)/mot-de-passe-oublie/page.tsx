@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
           </Button>
         </form>
       )}
-      <Link href="/connexion" className="text-sm font-semibold text-copper underline">
+      <Link href="/connexion" className="text-sm font-semibold text-primary underline">
         Retour à la connexion
       </Link>
     </Card>

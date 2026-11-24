@@ -1,13 +1,23 @@
+import { CircleAlert, CircleCheck, Info, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import type { ComponentProps, ReactNode } from 'react';
 
-export function Logo() {
+export function Logo({ inverse = false }: { inverse?: boolean }) {
   return (
     <Link
       href="/"
-      className="rounded-md font-display text-2xl font-extrabold tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-copper"
+      aria-label="Konzia, accueil"
+      className={`flex items-center gap-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary ${inverse ? 'text-white' : 'text-ink'}`}
     >
-      Kon<span className="text-copper">zia</span>
+      {/* Le K et le point cuivre : la marque (même dessin que l'icône de l'application). */}
+      <span
+        aria-hidden
+        className="relative flex size-9 items-center justify-center rounded-[9px] bg-[#eef1f3] font-display text-[22px] font-extrabold text-[#16212b]"
+      >
+        K
+        <span className="absolute right-[5px] bottom-[8px] size-[7px] rounded-full bg-accent" />
+      </span>
+      <span className="font-display text-[22px] font-extrabold tracking-tight">Konzia</span>
     </Link>
   );
 }
@@ -50,7 +60,7 @@ export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 const VARIANTS: Record<ButtonVariant, string> = {
   // Une seule action principale par écran (docs/06) : c'est la seule en cuivre plein.
-  primary: 'bg-copper text-on-copper hover:bg-copper-strong',
+  primary: 'bg-primary text-on-primary hover:bg-primary-strong',
   secondary: 'border border-line-strong bg-surface text-ink hover:border-muted',
   ghost: 'border border-line bg-transparent text-ink hover:bg-sunken',
   danger: 'border border-danger/40 bg-surface text-danger hover:bg-danger-soft',
@@ -63,7 +73,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
 export function buttonClass(variant: ButtonVariant = 'primary', extra = ''): string {
   return [
     'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 text-center font-semibold',
-    'outline-none select-none focus-visible:ring-2 focus-visible:ring-copper focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
+    'outline-none select-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
     // Retour tactile immédiat : légère compression à l'appui, rien d'autre ne bouge.
     'transition-[transform,background-color,border-color] duration-150 ease-out-quint active:scale-[0.97]',
     'disabled:pointer-events-none disabled:opacity-55',
@@ -108,10 +118,10 @@ export function Spinner() {
 }
 
 const NOTICE_TONES = {
-  info: 'bg-info-soft text-info',
-  ok: 'bg-ok-soft text-ok',
-  warn: 'bg-warn-soft text-warn',
-  error: 'bg-danger-soft text-danger',
+  info: { cls: 'bg-info-soft text-info', icon: Info },
+  ok: { cls: 'bg-ok-soft text-ok', icon: CircleCheck },
+  warn: { cls: 'bg-warn-soft text-warn', icon: TriangleAlert },
+  error: { cls: 'bg-danger-soft text-danger', icon: CircleAlert },
 } as const;
 
 export function Notice({
@@ -121,12 +131,14 @@ export function Notice({
   tone?: keyof typeof NOTICE_TONES;
   children: ReactNode;
 }) {
+  const { cls, icon: Icon } = NOTICE_TONES[tone];
   return (
     <div
       role={tone === 'error' ? 'alert' : 'status'}
-      className={`animate-enter rounded-lg px-3 py-2 text-sm font-medium ${NOTICE_TONES[tone]}`}
+      className={`animate-enter flex items-start gap-2 rounded-lg px-3 py-2 text-sm font-medium ${cls}`}
     >
-      {children}
+      <Icon aria-hidden size={16} strokeWidth={2} className="mt-0.5 shrink-0" />
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }

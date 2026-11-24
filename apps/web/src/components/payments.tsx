@@ -213,7 +213,7 @@ export function CustomerPayments({
         {pending > 0 && ` · ${fmtAmount(pending, order.currency)} à vérifier`}
       </p>
       {open && remaining > 0 && info && (
-        <div className="flex flex-col gap-2 rounded-lg bg-copper-soft p-3 text-sm">
+        <div className="flex flex-col gap-2 rounded-lg bg-primary-soft p-3 text-sm">
           <strong>Comment payer {info.organizationName}</strong>
           {info.instructions.length === 0 && (
             <span>
@@ -268,7 +268,7 @@ export function CustomerPayments({
             label="Référence de la transaction"
             placeholder="Ex. : MP241121.1042.K93811"
           />
-          <label className="flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-line px-4 text-sm font-semibold focus-within:ring-2 focus-within:ring-copper">
+          <label className="flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-line px-4 text-sm font-semibold focus-within:ring-2 focus-within:ring-primary">
             {proof
               ? `Preuve : ${proof.name} (changer)`
               : 'Joindre une capture ou un reçu (recommandé)'}
@@ -306,7 +306,7 @@ export function CustomerPayments({
           p.status === 'pending_verification' && p.declaredByCustomer ? (
             <button
               type="button"
-              className="self-start text-sm font-semibold text-copper underline"
+              className="self-start text-sm font-semibold text-primary underline"
               onClick={async () => {
                 await api(`/payments/${p.id}/cancel`, { method: 'POST' });
                 await load();

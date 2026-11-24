@@ -50,7 +50,7 @@ export default function RequestPage() {
   return (
     <main className="mx-auto flex max-w-md flex-col gap-5 px-4 py-10">
       <ClientHeader />
-      <Link href="/demandes" className="text-sm font-semibold text-copper underline">
+      <Link href="/demandes" className="text-sm font-semibold text-primary underline">
         ← Mes demandes
       </Link>
       <div className="flex flex-wrap items-center justify-between gap-2">

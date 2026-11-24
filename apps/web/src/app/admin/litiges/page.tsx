@@ -22,7 +22,10 @@ export default function AdminDisputesPage() {
           {
             label: 'Problème',
             render: (d) => (
-              <Link href={`/admin/litiges/${d.id}`} className="font-semibold text-copper underline">
+              <Link
+                href={`/admin/litiges/${d.id}`}
+                className="font-semibold text-primary underline"
+              >
                 {DISPUTE_CATEGORY_LABELS[d.category]}
               </Link>
             ),
