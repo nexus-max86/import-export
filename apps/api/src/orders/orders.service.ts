@@ -11,6 +11,7 @@ import {
   ORG_NEXT_STATUSES,
   ORDER_STATUS_LABELS,
   type OrderDetail,
+  type OrderPaymentStatus,
   type OrderStatus,
   type OrderSummary,
   type PurchaseRule,
@@ -68,6 +69,9 @@ export async function nextOrderNumber(tx: Prisma.TransactionClient): Promise<str
 /** Statuts avant le premier achat fournisseur. */
 const PRE_PURCHASE_STATUSES: OrderStatus[] = ['awaiting_payment', 'payment_to_verify', 'paid'];
 
+/** Statuts de paiement pour lesquels un solde reste dû. */
+const OUTSTANDING: readonly OrderPaymentStatus[] = ['unpaid', 'partially_paid'];
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -95,6 +99,13 @@ export class OrdersService {
       if (to === 'purchasing') {
         const blocked = await purchaseBlockReason(tx, { id: orderId, ...order });
         if (blocked) throw new ConflictException(blocked);
+      }
+      // Décision D-1 : terminer une commande avec un solde impayé reste possible (crédit à un
+      // client de confiance), mais seulement avec un motif écrit, conservé dans l'historique.
+      if (to === 'completed' && OUTSTANDING.includes(order.paymentStatus) && !note?.trim()) {
+        throw new BadRequestException(
+          'Il reste un solde à payer : indiquez un motif pour terminer la commande.',
+        );
       }
       await tx.order.update({ where: { id: orderId }, data: { status: to }, select: { id: true } });
       await tx.orderEvent.create({
@@ -395,6 +406,7 @@ export class OrdersService {
         customerUserId: true,
         purchaseRule: true,
         depositBps: true,
+        paymentStatus: true,
       },
     });
     if (!o) throw new NotFoundException('Commande introuvable.');

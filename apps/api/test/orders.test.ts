@@ -51,10 +51,28 @@ describe('Cycle de vie des commandes', () => {
       'in_transit',
       'at_distribution_point',
       'ready_for_handover',
-      'completed',
     ]) {
       await move(s).expect(201);
     }
+    // Décision D-1 : solde impayé (aucun paiement enregistré) → un motif est exigé pour terminer.
+    const refused = await move('completed').expect(400);
+    expect(refused.body.message).toMatch(/solde à payer/);
+    await kaseba.agent
+      .post(`/api/org/orders/${orderId}/status`, {
+        status: 'completed',
+        note: 'Client de confiance, paiera à la remise',
+      })
+      .set(...asOrg(orgK))
+      .expect(201);
+    // Le client peut encore déclarer son paiement sur la commande terminée.
+    await ruth.agent
+      .post(`/api/orders/${orderId}/payments`, {
+        method: 'cash',
+        amount: 1000,
+        currency: 'USD',
+        idempotencyKey: '00000000-0000-4000-8000-0000000000d1',
+      })
+      .expect(201);
     const o = await ruth.agent.get(`/api/orders/${orderId}`).expect(200);
     expect(o.body.status).toBe('completed');
     expect(o.body.events.map((e: { toStatus: string }) => e.toStatus).slice(-2)).toEqual([

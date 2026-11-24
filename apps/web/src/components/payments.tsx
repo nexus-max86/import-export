@@ -157,7 +157,9 @@ export function CustomerPayments({
     .filter((p) => p.status === 'pending_verification')
     .reduce((s, p) => s + p.orderAmount, 0);
   const remaining = Math.max(order.finalAmount - paid - pending, 0);
-  const open = order.status !== 'cancelled' && order.status !== 'completed';
+  // Décision D-1 : une commande terminée avec un solde dû accepte encore une déclaration.
+  const owes = order.paymentStatus === 'unpaid' || order.paymentStatus === 'partially_paid';
+  const open = order.status !== 'cancelled' && (order.status !== 'completed' || owes);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();

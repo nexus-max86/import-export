@@ -25,6 +25,9 @@ export function OrgOrderActions({
   const [error, setError] = useState<string>();
   const [mode, setMode] = useState<'idle' | 'cancel' | 'adjust'>('idle');
   const [busy, setBusy] = useState<string>();
+  const [closeNote, setCloseNote] = useState('');
+  // Décision D-1 : terminer avec un solde impayé demande un motif écrit (exigé aussi par l'API).
+  const owes = order.paymentStatus === 'unpaid' || order.paymentStatus === 'partially_paid';
   // Avant paiement complet, « Achat en cours » n'est proposé que si la règle d'achat le permet.
   const next = (ORG_NEXT_STATUSES[order.status] ?? []).filter(
     (s) => s !== 'purchasing' || order.status === 'paid' || order.purchaseRule !== 'full_payment',
@@ -70,10 +73,39 @@ export function OrgOrderActions({
       {next.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {next.map((s) => (
-            <Button key={s} busy={busy === s} onClick={() => run(s, 'status', { status: s })}>
+            <Button
+              key={s}
+              busy={busy === s}
+              disabled={s === 'completed' && owes && closeNote.trim().length < 3}
+              onClick={() =>
+                run(
+                  s,
+                  'status',
+                  s === 'completed' && owes ? { status: s, note: closeNote } : { status: s },
+                )
+              }
+            >
               Passer à « {ORDER_STATUS_LABELS[s]} »
             </Button>
           ))}
+        </div>
+      )}
+      {next.includes('completed') && owes && (
+        <div className="flex flex-col gap-2">
+          <Notice tone="warn">
+            Il reste un solde à payer. Vous pouvez terminer la commande en indiquant pourquoi ; le
+            client pourra encore déclarer son paiement.
+          </Notice>
+          <label className="flex flex-col gap-1 text-sm font-semibold" htmlFor="closeNote">
+            Motif
+            <input
+              id="closeNote"
+              value={closeNote}
+              onChange={(e) => setCloseNote(e.target.value)}
+              placeholder="Ex. client de confiance, paiera à la remise"
+              className="min-h-11 rounded-lg border px-3 text-base font-normal"
+            />
+          </label>
         </div>
       )}
       {pending && (

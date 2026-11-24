@@ -170,13 +170,16 @@ export class PaymentsService {
         select: {
           id: true,
           status: true,
+          paymentStatus: true,
           currency: true,
           organizationId: true,
           orgCustomerId: true,
         },
       });
       if (!order) throw new NotFoundException('Commande introuvable.');
-      if (order.status === 'cancelled' || order.status === 'completed')
+      // Décision D-1 : une commande terminée avec un solde dû accepte encore les déclarations.
+      const settled = order.paymentStatus !== 'unpaid' && order.paymentStatus !== 'partially_paid';
+      if (order.status === 'cancelled' || (order.status === 'completed' && settled))
         throw new ConflictException('Cette commande est close.');
       if (input.proofFileId) {
         const proof = await tx.storedFile.findFirst({

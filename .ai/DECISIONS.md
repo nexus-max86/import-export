@@ -54,3 +54,23 @@ Ne figurent ici que les décisions difficiles à défaire, surprenantes sans con
 - **Coût** :
   - la base Neon doit rester en Postgres 16, comme l'outil de sauvegarde ;
   - aucune migration ne doit exiger de superutilisateur : pas d'extension réservée, pas de `ALTER ROLE … BYPASSRLS`, pas de `FORCE ROW LEVEL SECURITY` sur le chemin système sans le vérifier.
+
+## D10 — Décisions de l'audit et de la refonte validées par le propriétaire (24/11/2026)
+
+- **Clôture avec solde impayé (D-1)** : autorisée seulement avec un motif écrit, gardé dans l'historique de la commande ; le client peut encore déclarer un paiement sur une commande terminée tant qu'un solde est dû.
+- **Remise (D-2)** : code à 4 chiffres donné au client et saisi à la remise ; confirmation facultative dans l'application (à construire).
+- **Revenu (D-3)** : abonnement des commissionnaires, gratuit pendant le pilote ; pas de commission par commande.
+- **Positionnement (D-7)** : Konzia reste intermédiaire et n'encaisse pas pendant le pilote et la V1.
+- **Refonte UX/UI** (transformation B, `UX_AUDIT.md`, `NAVIGATION_ARCHITECTURE.md`, `DESIGN_SYSTEM.md`) :
+  - icônes `lucide-react` ;
+  - graphiques en SVG maison ;
+  - alertes à règles, jamais présentées comme de l'IA ;
+  - Market sans grille de produits tant qu'aucun catalogue officiel n'est connecté ;
+  - chaque écran adapté au téléphone avant livraison.
+- **Changements techniques acceptés** (ajouts seulement, sans rupture) :
+  - pagination, tri et filtres côté serveur (R-9) ;
+  - entrepôts et réceptions contrôlées (R-3) ;
+  - tarifs publiés (R-10) ;
+  - signalements (R-11) ;
+  - pages publiques rendues côté serveur.
+- **Dépendances** : versions correctives dans les majeures de D6 ; nodemailer passe en 10 (hors D6) pour corriger des failles, dont une injection SMTP ; corrections transitives par `pnpm.overrides`.
