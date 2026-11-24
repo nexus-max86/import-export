@@ -8,10 +8,14 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   DeclineRequestSchema,
   ManagedRequestSchema,
+  OrgRequestPageQuerySchema,
+  type OrgRequestPage,
+  type OrgRequestPageQuery,
   RequestItemSchema,
   SendRequestSchema,
   UpdateRequestItemSchema,
@@ -100,6 +104,16 @@ export class RequestsController {
   @ForOrg('request.view')
   listForOrg(@Auth() auth: AuthContext, @Org() org: OrgContext): Promise<OrgRequestSummary[]> {
     return this.requests.listForOrg(auth.userId, org);
+  }
+
+  @Get('org/requests/page')
+  @ForOrg('request.view')
+  pageForOrg(
+    @Auth() auth: AuthContext,
+    @Org() org: OrgContext,
+    @Query(new ZodBody(OrgRequestPageQuerySchema)) q: OrgRequestPageQuery,
+  ): Promise<OrgRequestPage> {
+    return this.requests.pageForOrg(auth.userId, org, q);
   }
 
   @Post('org/requests')

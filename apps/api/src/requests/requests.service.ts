@@ -8,9 +8,14 @@ import {
 import { Prisma } from '@konzia/db';
 import {
   MAX_ITEMS_PER_REQUEST,
+  ORG_REQUEST_TAB_STATUSES,
+  ORG_REQUEST_TABS,
   type ManagedRequestInput,
   type MarketplaceCode,
+  type OrgRequestPage,
+  type OrgRequestPageQuery,
   type OrgRequestSummary,
+  type OrgRequestTab,
   type RequestDetail,
   type RequestItemInput,
   type RequestSummary,
@@ -415,6 +420,77 @@ export class RequestsService {
         firstItemTitle: r.quoteRequest.items[0]?.title ?? null,
         sentAt: r.quoteRequest.sentAt?.toISOString() ?? null,
       }));
+    });
+  }
+
+  /** Liste paginée côté serveur : onglets, recherche (client, article), tri par date de réception. */
+  pageForOrg(userId: string, org: OrgContext, q: OrgRequestPageQuery): Promise<OrgRequestPage> {
+    return this.db.run(userId, async (tx) => {
+      const base: Prisma.QuoteRequestRecipientWhereInput = {
+        organizationId: org.organizationId,
+        quoteRequest: { status: { not: 'draft' } },
+      };
+      if (q.q) {
+        base.OR = [
+          { orgCustomer: { fullName: { contains: q.q, mode: 'insensitive' } } },
+          {
+            quoteRequest: {
+              status: { not: 'draft' },
+              items: { some: { title: { contains: q.q, mode: 'insensitive' } } },
+            },
+          },
+        ];
+      }
+      const grouped = await tx.quoteRequestRecipient.groupBy({
+        by: ['status'],
+        where: base,
+        _count: { _all: true },
+      });
+      const byStatus = new Map(grouped.map((g) => [g.status as string, g._count._all]));
+      const counts = Object.fromEntries(
+        ORG_REQUEST_TABS.map((tab) => [
+          tab,
+          tab === 'all'
+            ? grouped.reduce((n, g) => n + g._count._all, 0)
+            : ORG_REQUEST_TAB_STATUSES[tab].reduce((n, st) => n + (byStatus.get(st) ?? 0), 0),
+        ]),
+      ) as Record<OrgRequestTab, number>;
+
+      const rows = await tx.quoteRequestRecipient.findMany({
+        where:
+          q.tab === 'all'
+            ? base
+            : { AND: [base, { status: { in: ORG_REQUEST_TAB_STATUSES[q.tab] } }] },
+        orderBy: [{ quoteRequest: { sentAt: q.dir } }, { createdAt: q.dir }],
+        skip: (q.page - 1) * q.pageSize,
+        take: q.pageSize,
+        select: {
+          status: true,
+          orgCustomer: { select: { fullName: true } },
+          quoteRequest: {
+            select: {
+              id: true,
+              sentAt: true,
+              _count: { select: { items: true } },
+              items: { select: { title: true }, orderBy: { position: 'asc' }, take: 1 },
+            },
+          },
+        },
+      });
+      return {
+        items: rows.map((r) => ({
+          id: r.quoteRequest.id,
+          status: r.status,
+          customerName: r.orgCustomer.fullName,
+          itemCount: r.quoteRequest._count.items,
+          firstItemTitle: r.quoteRequest.items[0]?.title ?? null,
+          sentAt: r.quoteRequest.sentAt?.toISOString() ?? null,
+        })),
+        total: counts[q.tab],
+        page: q.page,
+        pageSize: q.pageSize,
+        counts,
+      };
     });
   }
 

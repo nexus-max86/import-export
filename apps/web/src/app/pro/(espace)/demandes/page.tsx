@@ -1,123 +1,246 @@
 'use client';
 
-import { RequestItemSchema, type OrgCustomerInfo, type OrgRequestSummary } from '@konzia/shared';
+import {
+  ORG_REQUEST_TAB_LABELS,
+  ORG_REQUEST_TAB_STATUSES,
+  ORG_REQUEST_TABS,
+  RequestItemSchema,
+  type OrgCustomerInfo,
+  type OrgRequestPage,
+  type OrgRequestSummary,
+  type OrgRequestTab,
+} from '@konzia/shared';
+import { Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { ProNav } from '@/components/pro-nav';
-import { ResponsiveList } from '@/components/responsive-list';
+import { DataTable, Pagination, TableTabs, type Column, type Sort } from '@/components/data-table';
+import { Drawer } from '@/components/drawer';
 import { StatusPill } from '@/components/status-pill';
-import { Button, Card, Field, Notice, Loading, EmptyState } from '@/components/ui';
+import { Button, Field, Notice, EmptyState } from '@/components/ui';
 import { api, ApiError, fieldErrors } from '@/lib/api';
 import { fmtDate } from '@/lib/format';
 import { RECIPIENT_STATUS_LABELS, recipientTone } from '@/lib/request-status';
 import { useActiveOrg } from '@/lib/use-org';
 
+/** Ancienneté lisible d'une demande reçue (« 5 h », « 3 j »). */
+function age(sentAt: string | null): { text: string; late: boolean } | null {
+  if (!sentAt) return null;
+  const h = Math.max(0, Math.floor((Date.now() - new Date(sentAt).getTime()) / 3_600_000));
+  return {
+    text: h < 1 ? 'moins d’1 h' : h < 48 ? `${h} h` : `${Math.floor(h / 24)} j`,
+    late: h >= 24,
+  };
+}
+
+const itemsText = (r: OrgRequestSummary) =>
+  `${r.itemCount} article(s)${r.firstItemTitle ? ` · ${r.firstItemTitle}` : ''}`;
+
 export default function ProRequestsPage() {
   const router = useRouter();
   const org = useActiveOrg();
-  const [list, setList] = useState<OrgRequestSummary[]>();
+  const [tab, setTab] = useState<OrgRequestTab>('todo');
+  // À traiter : les plus anciennes d'abord ; ailleurs, les plus récentes.
+  const [sort, setSort] = useState<Sort>({ key: 'received', dir: 'asc' });
+  const [search, setSearch] = useState('');
+  const [q, setQ] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [data, setData] = useState<OrgRequestPage>();
+  const [error, setError] = useState<string>();
   const [creating, setCreating] = useState(false);
 
-  const load = useCallback(
-    async (orgId: string) => {
-      try {
-        setList(await api<OrgRequestSummary[]>('/org/requests', { org: orgId }));
-      } catch (err) {
-        if (err instanceof ApiError && err.status === 401)
-          router.replace('/connexion?suite=/pro/demandes');
-        else router.replace('/pro');
-      }
-    },
-    [router],
-  );
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setQ(search.trim());
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(id);
+  }, [search]);
+
+  const load = useCallback(async () => {
+    if (!org) return;
+    setError(undefined);
+    const params = new URLSearchParams({
+      tab,
+      dir: sort.dir,
+      page: String(page),
+      pageSize: String(pageSize),
+    });
+    if (q) params.set('q', q);
+    try {
+      setData(await api<OrgRequestPage>(`/org/requests/page?${params}`, { org }));
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401)
+        router.replace('/connexion?suite=/pro/demandes');
+      else setError(err instanceof ApiError ? err.message : 'Chargement impossible.');
+    }
+  }, [org, tab, sort, page, pageSize, q, router]);
 
   useEffect(() => {
-    if (org) void load(org);
-  }, [org, load]);
+    void load();
+  }, [load]);
+
+  const closeDrawer = useCallback(() => setCreating(false), []);
 
   if (!org) return null;
-  const todo = list?.filter((r) => ['sent', 'viewed', 'evaluating'].includes(r.status)) ?? [];
-  const done = list?.filter((r) => !['sent', 'viewed', 'evaluating'].includes(r.status)) ?? [];
+
+  const columns: Column<OrgRequestSummary>[] = [
+    { key: 'customer', label: 'Client', cell: (r) => r.customerName },
+    {
+      key: 'items',
+      label: 'Articles',
+      cell: (r) => <span className="line-clamp-1 text-ink-2">{itemsText(r)}</span>,
+    },
+    {
+      key: 'received',
+      label: 'Reçue le',
+      sortKey: 'received',
+      cell: (r) => <span className="whitespace-nowrap text-muted">{fmtDate(r.sentAt)}</span>,
+    },
+    {
+      key: 'age',
+      label: 'Attend depuis',
+      hideable: true,
+      cell: (r) => {
+        const a = ORG_REQUEST_TAB_STATUSES.todo.includes(r.status) ? age(r.sentAt) : null;
+        return a ? (
+          <span
+            className={`whitespace-nowrap tabular-nums ${a.late ? 'font-semibold text-warn' : 'text-muted'}`}
+          >
+            {a.text}
+          </span>
+        ) : (
+          <span className="text-muted">—</span>
+        );
+      },
+    },
+    {
+      key: 'status',
+      label: 'Statut',
+      cell: (r) => (
+        <StatusPill tone={recipientTone(r.status)}>{RECIPIENT_STATUS_LABELS[r.status]}</StatusPill>
+      ),
+    },
+  ];
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 py-10 lg:max-w-5xl lg:px-8">
+    <main className="mx-auto flex w-full max-w-[1600px] flex-col gap-5 px-4 py-8 lg:px-8">
       <ProNav />
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-2xl font-bold">Demandes de devis</h1>
-        {!creating && (
-          <Button onClick={() => setCreating(true)}>Nouvelle demande pour un client</Button>
-        )}
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 className="font-display text-2xl font-bold">Demandes de devis</h1>
+          <p className="text-sm text-muted">
+            Demandes de vos clients Konzia, et celles reçues par WhatsApp ou en boutique.
+          </p>
+        </div>
+        <Button onClick={() => setCreating(true)}>
+          <Plus aria-hidden size={18} />
+          Nouvelle demande pour un client
+        </Button>
       </div>
-      {creating && (
-        <div className="lg:max-w-2xl">
+
+      <TableTabs
+        label="Filtrer les demandes"
+        value={tab}
+        onChange={(t) => {
+          setTab(t);
+          setSort({ key: 'received', dir: t === 'todo' ? 'asc' : 'desc' });
+          setPage(1);
+        }}
+        tabs={ORG_REQUEST_TABS.map((k) => ({
+          key: k,
+          label: ORG_REQUEST_TAB_LABELS[k],
+          count: data?.counts[k],
+        }))}
+      />
+
+      <DataTable
+        label="Demandes de devis"
+        storageKey="pro-demandes"
+        columns={columns}
+        rows={data?.items}
+        error={error}
+        onRetry={() => void load()}
+        sort={sort}
+        onSort={(s) => {
+          setSort(s);
+          setPage(1);
+        }}
+        onOpen={(r) => router.push(`/pro/demandes/${r.id}`)}
+        openLabel={(r) => `Ouvrir la demande de ${r.customerName}`}
+        toolbar={
+          <label className="flex min-h-10 w-full items-center gap-2 rounded-lg border border-line-strong bg-surface px-3 focus-within:ring-2 focus-within:ring-primary sm:w-80">
+            <Search aria-hidden size={16} className="text-muted" />
+            <span className="sr-only">Rechercher une demande</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Client ou article…"
+              className="min-w-0 flex-1 border-0 bg-transparent text-sm shadow-none outline-none focus-visible:shadow-none"
+            />
+          </label>
+        }
+        card={(r) => {
+          const a = ORG_REQUEST_TAB_STATUSES.todo.includes(r.status) ? age(r.sentAt) : null;
+          return (
+            <>
+              <span className="flex flex-wrap items-center justify-between gap-2">
+                <strong>{r.customerName}</strong>
+                <StatusPill tone={recipientTone(r.status)}>
+                  {RECIPIENT_STATUS_LABELS[r.status]}
+                </StatusPill>
+              </span>
+              <span className="line-clamp-1 text-sm text-muted">{itemsText(r)}</span>
+              <span className={`text-sm ${a?.late ? 'font-semibold text-warn' : 'text-muted'}`}>
+                Reçue le {fmtDate(r.sentAt)}
+                {a && ` · attend depuis ${a.text}`}
+              </span>
+            </>
+          );
+        }}
+        empty={
+          <EmptyState
+            title={
+              q
+                ? 'Aucune demande trouvée'
+                : tab === 'todo'
+                  ? 'Aucune demande à traiter'
+                  : 'Aucune demande ici'
+            }
+          >
+            {q
+              ? 'Aucune demande ne correspond à cette recherche.'
+              : 'Les demandes de vos clients Konzia arrivent ici ; vous pouvez aussi saisir celles reçues par WhatsApp.'}
+          </EmptyState>
+        }
+      />
+
+      {data && data.total > 0 && (
+        <Pagination
+          page={data.page}
+          pageSize={data.pageSize}
+          total={data.total}
+          onPage={setPage}
+          onPageSize={(n) => {
+            setPageSize(n);
+            setPage(1);
+          }}
+        />
+      )}
+
+      <Drawer open={creating} title="Nouvelle demande pour un client" onClose={closeDrawer}>
+        <div className="px-5 py-4">
           <ManagedRequestForm
             org={org}
-            onCancel={() => setCreating(false)}
+            onCancel={closeDrawer}
             onCreated={(id) => router.push(`/pro/demandes/${id}`)}
           />
         </div>
-      )}
-      {!list && <Loading />}
-      {list?.length === 0 && (
-        <EmptyState title="Aucune demande pour l’instant">
-          Les demandes de vos clients Konzia arrivent ici ; vous pouvez aussi saisir celles reçues
-          par WhatsApp.
-        </EmptyState>
-      )}
-      {todo.length > 0 && <RequestList title={`À traiter (${todo.length})`} items={todo} />}
-      {done.length > 0 && <RequestList title="Traitées" items={done} />}
+      </Drawer>
     </main>
-  );
-}
-
-function RequestList({ title, items }: { title: string; items: OrgRequestSummary[] }) {
-  return (
-    <section className="flex flex-col gap-3">
-      <h2 className="font-display text-lg font-bold">{title}</h2>
-      <ResponsiveList
-        rows={items}
-        href={(r) => `/pro/demandes/${r.id}`}
-        caption={title}
-        columns={[
-          { label: 'Client', cell: (r) => r.customerName },
-          {
-            label: 'Articles',
-            cell: (r) => (
-              <span className="line-clamp-1 text-muted">
-                {r.itemCount} article(s){r.firstItemTitle ? ` · ${r.firstItemTitle}` : ''}
-              </span>
-            ),
-          },
-          {
-            label: 'Reçue le',
-            cell: (r) => <span className="text-muted">{fmtDate(r.sentAt)}</span>,
-          },
-          {
-            label: 'Statut',
-            cell: (r) => (
-              <StatusPill tone={recipientTone(r.status)}>
-                {RECIPIENT_STATUS_LABELS[r.status]}
-              </StatusPill>
-            ),
-          },
-        ]}
-        card={(r) => (
-          <>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <strong>{r.customerName}</strong>
-              <StatusPill tone={recipientTone(r.status)}>
-                {RECIPIENT_STATUS_LABELS[r.status]}
-              </StatusPill>
-            </div>
-            <span className="text-sm text-muted">
-              {r.itemCount} article(s){r.firstItemTitle ? ` · ${r.firstItemTitle}` : ''} · reçue le{' '}
-              {fmtDate(r.sentAt)}
-            </span>
-          </>
-        )}
-      />
-    </section>
   );
 }
 
@@ -187,8 +310,8 @@ function ManagedRequestForm({
   }
 
   return (
-    <Card>
-      <h2 className="font-display text-lg font-bold">Demande reçue par WhatsApp ou en boutique</h2>
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-muted">Saisissez une demande reçue par WhatsApp ou en boutique.</p>
       <form onSubmit={submit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <label htmlFor="customer" className="text-sm font-semibold">
@@ -282,6 +405,6 @@ function ManagedRequestForm({
           </Button>
         </div>
       </form>
-    </Card>
+    </div>
   );
 }

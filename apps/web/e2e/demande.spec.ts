@@ -69,9 +69,10 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await login(pro, proEmail);
   await pro.getByRole('button', { name: new RegExp(orgName) }).click();
   await pro.getByRole('link', { name: 'Demandes', exact: true }).click();
-  await expect(pro.getByText('À traiter (1)')).toBeVisible();
+  await expect(pro.getByRole('tab', { name: /À traiter\s*1/ })).toBeVisible();
   await expect(pro.getByRole('link', { name: 'Notifications, 1 non lue(s)' })).toBeVisible();
-  await pro.getByRole('link', { name: /Ruth/ }).click();
+  await shot(pro, '02b-pro-demandes');
+  await pro.getByRole('button', { name: /Ruth/ }).click();
   // Attendre la fiche : le titre du premier article figure aussi dans la liste.
   await expect(pro).toHaveURL(/\/pro\/demandes\/[0-9a-f-]{36}$/);
   await expect(pro.getByText('Robe midi plissée à col montant (exemple)')).toBeVisible();

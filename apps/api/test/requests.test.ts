@@ -218,6 +218,29 @@ describe('Demandes de devis', () => {
       ).toBe('viewed');
     });
 
+    it('liste paginée : onglets, compteurs, recherche, plus anciennes d’abord', async () => {
+      const first = await sentRequest([slugK]);
+      const second = await sentRequest([slugK]);
+      const declined = await sentRequest([slugK]);
+      await kaseba.agent
+        .post(`/api/org/requests/${declined}/decline`, { reason: 'Article interdit à l’import' })
+        .set(...asOrg(orgK))
+        .expect(204);
+      const page = (qs: string) =>
+        kaseba.agent.get(`/api/org/requests/page?${qs}`).set(...asOrg(orgK));
+      const todo = await page('').expect(200);
+      expect(todo.body.counts).toEqual({ todo: 2, quoted: 0, closed: 1, all: 3 });
+      expect(todo.body.items.map((r: { id: string }) => r.id)).toEqual([first, second]);
+      const recent = await page('tab=all&dir=desc').expect(200);
+      expect(recent.body.items[0].id).toBe(declined);
+      expect((await page('tab=closed&q=kabeya').expect(200)).body.total).toBe(1);
+      expect((await page('q=plissée').expect(200)).body.total).toBe(2);
+      expect((await page('q=inconnu').expect(200)).body.counts.all).toBe(0);
+      await page('tab=autre').expect(400);
+      const theirs = await other.agent.get('/api/org/requests/page').set(...asOrg(orgO));
+      expect(theirs.body.counts.all).toBe(0);
+    });
+
     it('un commissionnaire non destinataire ne voit rien, même en SQL direct', async () => {
       const id = await sentRequest([slugK]);
       await other.agent

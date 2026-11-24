@@ -181,3 +181,42 @@ export interface OrgRequestSummary {
   firstItemTitle: string | null;
   sentAt: string | null;
 }
+
+/** Onglets de la liste des demandes (espace professionnel). */
+export const ORG_REQUEST_TABS = ['todo', 'quoted', 'closed', 'all'] as const;
+export type OrgRequestTab = (typeof ORG_REQUEST_TABS)[number];
+export const ORG_REQUEST_TAB_LABELS: Record<OrgRequestTab, string> = {
+  todo: 'À traiter',
+  quoted: 'Devis envoyé',
+  closed: 'Clôturées',
+  all: 'Toutes',
+};
+export const ORG_REQUEST_TAB_STATUSES: Record<
+  Exclude<OrgRequestTab, 'all'>,
+  RecipientStatusCode[]
+> = {
+  todo: ['sent', 'viewed', 'evaluating'],
+  quoted: ['quoted'],
+  closed: ['declined', 'expired'],
+};
+
+export const OrgRequestPageQuerySchema = z.object({
+  tab: z.enum(ORG_REQUEST_TABS).default('todo'),
+  q: z.string().trim().max(80).optional(),
+  dir: z.enum(['asc', 'desc']).default('asc'),
+  page: z.coerce.number().int().min(1).max(10_000).default(1),
+  pageSize: z.coerce
+    .number()
+    .int()
+    .refine((n) => [25, 50, 100].includes(n), 'Taille de page : 25, 50 ou 100.')
+    .default(25),
+});
+export type OrgRequestPageQuery = z.infer<typeof OrgRequestPageQuerySchema>;
+
+export interface OrgRequestPage {
+  items: OrgRequestSummary[];
+  total: number;
+  page: number;
+  pageSize: number;
+  counts: Record<OrgRequestTab, number>;
+}
