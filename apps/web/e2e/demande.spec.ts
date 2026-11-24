@@ -230,6 +230,8 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
 
   // --- Colis partagé par deux clients (écran 09) ---
   await pro.getByRole('link', { name: 'Colis', exact: true }).click();
+  await expect(pro.getByText(/attendent? d’être mis en colis/)).toBeVisible();
+  await pro.getByRole('button', { name: 'Nouveau colis' }).click();
   await pro.getByLabel('Diviseur volumétrique du transporteur').selectOption('6000');
   await pro.getByRole('button', { name: 'Créer le colis' }).click();
   await expect(pro.getByRole('heading', { name: /^KZ-P-[0-9A-Z]{6}$/ })).toBeVisible();
@@ -258,6 +260,10 @@ test('un client envoie une demande ; le commissionnaire la reçoit et l’ouvre'
   await pro.getByRole('button', { name: 'Fermer le colis' }).click();
   await expect(pro.getByText('Colis fermé.')).toBeVisible();
   await shot(pro, '10-pro-colis');
+  await pro.getByRole('link', { name: 'Colis', exact: true }).click();
+  await pro.getByRole('tab', { name: /À expédier/ }).click();
+  await expect(pro.getByText('Fermé, à expédier').first()).toBeVisible();
+  await shot(pro, '10b-pro-colis-liste');
 
   await client.reload();
   await expect(client.getByText('En préparation logistique').first()).toBeVisible();

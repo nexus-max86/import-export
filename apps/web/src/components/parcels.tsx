@@ -13,7 +13,6 @@ import {
   type PackableItem,
   type ParcelCondition,
   type ParcelDetail,
-  type ParcelSummary,
   type RouteTemplateInfo,
   type ParcelItemInfo,
 } from '@konzia/shared';
@@ -21,9 +20,8 @@ import { Check, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { ResponsiveList } from '@/components/responsive-list';
 import { StatusPill } from '@/components/status-pill';
-import { Button, Card, Field, Notice, Loading, EmptyState } from '@/components/ui';
+import { Button, Card, Field, Notice } from '@/components/ui';
 import { api, ApiError, apiUpload } from '@/lib/api';
 import { fmtDate } from '@/lib/format';
 
@@ -49,17 +47,11 @@ function errorText(err: unknown, fallback: string) {
   return err instanceof ApiError ? err.message : fallback;
 }
 
-/** Liste des colis + création. */
-export function ParcelsBoard({ org }: { org: string }) {
+/** Création d'un colis (lieu, diviseur du transporteur), puis ouverture de sa fiche. */
+export function NewParcelForm({ org }: { org: string }) {
   const router = useRouter();
-  const [list, setList] = useState<ParcelSummary[]>();
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    api<ParcelSummary[]>('/org/parcels', { org }).then(setList, (err: unknown) =>
-      setError(errorText(err, 'Chargement impossible.')),
-    );
-  }, [org]);
 
   async function create(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -81,92 +73,27 @@ export function ParcelsBoard({ org }: { org: string }) {
     }
   }
 
-  const summary = (p: ParcelSummary) =>
-    [
-      `${p.itemCount} article(s)`,
-      `${p.customerCount} client(s)`,
-      p.weightG != null && fmtKg(p.weightG),
-      p.locationLabel,
-      fmtDate(p.createdAt),
-    ]
-      .filter(Boolean)
-      .join(' · ');
-  const pill = (p: ParcelSummary) => (
-    <StatusPill tone={p.status === 'open' ? 'warn' : 'neutral'}>
-      {PARCEL_STATUS_LABELS[p.status]}
-    </StatusPill>
-  );
-
   return (
-    <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-      <div className="lg:sticky lg:top-6 lg:order-2">
-        <Card>
-          <h2 className="font-display text-lg font-bold">Nouveau colis</h2>
-          <form onSubmit={create} className="flex flex-col gap-3">
-            <Field id="parcelLocation" label="Lieu (facultatif)" placeholder="Entrepôt Guangzhou" />
-            <label className="flex flex-col gap-1 text-sm font-semibold">
-              Diviseur volumétrique du transporteur
-              <select name="divisor" className="min-h-11 rounded-lg border border-line px-3">
-                {VOLUMETRIC_DIVISORS.map((d) => (
-                  <option key={d} value={d}>
-                    ÷ {d.toLocaleString('fr-FR')}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {error && <Notice tone="error">{error}</Notice>}
-            <Button type="submit" busy={busy}>
-              Créer le colis
-            </Button>
-          </form>
-        </Card>
-      </div>
-      <section className="flex flex-col gap-3 lg:order-1">
-        <h2 className="font-display text-lg font-bold">Vos colis</h2>
-        {!list ? (
-          <Loading lines={2} />
-        ) : list.length === 0 ? (
-          <EmptyState title="Aucun colis pour l’instant">
-            Créez un colis, puis ajoutez-y les articles reçus à l’entrepôt.
-          </EmptyState>
-        ) : (
-          <ResponsiveList
-            rows={list}
-            href={(p) => `/pro/colis/${p.id}`}
-            caption="Colis"
-            columns={[
-              {
-                label: 'Colis',
-                cell: (p) => <span className="font-mono whitespace-nowrap">{p.code}</span>,
-              },
-              { label: 'Articles', numeric: true, cell: (p) => p.itemCount },
-              { label: 'Clients', numeric: true, cell: (p) => p.customerCount },
-              {
-                label: 'Poids',
-                numeric: true,
-                cell: (p) => (p.weightG != null ? fmtKg(p.weightG) : '—'),
-              },
-              { label: 'Lieu', wide: true, cell: (p) => p.locationLabel ?? '—' },
-              {
-                label: 'Créé le',
-                wide: true,
-                cell: (p) => <span className="text-muted">{fmtDate(p.createdAt)}</span>,
-              },
-              { label: 'État', cell: pill },
-            ]}
-            card={(p) => (
-              <>
-                <span className="flex items-center justify-between gap-2">
-                  <strong className="font-mono">{p.code}</strong>
-                  {pill(p)}
-                </span>
-                <span className="text-sm text-muted">{summary(p)}</span>
-              </>
-            )}
-          />
-        )}
-      </section>
-    </div>
+    <form onSubmit={create} className="flex flex-col gap-3">
+      <Field id="parcelLocation" label="Lieu (facultatif)" placeholder="Entrepôt Guangzhou" />
+      <label className="flex flex-col gap-1 text-sm font-semibold">
+        Diviseur volumétrique du transporteur
+        <select name="divisor" className="min-h-11 rounded-lg border border-line px-3">
+          {VOLUMETRIC_DIVISORS.map((d) => (
+            <option key={d} value={d}>
+              ÷ {d.toLocaleString('fr-FR')}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="text-sm text-muted">
+        Vous ajouterez ensuite les articles reçus, le poids et les dimensions sur la fiche du colis.
+      </p>
+      {error && <Notice tone="error">{error}</Notice>}
+      <Button type="submit" busy={busy}>
+        Créer le colis
+      </Button>
+    </form>
   );
 }
 

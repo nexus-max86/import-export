@@ -138,3 +138,41 @@ export interface PackableItem {
   qtyReceived: number;
   qtyPacked: number;
 }
+
+/** Onglets de la liste des colis (espace professionnel). */
+export const ORG_PARCEL_TABS = ['open', 'to_ship', 'shipped', 'done', 'all'] as const;
+export type OrgParcelTab = (typeof ORG_PARCEL_TABS)[number];
+export const ORG_PARCEL_TAB_LABELS: Record<OrgParcelTab, string> = {
+  open: 'En préparation',
+  to_ship: 'À expédier',
+  shipped: 'Expédiés',
+  done: 'Terminés',
+  all: 'Tous',
+};
+
+export const OrgParcelPageQuerySchema = z.object({
+  tab: z.enum(ORG_PARCEL_TABS).default('all'),
+  q: z.string().trim().max(80).optional(),
+  sort: z.enum(['created', 'weight']).default('created'),
+  dir: z.enum(['asc', 'desc']).default('desc'),
+  page: z.coerce.number().int().min(1).max(10_000).default(1),
+  pageSize: z.coerce
+    .number()
+    .int()
+    .refine((n) => [25, 50, 100].includes(n), 'Taille de page : 25, 50 ou 100.')
+    .default(25),
+});
+export type OrgParcelPageQuery = z.infer<typeof OrgParcelPageQuerySchema>;
+
+export interface OrgParcelRow extends ParcelSummary {
+  /** Noms des clients dont des articles sont dans le colis (fiches du commissionnaire). */
+  customers: string[];
+}
+
+export interface OrgParcelPage {
+  items: OrgParcelRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  counts: Record<OrgParcelTab, number>;
+}

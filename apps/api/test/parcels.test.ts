@@ -112,6 +112,39 @@ describe('Colis', () => {
     expect(order.body.events.at(-1).note).toBe(`Mis en colis (${parcel.code}).`);
   });
 
+  it('liste paginée : onglets, compteurs, recherche par code, client ou commande', async () => {
+    await receive(ruthOrder.so, [{ orderItemId: ruthOrder.robe, qtyReceived: 2 }]);
+    await receive(patrickOrder.so, [{ orderItemId: patrickOrder.ecouteurs, qtyReceived: 5 }]);
+    const a = await newParcel({ locationLabel: 'Entrepôt Guangzhou' });
+    await add(a.id, [
+      { orderItemId: ruthOrder.robe, quantity: 2 },
+      { orderItemId: patrickOrder.ecouteurs, quantity: 5 },
+    ]).expect(201);
+    const c = await newParcel();
+    await asK(logistique.agent.post(`/api/org/parcels/${c.id}/cancel`, {})).expect(201);
+
+    const page = (qs: string) => asK(vendeuse.agent.get(`/api/org/parcels/page?${qs}`));
+    const all = await page('').expect(200);
+    expect(all.body.counts).toEqual({ open: 1, to_ship: 0, shipped: 0, done: 1, all: 2 });
+    expect(all.body.items.map((p: { code: string }) => p.code)).toEqual([c.code, a.code]);
+    const open = await page('tab=open').expect(200);
+    expect(open.body.items).toHaveLength(1);
+    expect(open.body.items[0]).toMatchObject({ code: a.code, itemCount: 7, customerCount: 2 });
+    expect(open.body.items[0].customers).toHaveLength(2);
+
+    const patrick = await asK(kaseba.agent.get(`/api/org/orders/${patrickOrder.id}`));
+    const byOrder = await page(`q=${patrick.body.number}`).expect(200);
+    expect(byOrder.body.items.map((p: { id: string }) => p.id)).toEqual([a.id]);
+    expect((await page(`q=${c.code.slice(-6)}`).expect(200)).body.total).toBe(1);
+    expect((await page('q=guangzhou').expect(200)).body.total).toBe(1);
+    await page('pageSize=10').expect(400);
+
+    await ruth.agent
+      .get('/api/org/parcels/page')
+      .set(...asOrg(orgK))
+      .expect(403);
+  });
+
   it('ne met jamais en colis plus que reçu, même réparti sur plusieurs colis', async () => {
     await receive(ruthOrder.so, [{ orderItemId: ruthOrder.ecouteurs, qtyReceived: 3 }]);
     const first = await newParcel();

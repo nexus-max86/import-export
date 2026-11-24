@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   Res,
   StreamableFile,
   UploadedFile,
@@ -17,12 +18,15 @@ import {
   AddParcelItemsSchema,
   CreateParcelSchema,
   MAX_UPLOAD_BYTES,
+  OrgParcelPageQuerySchema,
   RemoveParcelItemSchema,
   TrackingEventSchema,
   type TrackingEventInput,
   UpdateParcelSchema,
   type AddParcelItemsInput,
   type CreateParcelInput,
+  type OrgParcelPage,
+  type OrgParcelPageQuery,
   type PackableItem,
   type ParcelDetail,
   type ParcelSummary,
@@ -50,6 +54,16 @@ export class ParcelsController {
   @ForOrg('order.view')
   list(@Auth() auth: AuthContext, @Org() org: OrgContext): Promise<ParcelSummary[]> {
     return this.parcels.list(auth.userId, org);
+  }
+
+  @Get('parcels/page')
+  @ForOrg('order.view')
+  page(
+    @Auth() auth: AuthContext,
+    @Org() org: OrgContext,
+    @Query(new ZodBody(OrgParcelPageQuerySchema)) q: OrgParcelPageQuery,
+  ): Promise<OrgParcelPage> {
+    return this.parcels.page(auth.userId, org, q);
   }
 
   @Post('parcels')

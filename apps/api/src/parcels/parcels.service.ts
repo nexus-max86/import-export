@@ -6,10 +6,14 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@konzia/db';
 import {
+  ORG_PARCEL_TABS,
   parcelCode,
   volumetricWeightG,
   type AddParcelItemsInput,
   type CreateParcelInput,
+  type OrgParcelPage,
+  type OrgParcelPageQuery,
+  type OrgParcelTab,
   type PackableItem,
   type ParcelDetail,
   type ParcelSummary,
@@ -350,6 +354,108 @@ export class ParcelsService {
         take: 200,
       });
       return rows.map((r) => summary(r));
+    });
+  }
+
+  /** Liste paginée côté serveur : onglets par avancement, recherche, tri, compteurs. */
+  page(userId: string, org: OrgContext, q: OrgParcelPageQuery): Promise<OrgParcelPage> {
+    return this.db.run(userId, async (tx) => {
+      const base: Prisma.ParcelWhereInput = { organizationId: org.organizationId };
+      if (q.q) {
+        const term = q.q;
+        const customers = await tx.orgCustomer.findMany({
+          where: {
+            organizationId: org.organizationId,
+            fullName: { contains: term, mode: 'insensitive' },
+          },
+          select: { id: true },
+          take: 500,
+        });
+        base.OR = [
+          { code: { contains: term, mode: 'insensitive' } },
+          { locationLabel: { contains: term, mode: 'insensitive' } },
+          {
+            items: {
+              some: {
+                removedAt: null,
+                OR: [
+                  { orgCustomerId: { in: customers.map((c) => c.id) } },
+                  { orderItem: { order: { number: { contains: term, mode: 'insensitive' } } } },
+                ],
+              },
+            },
+          },
+        ];
+      }
+      const inShipment = { shipments: { some: { removedAt: null } } };
+      const TAB_WHERE: Record<OrgParcelTab, Prisma.ParcelWhereInput> = {
+        open: { status: 'open' },
+        to_ship: { status: 'closed', shipments: { none: { removedAt: null } } },
+        shipped: { status: 'closed', ...inShipment },
+        done: { status: { in: ['delivered', 'lost', 'cancelled'] } },
+        all: {},
+      };
+      const counts = Object.fromEntries(
+        await Promise.all(
+          ORG_PARCEL_TABS.map(
+            async (t) =>
+              [t, await tx.parcel.count({ where: { AND: [base, TAB_WHERE[t]] } })] as const,
+          ),
+        ),
+      ) as Record<OrgParcelTab, number>;
+
+      const orderBy: Prisma.ParcelOrderByWithRelationInput[] =
+        q.sort === 'weight'
+          ? [{ weightG: { sort: q.dir, nulls: 'last' } }, { createdAt: 'desc' }]
+          : [{ createdAt: q.dir }];
+      const rows = await tx.parcel.findMany({
+        where: { AND: [base, TAB_WHERE[q.tab]] },
+        select: {
+          id: true,
+          code: true,
+          status: true,
+          locationLabel: true,
+          weightG: true,
+          volumetricWeightG: true,
+          currentStepCode: true,
+          createdAt: true,
+          shipments: { where: { removedAt: null }, select: { shipmentId: true } },
+          items: {
+            where: { removedAt: null },
+            select: { orgCustomerId: true, quantity: true, removedAt: true },
+          },
+        },
+        orderBy,
+        skip: (q.page - 1) * q.pageSize,
+        take: q.pageSize,
+      });
+      const names = await this.customerNames(
+        tx,
+        rows.flatMap((r) => r.items.map((i) => i.orgCustomerId)),
+      );
+      return {
+        items: rows.map((r) => ({
+          id: r.id,
+          code: r.code,
+          status: r.status,
+          locationLabel: r.locationLabel,
+          itemCount: r.items.reduce((n, i) => n + i.quantity, 0),
+          customerCount: new Set(r.items.map((i) => i.orgCustomerId)).size,
+          weightG: r.weightG,
+          volumetricWeightG: r.volumetricWeightG,
+          currentStepCode: r.currentStepCode as TrackingStepCode | null,
+          shipmentId: r.shipments[0]?.shipmentId ?? null,
+          createdAt: r.createdAt.toISOString(),
+          customers: [...new Set(r.items.map((i) => i.orgCustomerId))]
+            .map((id) => names.get(id)?.name ?? '')
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b, 'fr')),
+        })),
+        total: counts[q.tab],
+        page: q.page,
+        pageSize: q.pageSize,
+        counts,
+      };
     });
   }
 
